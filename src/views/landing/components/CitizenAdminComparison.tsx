@@ -1,5 +1,5 @@
 import React from 'react';
-import { User, ShieldCheck, Smartphone, Laptop, CheckCircle2, Navigation, BellRing, Camera, Layers, Cpu, Siren, ArrowRight } from 'lucide-react';
+import { User, ShieldCheck, Smartphone, Laptop, Navigation, BellRing, Camera, Layers, Cpu, Siren, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router';
 
 export const CitizenAdminComparison: React.FC = () => {

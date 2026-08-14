@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Database, Cpu, Navigation, ShieldCheck, CloudRain, Satellite, HardHat, AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Database, Cpu, ShieldCheck, CloudRain, CheckCircle2 } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
 export const DataPipelineFlow: React.FC = () => {

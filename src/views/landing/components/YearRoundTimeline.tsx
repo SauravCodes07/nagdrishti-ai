@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CloudRain, Sun, Leaf, Snowflake, HardHat, Car, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { CloudRain, Leaf, HardHat } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Link } from 'react-router';
 

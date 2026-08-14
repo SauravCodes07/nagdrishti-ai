@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CloudRain, Navigation, AlertTriangle, ShieldCheck, Compass, Sparkles, Droplets, HardHat, Car, Layers } from 'lucide-react';
+import { CloudRain, AlertTriangle, ShieldCheck, Compass, Sparkles, Droplets, HardHat, Layers } from 'lucide-react';
 import { fetchNagpurWeather, WeatherData } from '../../../services/weather/weatherService';
 import { getActiveConstructionProjects } from '../../../services/construction/constructionService';
 import { getIncidents } from '../../../services/incidents/incidentService';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router';
 import nagdrishtiLogo from '../../../assets/images/logos/nagdrishti-logo.png';
-import { ShieldCheck, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 export const LandingFooter: React.FC = () => {
   return (

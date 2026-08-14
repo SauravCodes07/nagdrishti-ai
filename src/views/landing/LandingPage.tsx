@@ -7,8 +7,7 @@ import { RouteComparisonDemo } from './components/RouteComparisonDemo';
 import { DataPipelineFlow } from './components/DataPipelineFlow';
 import { YearRoundTimeline } from './components/YearRoundTimeline';
 import { CitizenAdminComparison } from './components/CitizenAdminComparison';
-import { Sparkles, ShieldCheck, ArrowRight, Navigation, Satellite, Cpu, Database, CloudRain, HardHat, Car, CheckCircle2 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
+import { ShieldCheck, ArrowRight, Navigation, Satellite, Cpu, CloudRain, HardHat } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   return (

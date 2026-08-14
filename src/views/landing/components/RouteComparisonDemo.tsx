@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldCheck, AlertTriangle, Clock, Car, Navigation, Sparkles, CheckCircle2, Droplets, HardHat, Compass } from 'lucide-react';
+import { AlertTriangle, Clock, Car, Navigation, Sparkles, CheckCircle2, Compass } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Link } from 'react-router';
 
