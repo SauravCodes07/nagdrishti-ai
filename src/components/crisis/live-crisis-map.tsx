@@ -6,6 +6,10 @@ import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
 import { cn } from '../../lib/utils';
 import { Link } from 'react-router';
+import { getTileUrlForStyle, BaseMapStyle } from '../../services/maps/mapService';
+import { useTheme } from '../../context/theme/ThemeContext';
+import { getActiveConstructionProjects } from '../../services/construction/constructionService';
+import { getSatelliteFloodPolygons } from '../../services/satellite/satelliteService';
 
 interface MapLayerState {
   waterlogging: boolean;
@@ -15,16 +19,23 @@ interface MapLayerState {
   citizenReports: boolean;
   resources: boolean;
   heatmap: boolean;
+  construction: boolean;
+  satelliteFlood: boolean;
 }
 
 export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScreenMode = false }) => {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const polygonLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   const { zones, incidents, resources, citizenReports, stageInfo } = useDemoSimulation();
 
+  const [mapStyle, setMapStyle] = useState<BaseMapStyle>('VECTOR_DAY');
   const [activeLayers, setActiveLayers] = useState<MapLayerState>({
     waterlogging: true,
     roadDamage: true,
@@ -33,6 +44,8 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     citizenReports: true,
     resources: true,
     heatmap: true,
+    construction: true,
+    satelliteFlood: true
   });
 
   const toggleLayer = (layerKey: keyof MapLayerState) => {
@@ -42,7 +55,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
   // Initialize Map
   useEffect(() => {
     if (!mapContainerRef.current) return;
-    if (mapInstanceRef.current) return; // already initialized
+    if (mapInstanceRef.current) return;
 
     // Center on Nagpur Zero Mile Stone: [21.1458, 79.0882]
     const map = L.map(mapContainerRef.current, {
@@ -51,8 +64,10 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       zoomControl: false,
     });
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> | NMC Crisis Command',
+    const tileInfo = getTileUrlForStyle(mapStyle, isDark);
+    tileLayerRef.current = L.tileLayer(tileInfo.url, {
+      attribution: tileInfo.attribution,
+      subdomains: tileInfo.subdomains || ['a', 'b', 'c', 'd'],
       maxZoom: 19,
     }).addTo(map);
 
@@ -71,6 +86,20 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     };
   }, []);
 
+  // Update Base Tile Layer on Style Change
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !tileLayerRef.current) return;
+
+    map.removeLayer(tileLayerRef.current);
+    const tileInfo = getTileUrlForStyle(mapStyle, isDark);
+    tileLayerRef.current = L.tileLayer(tileInfo.url, {
+      attribution: tileInfo.attribution,
+      subdomains: tileInfo.subdomains || ['a', 'b', 'c', 'd'],
+      maxZoom: 19,
+    }).addTo(map);
+  }, [mapStyle, isDark]);
+
   // Update Layers & Markers when zones/incidents or activeLayers change
   useEffect(() => {
     const map = mapInstanceRef.current;
@@ -82,16 +111,16 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     // 1. Draw Zone Heatmap Polygons
     if (activeLayers.heatmap) {
       zones.forEach(zone => {
-        let color = '#22A447'; // Green - Low
+        let color = '#22A447';
         let opacity = 0.25;
         if (zone.baselineRisk === 'SEVERE') {
-          color = '#E53935'; // Red - Severe
+          color = '#E53935';
           opacity = 0.45;
         } else if (zone.baselineRisk === 'HIGH') {
-          color = '#FF8A00'; // Orange - High
+          color = '#FF8A00';
           opacity = 0.4;
         } else if (zone.baselineRisk === 'MEDIUM') {
-          color = '#FFC107'; // Yellow - Medium
+          color = '#FFC107';
           opacity = 0.3;
         }
 
@@ -111,6 +140,30 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       });
     }
 
+    // 2. Draw Satellite SAR Flood Polygons
+    if (activeLayers.satelliteFlood) {
+      const floodFeats = getSatelliteFloodPolygons();
+      floodFeats.forEach(f => {
+        const poly = L.polygon(f.coordinates, {
+          color: '#E53935',
+          fillColor: '#E53935',
+          fillOpacity: 0.4,
+          weight: 2,
+          dashArray: '4, 4'
+        });
+        poly.bindPopup(`
+          <div style="font-family: system-ui, sans-serif; padding: 4px;">
+            <span style="font-size: 9px; font-weight: bold; background: #E53935; color: white; padding: 2px 6px; border-radius: 4px;">
+              COPERNICUS SAR FLOOD EXTENT
+            </span>
+            <h4 style="font-size: 13px; font-weight: bold; margin: 4px 0;">${f.zoneName}</h4>
+            <p style="font-size: 11px; margin: 0; color: #555;">${f.notes}</p>
+          </div>
+        `);
+        poly.addTo(polygonLayerGroupRef.current!);
+      });
+    }
+
     // Helper for Custom Div Icons
     const createCustomIcon = (emoji: string, bgColor: string, pulse: boolean = false) => {
       return L.divIcon({
@@ -118,13 +171,13 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
         html: `
           <div style="
             background-color: ${bgColor};
-            width: 34px;
-            height: 34px;
+            width: 32px;
+            height: 32px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 16px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             border: 2px solid white;
             position: relative;
@@ -132,20 +185,40 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
             ${emoji}
             ${pulse ? `<span style="
               position: absolute;
-              width: 44px;
-              height: 44px;
+              width: 42px;
+              height: 42px;
               border-radius: 50%;
               border: 2px solid ${bgColor};
               animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
             "></span>` : ''}
           </div>
         `,
-        iconSize: [34, 34],
-        iconAnchor: [17, 17],
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
       });
     };
 
-    // 2. Add Incident Markers
+    // 3. Add Construction Markers
+    if (activeLayers.construction) {
+      const constructions = getActiveConstructionProjects();
+      constructions.forEach(c => {
+        const icon = createCustomIcon('🚧', '#FF8A00');
+        const marker = L.marker(c.coordinates, { icon });
+        marker.bindPopup(`
+          <div style="font-family: system-ui, sans-serif; padding: 4px; max-width: 220px;">
+            <span style="font-size: 10px; font-weight: bold; color: #FF8A00; background: #FFF8E1; padding: 2px 6px; border-radius: 4px;">
+              CONSTRUCTION • ${c.trafficImpact}
+            </span>
+            <h4 style="font-size: 13px; font-weight: bold; margin: 4px 0;">${c.projectName}</h4>
+            <p style="font-size: 11px; margin: 0; color: #666;">${c.laneClosures}</p>
+            <p style="font-size: 10px; margin-top: 4px; color: #FF8A00; font-weight: bold;">💡 ${c.detourAdvice}</p>
+          </div>
+        `);
+        marker.addTo(markersLayerGroupRef.current!);
+      });
+    }
+
+    // 4. Add Incident Markers
     incidents.forEach(inc => {
       let include = false;
       let emoji = '⚠️';
@@ -194,7 +267,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       }
     });
 
-    // 3. Add Resource Markers
+    // 5. Add Resource Markers
     if (activeLayers.resources) {
       resources.forEach(res => {
         const icon = createCustomIcon('🚑', '#22A447');
@@ -212,7 +285,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       });
     }
 
-    // 4. Add Citizen Reports
+    // 6. Add Citizen Reports
     if (activeLayers.citizenReports) {
       citizenReports.forEach(rep => {
         const icon = createCustomIcon('📸', '#8B5CF6');
@@ -242,14 +315,36 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#22A447]"></span>
           </span>
           <span className="font-bold text-xs text-[#111111] dark:text-white">
-            Live Crisis Map — Nagpur
+            Nagpur Command GIS Map
           </span>
           <Badge className="bg-[#FFC107] text-[#111111] text-[9px] font-mono font-black">
             {stageInfo.title.split(':')[0]}
           </Badge>
         </div>
 
-        <div className="flex items-center gap-1 pointer-events-auto">
+        <div className="flex items-center gap-2 pointer-events-auto">
+          {/* Base Layer Switcher */}
+          <div className="bg-white/95 dark:bg-[#111C2E]/95 backdrop-blur-md p-1 rounded-xl border border-[#E5E5E5] dark:border-white/10 shadow-md flex items-center gap-1">
+            <button
+              onClick={() => setMapStyle('VECTOR_DAY')}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer",
+                mapStyle === 'VECTOR_DAY' ? "bg-[#FF8A00] text-white shadow-xs" : "text-[#666666] dark:text-gray-400"
+              )}
+            >
+              Street
+            </button>
+            <button
+              onClick={() => setMapStyle('SATELLITE')}
+              className={cn(
+                "px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer",
+                mapStyle === 'SATELLITE' ? "bg-[#FF8A00] text-white shadow-xs" : "text-[#666666] dark:text-gray-400"
+              )}
+            >
+              🛰️ Satellite
+            </button>
+          </div>
+
           {!fullScreenMode && (
             <Button
               variant="outline"
@@ -263,7 +358,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
         </div>
       </div>
 
-      {/* Layer Control Drawer / Buttons Bar */}
+      {/* Layer Control Bar */}
       <div className="absolute bottom-4 left-3 right-3 z-[1000] flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
         <div className="flex items-center gap-1 bg-white/95 dark:bg-[#111C2E]/95 backdrop-blur-md p-1.5 rounded-xl border border-[#E5E5E5] dark:border-white/10 shadow-lg max-w-full overflow-x-auto no-scrollbar">
           <span className="text-[10px] font-bold text-[#666666] dark:text-gray-400 uppercase px-2 whitespace-nowrap flex items-center gap-1">
@@ -278,6 +373,26 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
             )}
           >
             🔥 Heatmap
+          </button>
+
+          <button
+            onClick={() => toggleLayer('satelliteFlood')}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap border min-h-[36px] cursor-pointer",
+              activeLayers.satelliteFlood ? "bg-rose-500/15 text-rose-600 border-rose-500 font-bold shadow-xs" : "bg-white dark:bg-[#111C2E] text-[#666666] dark:text-gray-400 border-[#E5E5E5] dark:border-white/10 hover:bg-[#F7F7F7]"
+            )}
+          >
+            🛰️ Sentinel SAR
+          </button>
+
+          <button
+            onClick={() => toggleLayer('construction')}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap border min-h-[36px] cursor-pointer",
+              activeLayers.construction ? "bg-[#FFF8E1] text-[#111111] dark:bg-[#FFC107]/20 dark:text-white border-[#FFC107] font-bold shadow-xs" : "bg-white dark:bg-[#111C2E] text-[#666666] dark:text-gray-400 border-[#E5E5E5] dark:border-white/10 hover:bg-[#F7F7F7]"
+            )}
+          >
+            🚧 Construction
           </button>
 
           <button
@@ -297,7 +412,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
               activeLayers.roadDamage ? "bg-[#FFF8E1] text-[#111111] dark:bg-[#FFC107]/20 dark:text-white border-[#FFC107] font-bold shadow-xs" : "bg-white dark:bg-[#111C2E] text-[#666666] dark:text-gray-400 border-[#E5E5E5] dark:border-white/10 hover:bg-[#F7F7F7]"
             )}
           >
-            ⚠️ Potholes / Damage
+            ⚠️ Potholes
           </button>
 
           <button
@@ -332,7 +447,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
         </div>
       </div>
 
-      {/* Actual Map Canvas Container */}
+      {/* Map Canvas Container */}
       <div
         ref={mapContainerRef}
         className={cn(

@@ -1,34 +1,46 @@
 import React, { useState } from 'react';
-import { PREDEFINED_LOCATIONS, DEMO_ROUTE_QUERIES } from '../../data/crisis/safe-routes-data';
-import { Navigation, AlertTriangle, CheckCircle2, Clock, Car } from 'lucide-react';
+import { PREDEFINED_LOCATIONS } from '../../data/crisis/safe-routes-data';
+import { calculateSafeRoutes } from '../../services/routing/predictiveRoutingService';
+import { useDemoSimulation } from '../../context/DemoSimulationContext';
+import { Navigation, AlertTriangle, CheckCircle2, Clock, Car, Sparkles } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { cn } from '../../lib/utils';
 
 const SafeRoutePage: React.FC = () => {
+  const { currentRainfallMm } = useDemoSimulation();
   const [origin, setOrigin] = useState('airport');
   const [destination, setDestination] = useState('civil_lines');
-  const [selectedRouteId, setSelectedRouteId] = useState('route-1-recommended');
+  const [selectedRouteId, setSelectedRouteId] = useState<string>('');
 
-  const routeData = DEMO_ROUTE_QUERIES['airport-civil_lines'];
-  const routes = routeData.routes;
+  const routeResult = calculateSafeRoutes(origin, destination, currentRainfallMm);
+  const routes = routeResult.routes;
 
   const activeRoute = routes.find(r => r.id === selectedRouteId) || routes[0];
 
   return (
     <div className="space-y-6 pb-20 md:pb-6">
       {/* Header */}
-      <div className="bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-sm">
+      <div className="bg-white dark:bg-[#111C2E] p-4 sm:p-6 rounded-2xl border border-[#E5E5E5] dark:border-white/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <Badge className="bg-[#FFC107] text-[#111111] font-mono text-[10px] font-black">
-            CIVIC SAFE NAVIGATION
-          </Badge>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] dark:text-white tracking-tight mt-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge className="bg-[#FFC107] text-[#111111] font-mono text-[10px] font-black">
+              CIVIC SAFE NAVIGATION
+            </Badge>
+            <span className="text-xs font-mono font-bold text-emerald-600">
+              [SAFETY SCORE ENGINE]
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] dark:text-white tracking-tight">
             AI Safe Route Planner
           </h1>
           <p className="text-xs sm:text-sm text-[#666666] dark:text-gray-400 mt-0.5">
-            Find safe navigation paths avoiding flooded underpasses, deep potholes, and traffic gridlocks during rainfall.
+            Evaluates routes dynamically by factoring waterlogged underpasses, active construction choke points, and pothole severity during rainfall.
           </p>
+        </div>
+
+        <div className="text-right text-xs text-[#666666] dark:text-gray-400">
+          <span className="font-bold text-[#FF8A00]">Active Rainfall: {currentRainfallMm} mm</span>
         </div>
       </div>
 
@@ -74,7 +86,7 @@ const SafeRoutePage: React.FC = () => {
               </select>
             </div>
 
-            <Button className="w-full bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold h-11 text-xs gap-2">
+            <Button className="w-full bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold h-11 text-xs gap-2 cursor-pointer">
               <Navigation className="size-4" /> Recalculate AI Safe Routes
             </Button>
           </div>
@@ -86,7 +98,9 @@ const SafeRoutePage: React.FC = () => {
             </h3>
 
             {routes.map(r => {
-              const isSelected = selectedRouteId === r.id;
+              const isSelected = (selectedRouteId || routes[0].id) === r.id;
+              const isRecommended = r.type === 'RECOMMENDED_SAFE';
+
               return (
                 <div
                   key={r.id}
@@ -97,8 +111,11 @@ const SafeRoutePage: React.FC = () => {
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border font-bold", r.badgeColor)}>
-                      {r.name}
+                    <span className={cn(
+                      "text-[10px] font-mono px-2 py-0.5 rounded border font-bold",
+                      isRecommended ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" : r.type === 'FASTEST_DIRECT' ? "bg-rose-500/10 text-rose-600 border-rose-500/30" : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                    )}>
+                      {isRecommended ? 'RECOMMENDED SAFE' : r.type === 'FASTEST_DIRECT' ? 'DIRECT (HAZARDOUS)' : 'ALTERNATIVE'}
                     </span>
                     <span className="text-xs font-bold text-[#111111] dark:text-white font-mono">
                       Safety: {r.safetyScore}/100
@@ -112,8 +129,8 @@ const SafeRoutePage: React.FC = () => {
                     <span className="flex items-center gap-1">
                       <Car className="size-3.5 text-[#666666] dark:text-gray-400" /> {r.distanceKm} km
                     </span>
-                    <span className="text-[#FF8A00] font-mono">
-                      Flood Risk: {r.waterloggingRiskScore}%
+                    <span className={cn("font-mono", r.waterloggingRiskPct > 40 ? "text-[#E53935]" : "text-emerald-600")}>
+                      Flood: {r.waterloggingRiskPct}%
                     </span>
                   </div>
 
@@ -131,11 +148,14 @@ const SafeRoutePage: React.FC = () => {
           <div className="bg-white dark:bg-[#111C2E] rounded-2xl p-5 border border-[#E5E5E5] dark:border-white/10 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-[#E5E5E5] dark:border-white/10 pb-3">
               <div>
-                <span className={cn("text-xs font-mono px-2.5 py-1 rounded border font-bold", activeRoute.badgeColor)}>
-                  {activeRoute.name}
+                <span className={cn(
+                  "text-xs font-mono px-2.5 py-1 rounded border font-bold",
+                  activeRoute.type === 'RECOMMENDED_SAFE' ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30" : "bg-rose-500/10 text-rose-600 border-rose-500/30"
+                )}>
+                  {activeRoute.title}
                 </span>
                 <h2 className="text-lg font-bold text-[#111111] dark:text-white mt-2">
-                  {routeData.originName} → {routeData.destinationName}
+                  {routeResult.originName} → {routeResult.destinationName}
                 </h2>
               </div>
 
@@ -150,29 +170,40 @@ const SafeRoutePage: React.FC = () => {
               </div>
             </div>
 
+            {/* AI Explanation Banner */}
+            <div className="p-3.5 rounded-xl bg-[#FFF8E1] dark:bg-[#FFC107]/10 border border-[#FFC107]/30 text-xs">
+              <div className="flex items-center gap-1.5 text-[#FF8A00] font-bold mb-1">
+                <Sparkles className="size-4" />
+                <span>AI Safety Analysis & Rationale</span>
+              </div>
+              <p className="text-xs text-[#111111] dark:text-gray-200 leading-relaxed font-medium">
+                {activeRoute.aiReasoning}
+              </p>
+            </div>
+
             {/* Risk Breakdown Progress Bars */}
             <div className="grid grid-cols-3 gap-3 p-3 rounded-xl bg-muted/30 text-xs">
               <div>
                 <span className="text-muted-foreground text-[10px] block mb-1">Waterlogging Risk</span>
-                <span className="font-bold text-rose-600 font-mono text-sm">{activeRoute.waterloggingRiskScore}%</span>
+                <span className="font-bold text-rose-600 font-mono text-sm">{activeRoute.waterloggingRiskPct}%</span>
                 <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mt-1">
-                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${activeRoute.waterloggingRiskScore}%` }} />
+                  <div className="h-full bg-rose-500 rounded-full" style={{ width: `${activeRoute.waterloggingRiskPct}%` }} />
                 </div>
               </div>
 
               <div>
                 <span className="text-muted-foreground text-[10px] block mb-1">Traffic Congestion</span>
-                <span className="font-bold text-amber-600 font-mono text-sm">{activeRoute.trafficRiskScore}%</span>
+                <span className="font-bold text-amber-600 font-mono text-sm">{activeRoute.trafficCongestionPct}%</span>
                 <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mt-1">
-                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${activeRoute.trafficRiskScore}%` }} />
+                  <div className="h-full bg-amber-500 rounded-full" style={{ width: `${activeRoute.trafficCongestionPct}%` }} />
                 </div>
               </div>
 
               <div>
                 <span className="text-muted-foreground text-[10px] block mb-1">Pothole Surface Index</span>
-                <span className="font-bold text-orange-600 font-mono text-sm">{activeRoute.potholeRiskScore}%</span>
+                <span className="font-bold text-orange-600 font-mono text-sm">{activeRoute.potholeRiskPct}%</span>
                 <div className="w-full bg-muted h-1.5 rounded-full overflow-hidden mt-1">
-                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${activeRoute.potholeRiskScore}%` }} />
+                  <div className="h-full bg-orange-500 rounded-full" style={{ width: `${activeRoute.potholeRiskPct}%` }} />
                 </div>
               </div>
             </div>

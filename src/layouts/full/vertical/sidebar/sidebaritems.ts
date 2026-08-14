@@ -55,6 +55,9 @@ import {
   Settings,
   UserCheck,
   HelpCircle,
+  HardHat,
+  Satellite,
+  User,
   LucideIcon
 } from "lucide-react";
 
@@ -64,9 +67,18 @@ const sidebaritems: MenuItem[] = [
     items: [
       {
         id: uniqueId(),
-        name: "Dashboard",
+        name: "Citizen Experience",
+        icon: User,
+        url: "/citizen",
+        badge: true,
+        badgeContent: "PUBLIC",
+        badgeType: "bg-[#FFC107] text-[#111111] font-bold"
+      },
+      {
+        id: uniqueId(),
+        name: "Command Dashboard",
         icon: LayoutDashboard,
-        url: "/",
+        url: "/admin",
       },
       {
         id: uniqueId(),
@@ -86,8 +98,26 @@ const sidebaritems: MenuItem[] = [
     ],
   },
   {
-    heading: "MONITORING",
+    heading: "YEAR-ROUND INTELLIGENCE",
     items: [
+      {
+        id: uniqueId(),
+        name: "Construction Intelligence",
+        icon: HardHat,
+        url: "/construction",
+        badge: true,
+        badgeContent: "YEAR-ROUND",
+        badgeType: "bg-amber-500 text-white font-semibold text-[9px]"
+      },
+      {
+        id: uniqueId(),
+        name: "Satellite Earth Observation",
+        icon: Satellite,
+        url: "/satellite",
+        badge: true,
+        badgeContent: "SAR RADAR",
+        badgeType: "bg-blue-500 text-white font-semibold text-[9px]"
+      },
       {
         id: uniqueId(),
         name: "Rainfall Monitor",
@@ -102,7 +132,7 @@ const sidebaritems: MenuItem[] = [
       },
       {
         id: uniqueId(),
-        name: "Road Risk",
+        name: "Road Risk & Potholes",
         icon: AlertTriangle,
         url: "/road-risk",
       },
@@ -158,8 +188,8 @@ const sidebaritems: MenuItem[] = [
         icon: Cpu,
         url: "/ai-predictions",
         badge: true,
-        badgeContent: "AI 94%",
-        badgeType: "bg-orange-500 text-white font-semibold"
+        badgeContent: "PRITHVI AI",
+        badgeType: "bg-[#FF8A00] text-white font-semibold"
       },
       {
         id: uniqueId(),
