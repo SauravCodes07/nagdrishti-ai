@@ -269,6 +269,11 @@ export const CitizenLiveMapPage: React.FC = () => {
               }}
               className="w-full text-xs font-semibold text-[#111111] dark:text-white bg-transparent focus:outline-none placeholder:text-[#666666]"
             />
+            {isSearching && (
+              <span className="text-[10px] font-mono font-bold text-[#FF8A00] animate-pulse shrink-0">
+                Searching...
+              </span>
+            )}
             <button
               onClick={handleLocateMe}
               className="size-7 rounded-lg bg-white dark:bg-[#111C2E] border border-[#E5E5E5] dark:border-white/10 flex items-center justify-center text-[#FF8A00] shadow-2xs shrink-0 cursor-pointer"
@@ -279,22 +284,32 @@ export const CitizenLiveMapPage: React.FC = () => {
           </div>
 
           {/* Search Dropdown Suggestions */}
-          {showDropdown && searchResults.length > 0 && (
+          {showDropdown && (
             <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#111C2E] border border-[#E5E5E5] dark:border-white/15 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-[#E5E5E5] dark:divide-white/5">
-              {searchResults.map(item => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => handleSelectSearchResult(item)}
-                  className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
-                >
-                  <MapPin className="size-3.5 text-[#FF8A00] shrink-0 mt-0.5" />
-                  <div>
-                    <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
-                    <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
-                  </div>
-                </button>
-              ))}
+              {isSearching && searchResults.length === 0 ? (
+                <div className="p-3 text-center text-xs text-[#666666] dark:text-gray-400 font-medium">
+                  🔍 Searching Nagpur places & landmarks...
+                </div>
+              ) : searchResults.length > 0 ? (
+                searchResults.map(item => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => handleSelectSearchResult(item)}
+                    className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
+                  >
+                    <MapPin className="size-3.5 text-[#FF8A00] shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
+                      <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="p-3 text-center text-xs text-[#666666] dark:text-gray-400">
+                  No locations found. Try searching &quot;Airport&quot;, &quot;Sitabuldi&quot;, or &quot;AIIMS&quot;.
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -337,6 +352,33 @@ export const CitizenLiveMapPage: React.FC = () => {
                 {cat === 'ALL' ? '🌟 All' : cat === 'TRANSPORT' ? '🚇 Metro' : cat === 'HEALTH' ? '🏥 Health' : cat === 'SAFETY' ? '👮 Safety' : '🏛️ Landmark'}
               </button>
             ))}
+
+            {/* Live Hazard Layer Toggles */}
+            <button
+              onClick={() => setShowFlooding(!showFlooding)}
+              className={cn(
+                "px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap border transition-all cursor-pointer",
+                showFlooding
+                  ? "bg-rose-500/15 text-rose-600 border-rose-500/40"
+                  : "bg-[#F7F7F7] dark:bg-[#0B1320] text-[#666666] opacity-60 border-[#E5E5E5] dark:border-white/10"
+              )}
+              title="Toggle Flood & Waterlogging Risk Polygons"
+            >
+              💧 Floods
+            </button>
+
+            <button
+              onClick={() => setShowConstruction(!showConstruction)}
+              className={cn(
+                "px-2 py-1 rounded-lg text-[10px] font-bold whitespace-nowrap border transition-all cursor-pointer",
+                showConstruction
+                  ? "bg-amber-500/15 text-amber-600 border-amber-500/40"
+                  : "bg-[#F7F7F7] dark:bg-[#0B1320] text-[#666666] opacity-60 border-[#E5E5E5] dark:border-white/10"
+              )}
+              title="Toggle Active Metro/Road Construction Work"
+            >
+              🚧 Road Work
+            </button>
           </div>
         </div>
       </div>

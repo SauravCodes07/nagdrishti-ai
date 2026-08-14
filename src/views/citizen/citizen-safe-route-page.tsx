@@ -281,30 +281,41 @@ export const CitizenSafeRoutePage: React.FC = () => {
                 }}
                 className="w-full text-xs font-semibold text-[#111111] dark:text-white bg-transparent focus:outline-none placeholder:text-[#666666]"
               />
+              {isOriginSearching && (
+                <span className="text-[10px] font-mono font-bold text-[#22A447] animate-pulse shrink-0">
+                  Searching...
+                </span>
+              )}
             </div>
 
             {/* Origin Auto-suggestions Dropdown */}
-            {showOriginDropdown && originSuggestions.length > 0 && (
+            {showOriginDropdown && (
               <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#111C2E] border border-[#E5E5E5] dark:border-white/15 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-[#E5E5E5] dark:divide-white/5">
-                {originSuggestions.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setOriginResult(item);
-                      setOriginQuery(item.name);
-                      setShowOriginDropdown(false);
-                      handleCalculateRoutes(item, destResult);
-                    }}
-                    className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
-                  >
-                    <MapPin className="size-3.5 text-[#22A447] shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
-                      <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
-                    </div>
-                  </button>
-                ))}
+                {isOriginSearching && originSuggestions.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-[#666666] dark:text-gray-400 font-medium">
+                    🔍 Searching start locations in Nagpur...
+                  </div>
+                ) : originSuggestions.length > 0 ? (
+                  originSuggestions.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setOriginResult(item);
+                        setOriginQuery(item.name);
+                        setShowOriginDropdown(false);
+                        handleCalculateRoutes(item, destResult);
+                      }}
+                      className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
+                    >
+                      <MapPin className="size-3.5 text-[#22A447] shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
+                        <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
+                      </div>
+                    </button>
+                  ))
+                ) : null}
               </div>
             )}
           </div>
@@ -335,30 +346,41 @@ export const CitizenSafeRoutePage: React.FC = () => {
                 }}
                 className="w-full text-xs font-semibold text-[#111111] dark:text-white bg-transparent focus:outline-none placeholder:text-[#666666]"
               />
+              {isDestSearching && (
+                <span className="text-[10px] font-mono font-bold text-[#FF8A00] animate-pulse shrink-0">
+                  Searching...
+                </span>
+              )}
             </div>
 
             {/* Destination Auto-suggestions Dropdown */}
-            {showDestDropdown && destSuggestions.length > 0 && (
+            {showDestDropdown && (
               <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#111C2E] border border-[#E5E5E5] dark:border-white/15 rounded-xl shadow-xl max-h-56 overflow-y-auto divide-y divide-[#E5E5E5] dark:divide-white/5">
-                {destSuggestions.map(item => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setDestResult(item);
-                      setDestQuery(item.name);
-                      setShowDestDropdown(false);
-                      handleCalculateRoutes(originResult, item);
-                    }}
-                    className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
-                  >
-                    <MapPin className="size-3.5 text-[#FF8A00] shrink-0 mt-0.5" />
-                    <div>
-                      <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
-                      <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
-                    </div>
-                  </button>
-                ))}
+                {isDestSearching && destSuggestions.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-[#666666] dark:text-gray-400 font-medium">
+                    🔍 Searching destinations in Nagpur...
+                  </div>
+                ) : destSuggestions.length > 0 ? (
+                  destSuggestions.map(item => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setDestResult(item);
+                        setDestQuery(item.name);
+                        setShowDestDropdown(false);
+                        handleCalculateRoutes(originResult, item);
+                      }}
+                      className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
+                    >
+                      <MapPin className="size-3.5 text-[#FF8A00] shrink-0 mt-0.5" />
+                      <div>
+                        <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
+                        <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
+                      </div>
+                    </button>
+                  ))
+                ) : null}
               </div>
             )}
           </div>
