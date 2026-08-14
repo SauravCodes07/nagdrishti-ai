@@ -10,6 +10,7 @@ import { getTileUrlForStyle, BaseMapStyle } from '../../services/maps/mapService
 import { useTheme } from '../../context/theme/ThemeContext';
 import { getActiveConstructionProjects } from '../../services/construction/constructionService';
 import { getSatelliteFloodPolygons } from '../../services/satellite/satelliteService';
+import { getProgressivePOIsInViewport } from '../../services/poi/poiService';
 
 interface MapLayerState {
   waterlogging: boolean;
@@ -21,6 +22,7 @@ interface MapLayerState {
   heatmap: boolean;
   construction: boolean;
   satelliteFlood: boolean;
+  pois: boolean;
 }
 
 export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScreenMode = false }) => {
@@ -32,10 +34,12 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
   const tileLayerRef = useRef<L.TileLayer | null>(null);
   const markersLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const polygonLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   const { zones, incidents, resources, citizenReports, stageInfo } = useDemoSimulation();
 
   const [mapStyle, setMapStyle] = useState<BaseMapStyle>('VECTOR_DAY');
+  const [currentZoom, setCurrentZoom] = useState<number>(13);
   const [activeLayers, setActiveLayers] = useState<MapLayerState>({
     waterlogging: true,
     roadDamage: true,
@@ -45,7 +49,8 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     resources: true,
     heatmap: true,
     construction: true,
-    satelliteFlood: true
+    satelliteFlood: true,
+    pois: true
   });
 
   const toggleLayer = (layerKey: keyof MapLayerState) => {
@@ -74,7 +79,12 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     L.control.zoom({ position: 'topright' }).addTo(map);
 
     polygonLayerGroupRef.current = L.layerGroup().addTo(map);
+    poiLayerGroupRef.current = L.layerGroup().addTo(map);
     markersLayerGroupRef.current = L.layerGroup().addTo(map);
+
+    map.on('zoomend', () => {
+      setCurrentZoom(map.getZoom());
+    });
 
     mapInstanceRef.current = map;
 
@@ -100,13 +110,14 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     }).addTo(map);
   }, [mapStyle, isDark]);
 
-  // Update Layers & Markers when zones/incidents or activeLayers change
+  // Update Layers, POIs & Markers
   useEffect(() => {
     const map = mapInstanceRef.current;
-    if (!map || !polygonLayerGroupRef.current || !markersLayerGroupRef.current) return;
+    if (!map || !polygonLayerGroupRef.current || !markersLayerGroupRef.current || !poiLayerGroupRef.current) return;
 
     polygonLayerGroupRef.current.clearLayers();
     markersLayerGroupRef.current.clearLayers();
+    poiLayerGroupRef.current.clearLayers();
 
     // 1. Draw Zone Heatmap Polygons
     if (activeLayers.heatmap) {
@@ -171,13 +182,13 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
         html: `
           <div style="
             background-color: ${bgColor};
-            width: 32px;
-            height: 32px;
+            width: 30px;
+            height: 30px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
+            font-size: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
             border: 2px solid white;
             position: relative;
@@ -185,20 +196,44 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
             ${emoji}
             ${pulse ? `<span style="
               position: absolute;
-              width: 42px;
-              height: 42px;
+              width: 40px;
+              height: 40px;
               border-radius: 50%;
               border: 2px solid ${bgColor};
               animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;
             "></span>` : ''}
           </div>
         `,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
       });
     };
 
-    // 3. Add Construction Markers
+    // 3. Progressive POIs (Metro, Hospitals, Fire, Police, Education)
+    if (activeLayers.pois) {
+      const pois = getProgressivePOIsInViewport(currentZoom);
+      pois.forEach(poi => {
+        const icon = L.divIcon({
+          className: 'custom-map-icon',
+          html: `<div style="background:${poi.color}; width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:13px; border:2px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.25);">${poi.icon}</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13]
+        });
+        const marker = L.marker(poi.coordinates, { icon });
+        marker.bindPopup(`
+          <div style="font-family: system-ui, sans-serif; padding: 4px; max-width: 200px;">
+            <span style="font-size: 9px; font-weight: bold; background: ${poi.color}; color: white; padding: 1px 5px; border-radius: 3px;">
+              ${poi.subType}
+            </span>
+            <h5 style="font-size: 12px; font-weight: bold; margin: 3px 0 1px 0;">${poi.name}</h5>
+            <p style="font-size: 10px; color: #666; margin: 0;">${poi.address || 'Nagpur Infrastructure'}</p>
+          </div>
+        `);
+        marker.addTo(poiLayerGroupRef.current!);
+      });
+    }
+
+    // 4. Add Construction Markers
     if (activeLayers.construction) {
       const constructions = getActiveConstructionProjects();
       constructions.forEach(c => {
@@ -218,7 +253,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       });
     }
 
-    // 4. Add Incident Markers
+    // 5. Add Incident Markers
     incidents.forEach(inc => {
       let include = false;
       let emoji = '⚠️';
@@ -267,7 +302,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       }
     });
 
-    // 5. Add Resource Markers
+    // 6. Add Resource Markers
     if (activeLayers.resources) {
       resources.forEach(res => {
         const icon = createCustomIcon('🚑', '#22A447');
@@ -285,7 +320,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
       });
     }
 
-    // 6. Add Citizen Reports
+    // 7. Add Citizen Reports
     if (activeLayers.citizenReports) {
       citizenReports.forEach(rep => {
         const icon = createCustomIcon('📸', '#8B5CF6');
@@ -303,7 +338,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
         marker.addTo(markersLayerGroupRef.current!);
       });
     }
-  }, [zones, incidents, resources, citizenReports, activeLayers]);
+  }, [zones, incidents, resources, citizenReports, activeLayers, currentZoom]);
 
   return (
     <div className="relative w-full rounded-2xl overflow-hidden border border-[#E5E5E5] dark:border-white/10 shadow-sm bg-white dark:bg-[#111C2E]">
@@ -373,6 +408,16 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
             )}
           >
             🔥 Heatmap
+          </button>
+
+          <button
+            onClick={() => toggleLayer('pois')}
+            className={cn(
+              "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all whitespace-nowrap border min-h-[36px] cursor-pointer",
+              activeLayers.pois ? "bg-[#FFF8E1] text-[#111111] dark:bg-[#FFC107]/20 dark:text-white border-[#FFC107] font-bold shadow-xs" : "bg-white dark:bg-[#111C2E] text-[#666666] dark:text-gray-400 border-[#E5E5E5] dark:border-white/10 hover:bg-[#F7F7F7]"
+            )}
+          >
+            📍 Places & POIs
           </button>
 
           <button

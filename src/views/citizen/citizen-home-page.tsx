@@ -6,12 +6,14 @@ import { getActiveConstructionProjects } from '../../services/construction/const
 import { getIncidents } from '../../services/incidents/incidentService';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { PREDEFINED_LOCATIONS } from '../../data/crisis/safe-routes-data';
+import { searchNagpurLocations, GeocodingResult, VERIFIED_NAGPUR_LOCATIONS } from '../../services/geocoding/geocodingService';
 
 export const CitizenHomePage: React.FC = () => {
   const navigate = useNavigate();
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [searchDestination, setSearchDestination] = useState('');
+  const [suggestions, setSuggestions] = useState<GeocodingResult[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   useEffect(() => {
     fetchNagpurWeather().then(data => {
@@ -19,11 +21,22 @@ export const CitizenHomePage: React.FC = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (!searchDestination || searchDestination.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(() => {
+      searchNagpurLocations(searchDestination).then(setSuggestions);
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchDestination]);
+
   const constructions = getActiveConstructionProjects().slice(0, 2);
   const criticalIncidents = getIncidents().filter(i => i.severity === 'SEVERE' || i.severity === 'HIGH').slice(0, 3);
 
-  const handleQuickDestinationSelect = (destId: string) => {
-    navigate(`/citizen/route?origin=airport&destination=${destId}`);
+  const handleQuickDestinationSelect = (name: string) => {
+    navigate(`/citizen/route?destination=${encodeURIComponent(name)}`);
   };
 
   return (
@@ -97,19 +110,46 @@ export const CitizenHomePage: React.FC = () => {
           <Search className="absolute left-3.5 top-3.5 size-4 text-[#666666] dark:text-gray-400" />
           <input
             type="text"
-            placeholder="Search destination (e.g., Civil Lines, Airport, Sitabuldi)..."
+            placeholder="Search destination (e.g., Civil Lines, AIIMS, Sitabuldi)..."
             value={searchDestination}
-            onChange={(e) => setSearchDestination(e.target.value)}
+            onFocus={() => setShowSuggestions(true)}
+            onChange={(e) => {
+              setSearchDestination(e.target.value);
+              setShowSuggestions(true);
+            }}
             className="w-full h-11 pl-10 pr-3 rounded-xl bg-[#F7F7F7] dark:bg-[#0B1320] border border-[#E5E5E5] dark:border-white/10 text-xs font-medium text-[#111111] dark:text-white placeholder:text-[#666666] focus:outline-none focus:ring-2 focus:ring-[#FF8A00]"
           />
+
+          {/* Suggestions Dropdown */}
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-white dark:bg-[#111C2E] border border-[#E5E5E5] dark:border-white/15 rounded-xl shadow-xl max-h-52 overflow-y-auto divide-y divide-[#E5E5E5] dark:divide-white/5">
+              {suggestions.map(item => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => {
+                    setShowSuggestions(false);
+                    handleQuickDestinationSelect(item.name);
+                  }}
+                  className="w-full p-2.5 text-left text-xs hover:bg-[#FFF8E1] dark:hover:bg-white/5 flex items-start gap-2 cursor-pointer transition-colors"
+                >
+                  <MapPin className="size-3.5 text-[#FF8A00] shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-bold text-[#111111] dark:text-white">{item.name}</div>
+                    <div className="text-[10px] text-[#666666] dark:text-gray-400 line-clamp-1">{item.displayName}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Quick Destination Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
-          {PREDEFINED_LOCATIONS.slice(0, 4).map((loc) => (
+          {VERIFIED_NAGPUR_LOCATIONS.slice(0, 5).map((loc) => (
             <button
               key={loc.id}
-              onClick={() => handleQuickDestinationSelect(loc.id)}
+              onClick={() => handleQuickDestinationSelect(loc.name)}
               className="px-2.5 py-1.5 rounded-lg bg-[#F7F7F7] dark:bg-[#0B1320] border border-[#E5E5E5] dark:border-white/10 text-[11px] font-semibold text-[#111111] dark:text-gray-200 whitespace-nowrap hover:border-[#FF8A00] transition-colors cursor-pointer"
             >
               📍 {loc.name.split(' ')[0]}
@@ -118,7 +158,10 @@ export const CitizenHomePage: React.FC = () => {
         </div>
 
         <Button
-          onClick={() => navigate('/citizen/route')}
+          onClick={() => {
+            const dest = searchDestination ? `?destination=${encodeURIComponent(searchDestination)}` : '';
+            navigate(`/citizen/route${dest}`);
+          }}
           className="w-full bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold h-11 text-xs gap-2 shadow-xs cursor-pointer"
         >
           <Navigation className="size-4" /> Calculate AI Safe Route
