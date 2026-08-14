@@ -56,7 +56,7 @@ export const MobileBottomNav: React.FC = () => {
   return (
     <>
       {/* Sticky Bottom Navigation Bar for Mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-background/95 backdrop-blur-md border-t border-border shadow-lg md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0B1320]/95 backdrop-blur-md border-t border-[#E5E5E5] dark:border-white/10 shadow-lg md:hidden">
         <div className="flex items-center justify-around h-16 px-1 max-w-md mx-auto">
           {mainTabs.map(tab => {
             const isActive = location.pathname === tab.path;
@@ -67,13 +67,13 @@ export const MobileBottomNav: React.FC = () => {
                 to={tab.path}
                 className={cn(
                   "flex flex-col items-center justify-center flex-1 h-full min-w-[56px] min-h-[44px] transition-colors relative",
-                  isActive ? "text-bhagwa font-bold" : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-[#FF8A00] dark:text-[#FFC107] font-bold" : "text-[#666666] dark:text-gray-400 hover:text-[#111111] dark:hover:text-white"
                 )}
               >
                 <div className="relative">
                   <IconComp className={cn("size-5 transition-transform", isActive && "scale-110")} />
                   {tab.badge && (
-                    <span className="absolute -top-1.5 -right-2 bg-rose-500 text-white text-[9px] font-bold px-1 rounded-full animate-pulse">
+                    <span className="absolute -top-1.5 -right-2 bg-[#E53935] text-white text-[9px] font-bold px-1 rounded-full animate-pulse">
                       {tab.badge}
                     </span>
                   )}
@@ -82,7 +82,7 @@ export const MobileBottomNav: React.FC = () => {
                   {tab.label}
                 </span>
                 {isActive && (
-                  <span className="absolute bottom-1 w-5 h-0.5 bg-bhagwa rounded-full" />
+                  <span className="absolute bottom-1 w-5 h-0.5 bg-[#FFC107] rounded-full" />
                 )}
               </Link>
             );
@@ -92,7 +92,7 @@ export const MobileBottomNav: React.FC = () => {
           <button
             onClick={() => setMoreOpen(true)}
             className={cn(
-              "flex flex-col items-center justify-center flex-1 h-full min-w-[56px] min-h-[44px] transition-colors relative text-muted-foreground hover:text-foreground"
+              "flex flex-col items-center justify-center flex-1 h-full min-w-[56px] min-h-[44px] transition-colors relative text-[#666666] dark:text-gray-400 hover:text-[#111111] dark:hover:text-white"
             )}
           >
             <Menu className="size-5" />
@@ -103,10 +103,10 @@ export const MobileBottomNav: React.FC = () => {
 
       {/* Drawer / Sheet for More Navigation Options */}
       <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden flex flex-col bg-background">
-          <SheetHeader className="p-4 border-b border-border flex flex-row items-center justify-between">
+        <SheetContent side="bottom" className="h-[85vh] rounded-t-2xl p-0 overflow-hidden flex flex-col bg-white dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10">
+          <SheetHeader className="p-4 border-b border-[#E5E5E5] dark:border-white/10 flex flex-row items-center justify-between">
             <div className="flex items-center gap-2.5 text-left">
-              <div className="size-9 rounded-xl bg-slate-900/5 dark:bg-slate-800/40 p-1 flex items-center justify-center border border-border shrink-0 shadow-xs">
+              <div className="size-9 rounded-xl bg-slate-900/5 dark:bg-slate-800/40 p-1 flex items-center justify-center border border-[#E5E5E5] shrink-0 shadow-xs">
                 <img
                   src={nagdrishtiLogo}
                   alt="NagDrishti AI Logo"
@@ -114,17 +114,17 @@ export const MobileBottomNav: React.FC = () => {
                 />
               </div>
               <div>
-                <SheetTitle className="text-base font-bold text-foreground font-outfit flex items-center gap-1.5">
-                  NagDrishti <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-bhagwa text-white rounded">AI</span>
+                <SheetTitle className="text-base font-bold text-[#111111] dark:text-white font-outfit flex items-center gap-1.5">
+                  NagDrishti <span className="text-[10px] font-black px-1.5 py-0.5 bg-[#FFC107] text-[#111111] rounded">AI</span>
                 </SheetTitle>
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Sparkles className="size-3 text-bhagwa" /> AI Urban Crisis Navigation
+                <p className="text-xs text-[#666666] dark:text-gray-400 flex items-center gap-1">
+                  <Sparkles className="size-3 text-[#FF8A00]" /> AI Urban Crisis Navigation
                 </p>
               </div>
             </div>
             <button
               onClick={() => setMoreOpen(false)}
-              className="p-2 rounded-full hover:bg-muted text-muted-foreground"
+              className="p-2 rounded-full hover:bg-[#F7F7F7] dark:hover:bg-slate-800 text-[#666666] dark:text-gray-400"
             >
               <X className="size-5" />
             </button>
@@ -143,22 +143,22 @@ export const MobileBottomNav: React.FC = () => {
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-xl border text-xs font-medium transition-all cursor-pointer min-h-[48px]",
                       isActive
-                        ? "bg-bhagwa/10 border-bhagwa/40 text-bhagwa font-bold shadow-sm"
+                        ? "bg-[#FFF8E1] dark:bg-[#FFC107]/15 border-[#FFC107] text-[#111111] dark:text-white font-bold shadow-xs"
                         : item.isHighlight
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400 font-semibold"
-                        : "bg-card border-border hover:bg-muted text-foreground"
+                        ? "bg-[#FFF9E6] border-[#FFC107]/50 text-[#111111] dark:text-white font-semibold"
+                        : "bg-white dark:bg-[#111C2E] border-[#E5E5E5] dark:border-white/10 hover:bg-[#F7F7F7] text-[#111111] dark:text-gray-200"
                     )}
                   >
                     <div className={cn(
                       "p-2 rounded-lg shrink-0",
-                      isActive ? "bg-bhagwa text-white" : "bg-muted text-muted-foreground"
+                      isActive ? "bg-[#FF8A00] text-white" : "bg-[#F7F7F7] dark:bg-slate-800 text-[#666666] dark:text-gray-400"
                     )}>
                       <IconComp className="size-4" />
                     </div>
                     <div className="flex-1 truncate">
                       <span className="block truncate">{item.label}</span>
                       {item.isBadge && (
-                        <span className="text-[9px] font-bold text-bhagwa uppercase">
+                        <span className="text-[9px] font-bold text-[#FF8A00] uppercase">
                           {item.isBadge}
                         </span>
                       )}

@@ -58,15 +58,15 @@ function Search() {
           className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
         />
         <Input
-          placeholder="Search...."
-          className="rounded-lg pl-10!"
+          placeholder="Search NagDrishti AI crisis modules..."
+          className="rounded-lg pl-10! bg-[#F7F7F7] dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10 text-xs text-[#111111] dark:text-white focus:ring-1 focus:ring-[#FF8A00]"
           required
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </div>
       <div
-        className={`absolute w-full bg-card rounded-md top-11 z-10 start-0 shadow-md border border-border ${Boolean(query) ? "block" : "hidden"
+        className={`absolute w-full bg-white dark:bg-[#111C2E] rounded-md top-11 z-10 start-0 shadow-md border border-[#E5E5E5] dark:border-white/10 ${Boolean(query) ? "block" : "hidden"
           }`}
       >
         <SimpleBar className="h-72 p-4 custom-scroll">
@@ -76,15 +76,15 @@ function Search() {
                 key={i}
                 to={item.url}
                 onClick={() => setQuery("")}
-                className="  p-2 mb-1.5 last:mb-0 flex items-center bg-input/30 gap-2 text-sm font-medium rounded-md hover:bg-primary/5 hover:text-primary w-full overflow-hidden"
+                className="p-2 mb-1.5 last:mb-0 flex items-center bg-[#F7F7F7] dark:bg-[#0B1320] gap-2 text-sm font-medium rounded-md hover:bg-[#FFF8E1] dark:hover:bg-slate-800 text-[#111111] dark:text-white w-full overflow-hidden"
               >
                 <div className="flex items-center">
-                  <Component width={18} height={18} />
+                  <Component width={18} height={18} className="text-[#FF8A00]" />
                   <div className="ps-3">
-                    <h5 className="mb-1 text-sm group-hover/link:text-primary">
+                    <h5 className="mb-0.5 text-sm font-bold text-[#111111] dark:text-white">
                       {item.name}
                     </h5>
-                    <span className="text-xs block  truncate max-w-60">
+                    <span className="text-xs text-[#666666] dark:text-gray-400 block truncate max-w-60">
                       {item.url}
                     </span>
                   </div>

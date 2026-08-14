@@ -37,18 +37,18 @@ const CitizenReportsPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-20 md:pb-6">
       {/* Header */}
-      <div className="bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div className="bg-white dark:bg-[#111C2E] p-4 sm:p-6 rounded-2xl border border-[#E5E5E5] dark:border-white/10 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <Badge className="bg-purple-600 text-white font-mono text-[10px]">
+            <Badge className="bg-[#FFC107] text-[#111111] font-mono text-[10px] font-black">
               CROWDSOURCED INTELLIGENCE
             </Badge>
-            <span className="text-xs text-muted-foreground">• Live Citizen Geotagged Reports</span>
+            <span className="text-xs text-[#666666] dark:text-gray-400">• Live Citizen Geotagged Reports</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] dark:text-white tracking-tight">
             Nagpur Citizen Crisis Reports
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
+          <p className="text-xs sm:text-sm text-[#666666] dark:text-gray-400 mt-0.5">
             Real-time citizen submissions of flooded roads, fallen trees, deep potholes, and clogged drains.
           </p>
         </div>
@@ -59,19 +59,19 @@ const CitizenReportsPage: React.FC = () => {
       {/* Reports Feed Grid / Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {reports.map(rep => (
-          <div key={rep.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
-            <div className="relative h-44 w-full bg-muted">
+          <div key={rep.id} className="bg-white dark:bg-[#111C2E] rounded-2xl border border-[#E5E5E5] dark:border-white/10 shadow-xs overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+            <div className="relative h-44 w-full bg-[#F7F7F7]">
               <img
                 src={rep.imageUrl}
                 alt={rep.issueType}
                 className="w-full h-full object-cover"
               />
               <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
-                <span className="text-[10px] font-extrabold px-2.5 py-1 rounded bg-slate-900/80 text-white backdrop-blur-md font-mono">
+                <span className="text-[10px] font-black px-2.5 py-1 rounded bg-[#111111]/80 text-white backdrop-blur-md font-mono">
                   {rep.issueType}
                 </span>
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded font-mono ${
-                  rep.verificationStatus === 'VERIFIED' ? 'bg-emerald-500 text-white' : 'bg-amber-500 text-white'
+                  rep.verificationStatus === 'VERIFIED' ? 'bg-[#22A447] text-white' : 'bg-[#FFC107] text-[#111111]'
                 }`}>
                   {rep.verificationStatus}
                 </span>
@@ -79,28 +79,28 @@ const CitizenReportsPage: React.FC = () => {
             </div>
 
             <div className="p-4 space-y-2 flex-1">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="font-semibold text-foreground">Reported by {rep.citizenName}</span>
+              <div className="flex items-center justify-between text-xs text-[#666666] dark:text-gray-400">
+                <span className="font-semibold text-[#111111] dark:text-white">Reported by {rep.citizenName}</span>
                 <span className="flex items-center gap-1 font-mono text-[10px]">
                   <Clock className="size-3" /> {rep.timeAgo}
                 </span>
               </div>
 
-              <h4 className="font-bold text-sm text-foreground flex items-center gap-1">
-                <MapPin className="size-4 text-bhagwa shrink-0" /> {rep.locationName}
+              <h4 className="font-bold text-sm text-[#111111] dark:text-white flex items-center gap-1">
+                <MapPin className="size-4 text-[#FF8A00] shrink-0" /> {rep.locationName}
               </h4>
 
-              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+              <p className="text-xs text-[#666666] dark:text-gray-400 line-clamp-2 leading-relaxed">
                 {rep.description}
               </p>
             </div>
 
-            <div className="p-3 bg-muted/30 border-t border-border flex items-center justify-between">
+            <div className="p-3 bg-[#F7F7F7] dark:bg-[#0B1320] border-t border-[#E5E5E5] dark:border-white/10 flex items-center justify-between">
               <Button
                 variant={rep.upvotedByMe ? "default" : "outline"}
                 size="sm"
                 onClick={() => handleUpvote(rep.id)}
-                className={`text-xs gap-1.5 min-h-[36px] ${rep.upvotedByMe ? 'bg-bhagwa text-white' : ''}`}
+                className={`text-xs gap-1.5 min-h-[36px] ${rep.upvotedByMe ? 'bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold' : 'border-[#E5E5E5] text-[#111111] dark:text-white'}`}
               >
                 <ThumbsUp className="size-3.5" /> {rep.upvotes} Confirmations
               </Button>
@@ -110,7 +110,7 @@ const CitizenReportsPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   onClick={() => handleVerify(rep.id)}
-                  className="text-xs text-emerald-600 border-emerald-500/30 hover:bg-emerald-500/10 min-h-[36px]"
+                  className="text-xs text-[#22A447] border-[#22A447]/30 hover:bg-[#22A447]/10 min-h-[36px] font-bold"
                 >
                   <CheckCircle2 className="size-3.5 mr-1" /> Admin Verify
                 </Button>

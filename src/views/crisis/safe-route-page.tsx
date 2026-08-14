@@ -19,36 +19,35 @@ const SafeRoutePage: React.FC = () => {
     <div className="space-y-6 pb-20 md:pb-6">
       {/* Header */}
       <div className="bg-card p-4 sm:p-6 rounded-2xl border border-border shadow-sm">
-        <div className="flex items-center gap-2 mb-1">
-          <Badge className="bg-emerald-500 text-white font-mono text-[10px]">
-            AI DIJKSTRA RISK ROUTING
+        <div>
+          <Badge className="bg-[#FFC107] text-[#111111] font-mono text-[10px] font-black">
+            CIVIC SAFE NAVIGATION
           </Badge>
-          <span className="text-xs text-muted-foreground">• Real-time Waterlogging & Pothole Avoidance</span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] dark:text-white tracking-tight mt-1">
+            AI Safe Route Planner
+          </h1>
+          <p className="text-xs sm:text-sm text-[#666666] dark:text-gray-400 mt-0.5">
+            Find safe navigation paths avoiding flooded underpasses, deep potholes, and traffic gridlocks during rainfall.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight">
-          Nagpur AI Safe Route Planner
-        </h1>
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-          Find safe navigation paths avoiding flooded underpasses, deep potholes, and traffic gridlocks during rainfall.
-        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Input & Route Options selection */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-sm space-y-4">
-            <h3 className="font-bold text-base text-foreground flex items-center gap-2">
-              <Navigation className="size-5 text-bhagwa" /> Route Parameters
+          <div className="bg-white dark:bg-[#111C2E] rounded-2xl p-4 sm:p-5 border border-[#E5E5E5] dark:border-white/10 shadow-xs space-y-4">
+            <h3 className="font-bold text-base text-[#111111] dark:text-white flex items-center gap-2">
+              <Navigation className="size-5 text-[#FF8A00]" /> Route Parameters
             </h3>
 
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">
+              <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
                 Start Location (Origin)
               </label>
               <select
                 value={origin}
                 onChange={e => setOrigin(e.target.value)}
-                className="w-full h-11 px-3 rounded-lg border border-input bg-background text-xs font-medium focus:ring-1 focus:ring-bhagwa"
+                className="w-full h-11 px-3 rounded-lg border border-[#E5E5E5] dark:border-white/10 bg-white dark:bg-[#0B1320] text-xs font-medium text-[#111111] dark:text-white focus:ring-1 focus:ring-[#FF8A00]"
               >
                 {PREDEFINED_LOCATIONS.map(loc => (
                   <option key={loc.id} value={loc.id}>
@@ -59,13 +58,13 @@ const SafeRoutePage: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">
+              <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
                 Destination Location
               </label>
               <select
                 value={destination}
                 onChange={e => setDestination(e.target.value)}
-                className="w-full h-11 px-3 rounded-lg border border-input bg-background text-xs font-medium focus:ring-1 focus:ring-bhagwa"
+                className="w-full h-11 px-3 rounded-lg border border-[#E5E5E5] dark:border-white/10 bg-white dark:bg-[#0B1320] text-xs font-medium text-[#111111] dark:text-white focus:ring-1 focus:ring-[#FF8A00]"
               >
                 {PREDEFINED_LOCATIONS.map(loc => (
                   <option key={loc.id} value={loc.id}>
@@ -75,14 +74,14 @@ const SafeRoutePage: React.FC = () => {
               </select>
             </div>
 
-            <Button className="w-full bg-bhagwa hover:bg-bhagwa-dark text-white font-bold h-11 text-xs gap-2">
+            <Button className="w-full bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold h-11 text-xs gap-2">
               <Navigation className="size-4" /> Recalculate AI Safe Routes
             </Button>
           </div>
 
           {/* Route Options List */}
           <div className="space-y-3">
-            <h3 className="font-bold text-sm text-foreground">
+            <h3 className="font-bold text-sm text-[#111111] dark:text-white">
               Calculated Route Options ({routes.length})
             </h3>
 
@@ -93,32 +92,32 @@ const SafeRoutePage: React.FC = () => {
                   key={r.id}
                   onClick={() => setSelectedRouteId(r.id)}
                   className={cn(
-                    "p-4 rounded-xl border transition-all cursor-pointer bg-card flex flex-col gap-2",
-                    isSelected ? "border-bhagwa ring-1 ring-bhagwa shadow-md" : "border-border hover:border-bhagwa/50"
+                    "p-4 rounded-xl border transition-all cursor-pointer bg-white dark:bg-[#111C2E] flex flex-col gap-2 shadow-2xs",
+                    isSelected ? "border-[#FF8A00] ring-1 ring-[#FF8A00] shadow-xs" : "border-[#E5E5E5] dark:border-white/10 hover:border-[#FFC107]"
                   )}
                 >
                   <div className="flex items-center justify-between">
-                    <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border", r.badgeColor)}>
+                    <span className={cn("text-[10px] font-mono px-2 py-0.5 rounded border font-bold", r.badgeColor)}>
                       {r.name}
                     </span>
-                    <span className="text-xs font-bold text-foreground font-mono">
+                    <span className="text-xs font-bold text-[#111111] dark:text-white font-mono">
                       Safety: {r.safetyScore}/100
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs font-bold text-foreground mt-1">
+                  <div className="flex items-center justify-between text-xs font-bold text-[#111111] dark:text-white mt-1">
                     <span className="flex items-center gap-1">
-                      <Clock className="size-3.5 text-muted-foreground" /> {r.etaMinutes} mins
+                      <Clock className="size-3.5 text-[#666666] dark:text-gray-400" /> {r.etaMinutes} mins
                     </span>
                     <span className="flex items-center gap-1">
-                      <Car className="size-3.5 text-muted-foreground" /> {r.distanceKm} km
+                      <Car className="size-3.5 text-[#666666] dark:text-gray-400" /> {r.distanceKm} km
                     </span>
-                    <span className="text-bhagwa font-mono">
+                    <span className="text-[#FF8A00] font-mono">
                       Flood Risk: {r.waterloggingRiskScore}%
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-muted-foreground line-clamp-1">
+                  <p className="text-[11px] text-[#666666] dark:text-gray-400 line-clamp-1">
                     Via: {r.viaRoads.join(' → ')}
                   </p>
                 </div>
@@ -129,13 +128,13 @@ const SafeRoutePage: React.FC = () => {
 
         {/* Right Active Route Detail Breakdown */}
         <div className="lg:col-span-7 space-y-4">
-          <div className="bg-card rounded-2xl p-5 border border-border shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-border pb-3">
+          <div className="bg-white dark:bg-[#111C2E] rounded-2xl p-5 border border-[#E5E5E5] dark:border-white/10 shadow-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-[#E5E5E5] dark:border-white/10 pb-3">
               <div>
                 <span className={cn("text-xs font-mono px-2.5 py-1 rounded border font-bold", activeRoute.badgeColor)}>
                   {activeRoute.name}
                 </span>
-                <h2 className="text-lg font-bold text-foreground mt-2">
+                <h2 className="text-lg font-bold text-[#111111] dark:text-white mt-2">
                   {routeData.originName} → {routeData.destinationName}
                 </h2>
               </div>

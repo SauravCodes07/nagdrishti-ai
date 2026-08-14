@@ -8,13 +8,13 @@ export default function Footer() {
       </p>
 
       <div className="flex gap-4">
-        <Link to="/help" className="hover:text-bhagwa">
+        <Link to="/help" className="hover:text-[#FF8A00] transition-colors">
           Emergency Helplines
         </Link>
-        <Link to="/ai-predictions" className="hover:text-bhagwa">
+        <Link to="/ai-predictions" className="hover:text-[#FF8A00] transition-colors">
           AI Risk Models
         </Link>
-        <Link to="/citizen-reports" className="hover:text-bhagwa">
+        <Link to="/citizen-reports" className="hover:text-[#FF8A00] transition-colors">
           Citizen Portal
         </Link>
       </div>

@@ -13,14 +13,14 @@ const FullLogo = () => {
       </div>
       <div className="flex flex-col hide-menu whitespace-nowrap">
         <div className="flex items-center gap-1.5">
-          <span className="font-extrabold text-base tracking-tight text-foreground leading-none font-outfit">
+          <span className="font-extrabold text-base tracking-tight text-[#111111] dark:text-white leading-none font-outfit">
             NagDrishti
           </span>
-          <span className="text-[10px] font-extrabold px-1.5 py-0.5 bg-bhagwa text-white rounded shadow-xs tracking-wider">
+          <span className="text-[10px] font-black px-1.5 py-0.5 bg-[#FFC107] text-[#111111] rounded shadow-xs tracking-wider">
             AI
           </span>
         </div>
-        <span className="text-[11px] font-medium text-muted-foreground leading-tight mt-0.5 tracking-tight">
+        <span className="text-[11px] font-medium text-[#666666] dark:text-gray-400 leading-tight mt-0.5 tracking-tight">
           Urban Crisis Management
         </span>
       </div>

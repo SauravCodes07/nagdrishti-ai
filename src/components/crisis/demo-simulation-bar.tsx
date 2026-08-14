@@ -24,15 +24,15 @@ export const DemoSimulationBar: React.FC = () => {
         
         {/* Left Title & Status */}
         <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-gradient-to-br from-bhagwa to-amber-500 flex items-center justify-center text-white font-bold shadow-md shrink-0">
+          <div className="size-10 rounded-xl bg-gradient-to-br from-[#FFC107] to-[#FF8A00] flex items-center justify-center text-[#111111] font-black shadow-md shrink-0">
             <Sparkles className="size-5 animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs uppercase tracking-wider font-bold text-bhagwa font-mono">
+              <span className="text-xs uppercase tracking-wider font-bold text-[#FFC107] font-mono">
                 HACKATHON DEMO SIMULATOR
               </span>
-              <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 text-[10px] flex items-center gap-1 font-mono">
+              <Badge className="bg-[#22A447]/20 text-[#22A447] border-[#22A447]/40 text-[10px] flex items-center gap-1 font-mono font-bold">
                 <Activity className="size-3 animate-ping" /> LIVE CRISIS SIMULATION
               </Badge>
               <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300">
@@ -63,7 +63,7 @@ export const DemoSimulationBar: React.FC = () => {
               onClick={togglePlay}
               className={cn(
                 "h-8 px-3 text-xs font-bold gap-1 transition-all",
-                isPlaying ? "bg-amber-500 hover:bg-amber-600 text-slate-950" : "bg-bhagwa hover:bg-bhagwa-dark text-white"
+                isPlaying ? "bg-[#FFC107] hover:bg-[#FFB300] text-[#111111]" : "bg-[#FF8A00] hover:bg-[#E07A00] text-white"
               )}
             >
               {isPlaying ? (
@@ -112,9 +112,9 @@ export const DemoSimulationBar: React.FC = () => {
                 key={s.stage}
                 onClick={() => setStage(s.stage as SimulationStage)}
                 className={cn(
-                  "py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all text-center flex flex-col items-center justify-center border min-h-[44px]",
+                  "py-1.5 px-2 rounded-lg text-[11px] font-medium transition-all text-center flex flex-col items-center justify-center border min-h-[44px] cursor-pointer",
                   isCurrent
-                    ? "bg-bhagwa text-white border-bhagwa font-bold shadow-md shadow-bhagwa/30 scale-105"
+                    ? "bg-[#FF8A00] text-white border-[#FF8A00] font-bold shadow-md shadow-[#FF8A00]/30 scale-105"
                     : "bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white"
                 )}
               >

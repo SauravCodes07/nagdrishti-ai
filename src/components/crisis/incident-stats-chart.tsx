@@ -7,25 +7,25 @@ export const IncidentStatsChart: React.FC = () => {
   const { kpis } = useDemoSimulation();
 
   const data = [
-    { name: 'Waterlogging', value: Math.round(kpis.activeIncidentsCount * 0.42), color: '#ef4444' },
-    { name: 'Road Damage & Potholes', value: Math.round(kpis.activeIncidentsCount * 0.28), color: '#ea580c' },
-    { name: 'Traffic Congestion', value: Math.round(kpis.activeIncidentsCount * 0.18), color: '#f59e0b' },
-    { name: 'Drainage Overflow', value: Math.round(kpis.activeIncidentsCount * 0.08), color: '#0284c7' },
-    { name: 'Fallen Trees & Other', value: Math.max(1, Math.round(kpis.activeIncidentsCount * 0.04)), color: '#8b5cf6' },
+    { name: 'Waterlogging', value: Math.round(kpis.activeIncidentsCount * 0.42), color: '#E53935' },
+    { name: 'Road Damage & Potholes', value: Math.round(kpis.activeIncidentsCount * 0.28), color: '#FF8A00' },
+    { name: 'Traffic Congestion', value: Math.round(kpis.activeIncidentsCount * 0.18), color: '#FFC107' },
+    { name: 'Drainage Overflow', value: Math.round(kpis.activeIncidentsCount * 0.08), color: '#0284C7' },
+    { name: 'Fallen Trees & Other', value: Math.max(1, Math.round(kpis.activeIncidentsCount * 0.04)), color: '#8B5CF6' },
   ];
 
   return (
-    <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-sm flex flex-col h-full">
+    <div className="bg-white dark:bg-[#111C2E] rounded-2xl p-4 sm:p-5 border border-[#E5E5E5] dark:border-white/10 shadow-xs flex flex-col h-full">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-bhagwa/10 text-bhagwa">
+          <div className="p-2 rounded-xl bg-[#FF8A00]/10 text-[#FF8A00]">
             <PieIcon className="size-5" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-foreground tracking-tight">
+            <h3 className="font-extrabold text-base text-[#111111] dark:text-white tracking-tight">
               Incident Breakdown
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#666666] dark:text-gray-400">
               Categories of active crisis reports
             </p>
           </div>

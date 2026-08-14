@@ -18,27 +18,27 @@ export const RainfallChart: React.FC = () => {
   const { currentRainfallMm } = useDemoSimulation();
 
   return (
-    <div className="bg-card rounded-2xl p-4 sm:p-5 border border-border shadow-sm flex flex-col h-full">
+    <div className="bg-white dark:bg-[#111C2E] rounded-2xl p-4 sm:p-5 border border-[#E5E5E5] dark:border-white/10 shadow-xs flex flex-col h-full">
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div className="flex items-center gap-2">
-          <div className="p-2 rounded-xl bg-bhagwa/10 text-bhagwa">
+          <div className="p-2 rounded-xl bg-[#FF8A00]/10 text-[#FF8A00]">
             <CloudRain className="size-5" />
           </div>
           <div>
-            <h3 className="font-extrabold text-base text-foreground tracking-tight flex items-center gap-2">
+            <h3 className="font-extrabold text-base text-[#111111] dark:text-white tracking-tight flex items-center gap-2">
               Rainfall Trend & Forecast
-              <Badge className="bg-bhagwa text-white text-[10px] font-mono">
+              <Badge className="bg-[#FFC107] text-[#111111] text-[10px] font-mono font-black">
                 {currentRainfallMm} mm/hr
               </Badge>
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-[#666666] dark:text-gray-400">
               Real-time Doppler radar & 24h forecast model
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2 text-xs font-mono">
-          <span className="px-2 py-1 bg-muted rounded font-bold text-foreground">
+          <span className="px-2.5 py-1 bg-[#F7F7F7] dark:bg-[#0B1320] border border-[#E5E5E5] dark:border-white/10 rounded-lg font-bold text-[#111111] dark:text-white">
             Peak: 85 mm (02:00 PM)
           </span>
         </div>
@@ -53,24 +53,25 @@ export const RainfallChart: React.FC = () => {
           >
             <defs>
               <linearGradient id="colorRain" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#f97316" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="#f97316" stopOpacity={0.05} />
+                <stop offset="5%" stopColor="#FFC107" stopOpacity={0.6} />
+                <stop offset="95%" stopColor="#FFC107" stopOpacity={0.05} />
               </linearGradient>
               <linearGradient id="colorForecast" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.0} />
+                <stop offset="5%" stopColor="#FF8A00" stopOpacity={0.5} />
+                <stop offset="95%" stopColor="#FF8A00" stopOpacity={0.0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-            <XAxis dataKey="time" tick={{ fontSize: 10, fill: 'gray' }} />
-            <YAxis tick={{ fontSize: 10, fill: 'gray' }} unit="mm" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E5E5" opacity={0.6} />
+            <XAxis dataKey="time" tick={{ fontSize: 10, fill: '#666666' }} />
+            <YAxis tick={{ fontSize: 10, fill: '#666666' }} unit="mm" />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'var(--card)',
-                borderColor: 'var(--border)',
+                backgroundColor: '#FFFFFF',
+                borderColor: '#E5E5E5',
                 borderRadius: '8px',
                 fontSize: '12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                color: '#111111',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.08)'
               }}
             />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
@@ -78,7 +79,7 @@ export const RainfallChart: React.FC = () => {
               type="monotone"
               dataKey="rainfallMm"
               name="Recorded Rainfall (mm)"
-              stroke="#f97316"
+              stroke="#FFC107"
               strokeWidth={3}
               fillOpacity={1}
               fill="url(#colorRain)"
@@ -87,7 +88,7 @@ export const RainfallChart: React.FC = () => {
               type="monotone"
               dataKey="forecast"
               name="AI Predictive Forecast (mm)"
-              stroke="#3b82f6"
+              stroke="#FF8A00"
               strokeWidth={2}
               strokeDasharray="4 4"
               fillOpacity={1}

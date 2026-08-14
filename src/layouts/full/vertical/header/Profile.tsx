@@ -15,9 +15,9 @@ export default function ProfileSheet() {
   return (
     <Sheet>
       {/* Trigger Button */}
-      <SheetTrigger className="cursor-pointer hover:bg-bhagwa/10 flex items-center justify-center rounded-full h-10 w-10 border border-bhagwa/20">
-        <Avatar className="h-8 w-8 bg-bhagwa text-white font-bold">
-          <AvatarFallback className="bg-bhagwa text-white">NMC</AvatarFallback>
+      <SheetTrigger className="cursor-pointer hover:bg-[#FFF8E1] dark:hover:bg-[#FFC107]/15 flex items-center justify-center rounded-full h-10 w-10 border border-[#E5E5E5] transition-colors">
+        <Avatar className="h-8 w-8 bg-[#FFC107] text-[#111111] font-black">
+          <AvatarFallback className="bg-[#FFC107] text-[#111111] font-black">NMC</AvatarFallback>
         </Avatar>
       </SheetTrigger>
 
@@ -25,24 +25,24 @@ export default function ProfileSheet() {
       <SheetContent
         showCloseButton={false}
         side="right"
-        className="border-s-0 w-full sm:max-w-80 max-w-60"
+        className="border-s-0 w-full sm:max-w-80 max-w-60 bg-white dark:bg-[#111C2E]"
       >
-        <SheetClose className="absolute top-5 end-5 p-2 hover:bg-primary/5 hover:text-primary rounded-full">
+        <SheetClose className="absolute top-5 end-5 p-2 hover:bg-[#F7F7F7] dark:hover:bg-slate-800 rounded-full">
           <Icon icon="tabler:x" width={20} height={20} />
         </SheetClose>
 
         {/* Top Profile Section */}
         <div className="p-6 py-6">
           <div className="flex flex-col gap-4 justify-center items-center pt-8">
-            <div className="size-20 rounded-full bg-gradient-to-br from-bhagwa to-bhagwa-dark text-white flex items-center justify-center text-2xl font-bold shadow-lg shadow-bhagwa/30">
+            <div className="size-20 rounded-full bg-gradient-to-br from-[#FFC107] to-[#FF8A00] text-[#111111] flex items-center justify-center text-2xl font-black shadow-md shadow-[#FF8A00]/20">
               NMC
             </div>
 
             <div className="text-center">
-              <h6 className="text-lg font-bold text-foreground flex items-center gap-1.5 justify-center">
-                Admin NMC <ShieldCheck className="size-4 text-bhagwa" />
+              <h6 className="text-lg font-bold text-[#111111] dark:text-white flex items-center gap-1.5 justify-center">
+                Admin NMC <ShieldCheck className="size-4 text-[#FF8A00]" />
               </h6>
-              <p className="text-xs font-semibold text-bhagwa uppercase tracking-wider mt-0.5">
+              <p className="text-xs font-bold text-[#FF8A00] uppercase tracking-wider mt-0.5">
                 Chief Crisis Officer
               </p>
               <div className="flex items-center gap-1.5 justify-center text-xs text-muted-foreground mt-2">
@@ -95,7 +95,7 @@ export default function ProfileSheet() {
             <Button
               variant="secondary"
               render={<Link to="/help" />}
-              className="w-full text-bhagwa"
+              className="w-full text-[#FF8A00] font-bold"
             >
               Emergency Protocols & Contacts
             </Button>

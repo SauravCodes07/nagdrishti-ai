@@ -60,111 +60,110 @@ export const CitizenReportModal: React.FC<{ children?: React.ReactNode }> = ({ c
       <DialogTrigger
         render={
           (children as React.ReactElement) || (
-            <Button variant="default" className="bg-bhagwa hover:bg-bhagwa-dark text-white font-bold gap-2">
+            <Button variant="default" className="bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold gap-2">
               <Camera className="size-4" /> Submit Citizen Report
             </Button>
           )
         }
       />
 
-      <DialogContent className="sm:max-w-md w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-md w-full max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111C2E] border-[#E5E5E5] dark:border-white/10">
         <DialogHeader>
-          <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
-            <AlertTriangle className="size-5 text-bhagwa" /> Submit Urban Incident Report
+          <DialogTitle className="text-base font-bold text-[#111111] dark:text-white flex items-center gap-2">
+            <AlertTriangle className="size-5 text-[#FF8A00]" /> Submit Urban Incident Report
           </DialogTitle>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-[#666666] dark:text-gray-400">
             Report waterlogging, potholes, or fallen trees directly to Nagpur Municipal Corporation.
           </p>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <div>
-            <label className="text-xs font-bold text-foreground block mb-1">
+            <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
               Your Full Name *
             </label>
             <Input
               placeholder="e.g. Rajesh Kumar"
               value={citizenName}
               onChange={e => setCitizenName(e.target.value)}
-              className="text-xs min-h-[44px]"
+              className="text-xs min-h-[44px] bg-white dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">
+              <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
                 Issue Category *
               </label>
               <select
                 value={issueType}
                 onChange={e => setIssueType(e.target.value as any)}
-                className="w-full h-11 px-3 rounded-md border border-input bg-background text-xs focus:ring-1 focus:ring-bhagwa"
+                className="w-full h-11 px-3 rounded-lg border border-[#E5E5E5] dark:border-white/10 bg-white dark:bg-[#0B1320] text-xs font-medium text-[#111111] dark:text-white"
               >
                 <option value="Waterlogging">💧 Waterlogging</option>
-                <option value="Pothole">⚠️ Pothole</option>
-                <option value="Road Damage">🚧 Road Damage</option>
-                <option value="Traffic Blockage">🚗 Traffic Blockage</option>
+                <option value="Pothole">🕳️ Pothole / Crater</option>
+                <option value="Road Damage">⚠️ Road Damage</option>
+                <option value="Traffic Blockage">🚗 Traffic Jam</option>
                 <option value="Drainage Overflow">🌊 Drainage Overflow</option>
-                <option value="Fallen Tree">🪵 Fallen Tree</option>
+                <option value="Fallen Tree">🌳 Fallen Tree</option>
               </select>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-foreground block mb-1">
-                Perceived Severity *
+              <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
+                Severity Level *
               </label>
               <select
                 value={severity}
                 onChange={e => setSeverity(e.target.value as any)}
-                className="w-full h-11 px-3 rounded-md border border-input bg-background text-xs focus:ring-1 focus:ring-bhagwa"
+                className="w-full h-11 px-3 rounded-lg border border-[#E5E5E5] dark:border-white/10 bg-white dark:bg-[#0B1320] text-xs font-medium text-[#111111] dark:text-white"
               >
-                <option value="SEVERE">🔴 SEVERE</option>
-                <option value="HIGH">🟠 HIGH</option>
-                <option value="MEDIUM">🟡 MEDIUM</option>
-                <option value="LOW">🟢 LOW</option>
+                <option value="LOW">🟢 Low Severity</option>
+                <option value="MEDIUM">🟡 Medium</option>
+                <option value="HIGH">🟠 High Risk</option>
+                <option value="SEVERE">🔴 Severe Emergency</option>
               </select>
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-foreground block mb-1">
-              Location in Nagpur *
+            <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
+              Location Name in Nagpur *
             </label>
             <div className="relative">
               <Input
-                placeholder="e.g. Dharampeth, Near Gokulpeth Market"
                 value={locationName}
                 onChange={e => setLocationName(e.target.value)}
-                className="text-xs min-h-[44px] pl-9"
+                className="text-xs min-h-[44px] pl-8 bg-white dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10"
               />
-              <MapPin className="size-4 text-bhagwa absolute left-3 top-3.5" />
+              <MapPin className="size-4 text-[#FF8A00] absolute left-2.5 top-3.5" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-bold text-foreground block mb-1">
-              Description & Details *
+            <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
+              Incident Description *
             </label>
             <Textarea
-              placeholder="Describe water depth, vehicle stall risk, or blockage..."
+              placeholder="Describe the depth of water, blocked lanes, or immediate civic threat..."
               value={description}
               onChange={e => setDescription(e.target.value)}
-              className="text-xs min-h-[80px]"
+              className="text-xs min-h-[80px] bg-white dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10"
             />
           </div>
 
           <div>
-            <label className="text-xs font-bold text-foreground block mb-1">
-              Photo Upload / Demo Image URL
+            <label className="text-xs font-bold text-[#111111] dark:text-white block mb-1">
+              Photo Evidence (Live Camera / File)
             </label>
             <div className="flex gap-2">
               <Input
                 placeholder="Image URL..."
                 value={imageUrl}
                 onChange={e => setImageUrl(e.target.value)}
-                className="text-xs min-h-[44px] flex-1"
+                className="text-xs min-h-[44px] flex-1 bg-white dark:bg-[#0B1320] border-[#E5E5E5] dark:border-white/10"
               />
-              <Button type="button" variant="outline" className="min-h-[44px] px-3 text-xs">
+              <Button type="button" variant="outline" className="min-h-[44px] px-3 text-xs border-[#E5E5E5] text-[#111111] dark:text-white">
                 <Upload className="size-4 mr-1" /> Browse
               </Button>
             </div>
@@ -175,13 +174,13 @@ export const CitizenReportModal: React.FC<{ children?: React.ReactNode }> = ({ c
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
-              className="min-h-[44px] text-xs"
+              className="min-h-[44px] text-xs border-[#E5E5E5] text-[#111111] dark:text-white"
             >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-bhagwa hover:bg-bhagwa-dark text-white font-bold min-h-[44px] text-xs"
+              className="bg-[#FF8A00] hover:bg-[#E07A00] text-white font-bold min-h-[44px] text-xs"
             >
               Submit Report
             </Button>

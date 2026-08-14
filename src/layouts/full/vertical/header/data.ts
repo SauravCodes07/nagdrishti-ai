@@ -25,11 +25,11 @@ export const MessagesLink: MessageType[] = [
   },
   {
     avatar: user2,
-    color: "bg-bhagwa",
+    color: "bg-[#FF8A00]",
     title: "Traffic Police HQ",
     subtitle: "Diversion posted at Sitabuldi Ramps",
     time: "8 mins ago",
-    badgeColor: "bg-bhagwa",
+    badgeColor: "bg-[#FF8A00]",
     isRead: false,
   },
   {
