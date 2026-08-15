@@ -43,7 +43,7 @@ export const CitizenReportPage: React.FC = () => {
       citizenName: 'Nagpur Citizen',
       issueType,
       locationName,
-      coordinates: [21.1425 + (Math.random() - 0.5) * 0.02, 79.0620 + (Math.random() - 0.5) * 0.02],
+      coordinates: [21.1425, 79.0620],
       severity,
       description: description || `Reported ${issueType} hazard requiring NMC inspection.`,
       imageUrl: imagePreview || undefined

@@ -1,6 +1,6 @@
 /**
  * NagDrishti AI — Real Predictive Safe Routing Engine
- * Dynamic routing with OSRM integration + Spatial Risk Scoring for any arbitrary origin & destination in Nagpur.
+ * Dynamic routing with live OSRM API integration + Spatial Risk Scoring for any arbitrary origin & destination in Nagpur.
  */
 
 import { getActiveConstructionProjects } from '../construction/constructionService';
@@ -59,7 +59,7 @@ export interface SafeRouteCalculationResult {
 /**
  * Haversine distance in meters between two lat/lng points
  */
-const getDistanceMeters = (p1: [number, number], p2: [number, number]): number => {
+export const getDistanceMeters = (p1: [number, number], p2: [number, number]): number => {
   const R = 6371e3;
   const phi1 = (p1[0] * Math.PI) / 180;
   const phi2 = (p2[0] * Math.PI) / 180;
@@ -179,13 +179,48 @@ const evaluatePolylineSafety = (
 };
 
 /**
- * Generate synthetic intermediate curved polyline coordinates when OSRM is unavailable or for alternatives
+ * Fetch genuine road geometry from Open Source Routing Machine (OSRM)
+ */
+const fetchOSRMRoute = async (
+  origin: [number, number],
+  dest: [number, number]
+): Promise<{ coordinates: [number, number][]; distanceKm: number; durationMinutes: number } | null> => {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${origin[1]},${origin[0]};${dest[1]},${dest[0]}?overview=full&geometries=geojson`;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 4000);
+
+    const res = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    if (!res.ok) return null;
+    const data = await res.json();
+
+    if (data.routes && data.routes.length > 0) {
+      const primary = data.routes[0];
+      const geoCoords: [number, number][] = primary.geometry.coordinates.map(
+        (c: [number, number]) => [c[1], c[0]] // Convert [lng, lat] to [lat, lng]
+      );
+      return {
+        coordinates: geoCoords,
+        distanceKm: parseFloat((primary.distance / 1000).toFixed(1)),
+        durationMinutes: Math.round(primary.duration / 60)
+      };
+    }
+  } catch {
+    // Offline fallback
+  }
+  return null;
+};
+
+/**
+ * Deterministic corridor polyline when OSRM is offline
  */
 const generateCorridorPolyline = (
   origin: [number, number],
   dest: [number, number],
   offsetCurve: number,
-  steps = 8
+  steps = 10
 ): [number, number][] => {
   const points: [number, number][] = [];
   const [lat1, lng1] = origin;
@@ -196,7 +231,6 @@ const generateCorridorPolyline = (
 
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
-    // Quadratic Bezier interpolation
     const lat = (1 - t) * (1 - t) * lat1 + 2 * (1 - t) * t * midLat + t * t * lat2;
     const lng = (1 - t) * (1 - t) * lng1 + 2 * (1 - t) * t * midLng + t * t * lng2;
     points.push([parseFloat(lat.toFixed(5)), parseFloat(lng.toFixed(5))]);
@@ -217,21 +251,27 @@ export const calculateDynamicSafeRoutes = async (
     (getDistanceMeters(origin.coordinates, destination.coordinates) / 1000).toFixed(1)
   );
 
-  // 1. Direct Highway/Arterial Route
-  const directPolyline = generateCorridorPolyline(origin.coordinates, destination.coordinates, 0.0);
+  // 1. Fetch live OSRM road geometry
+  const osrmResult = await fetchOSRMRoute(origin.coordinates, destination.coordinates);
+
+  const directPolyline = osrmResult
+    ? osrmResult.coordinates
+    : generateCorridorPolyline(origin.coordinates, destination.coordinates, 0.0);
+
+  const directDistance = osrmResult ? osrmResult.distanceKm : directDistanceKm;
+  const directMinutes = osrmResult ? osrmResult.durationMinutes : Math.max(8, Math.round(directDistance * 2.1));
+
   const directSafety = evaluatePolylineSafety(directPolyline, currentRainfallMm);
 
-  // 2. Safe Elevated / Bypass Route (Curves away from low-elevation basins)
-  const safePolyline = generateCorridorPolyline(origin.coordinates, destination.coordinates, 0.25);
+  // 2. Safe Elevated / Bypass Route (Avoids low-lying basins)
+  const safePolyline = generateCorridorPolyline(origin.coordinates, destination.coordinates, 0.20);
   const safeSafety = evaluatePolylineSafety(safePolyline, currentRainfallMm);
-  // Ensure safe route avoids underpasses
   const calibratedSafeScore = Math.max(88, safeSafety.safetyScore);
 
   // 3. Alternative Outer Corridor Route
-  const altPolyline = generateCorridorPolyline(origin.coordinates, destination.coordinates, -0.35);
+  const altPolyline = generateCorridorPolyline(origin.coordinates, destination.coordinates, -0.30);
   const altSafety = evaluatePolylineSafety(altPolyline, currentRainfallMm);
 
-  const baseMinutes = Math.max(8, Math.round(directDistanceKm * 2.1));
   const rainDelay = Math.round(currentRainfallMm * 0.15);
 
   const safeRoute: ComputedRoute = {
@@ -239,9 +279,9 @@ export const calculateDynamicSafeRoutes = async (
     type: 'RECOMMENDED_SAFE',
     title: 'AI Recommended Safe Route',
     tagline: 'Dry elevated corridors • Bypasses construction bottlenecks',
-    distanceKm: parseFloat((directDistanceKm * 1.18).toFixed(1)),
-    etaMinutes: Math.round(baseMinutes * 1.1 + Math.max(2, rainDelay * 0.3)),
-    baseEtaMinutes: baseMinutes,
+    distanceKm: parseFloat((directDistance * 1.15).toFixed(1)),
+    etaMinutes: Math.round(directMinutes * 1.05 + Math.max(2, rainDelay * 0.3)),
+    baseEtaMinutes: directMinutes,
     delayMinutes: Math.round(rainDelay * 0.3),
     safetyScore: calibratedSafeScore,
     safetyRating: 'EXCELLENT',
@@ -268,10 +308,10 @@ export const calculateDynamicSafeRoutes = async (
     type: 'FASTEST_DIRECT',
     title: 'Shortest Distance Route (Hazard Risk)',
     tagline: 'Geographically shortest • Risk of waterlogging & road work',
-    distanceKm: directDistanceKm,
-    etaMinutes: Math.round(baseMinutes + rainDelay * 2.2 + 8),
-    baseEtaMinutes: baseMinutes,
-    delayMinutes: Math.round(rainDelay * 2.2 + 8),
+    distanceKm: directDistance,
+    etaMinutes: Math.round(directMinutes + rainDelay * 2.2 + 6),
+    baseEtaMinutes: directMinutes,
+    delayMinutes: Math.round(rainDelay * 2.2 + 6),
     safetyScore: Math.min(58, directSafety.safetyScore),
     safetyRating: directSafety.safetyScore < 45 ? 'HAZARDOUS' : 'MODERATE',
     waterloggingRiskPct: Math.max(65, directSafety.waterloggingRiskPct),
@@ -289,9 +329,9 @@ export const calculateDynamicSafeRoutes = async (
         description: 'Water accumulation during active downpours.'
       }
     ],
-    aiReasoning: `CAUTION: While geographically ${(safeRoute.distanceKm - directDistanceKm).toFixed(1)} km shorter, this route traverses low-lying drainage choke points prone to waterlogging and localized construction delays.`,
+    aiReasoning: `CAUTION: While geographically ${(safeRoute.distanceKm - directDistance).toFixed(1)} km shorter, this route traverses low-lying drainage choke points prone to waterlogging and localized construction delays.`,
     highlights: [
-      `Shortest geographical distance (${directDistanceKm} km)`
+      `Shortest geographical distance (${directDistance} km)`
     ],
     warnings: [
       'Potential standing water in low-elevation underpasses',
@@ -305,9 +345,9 @@ export const calculateDynamicSafeRoutes = async (
     type: 'ALTERNATIVE_BYPASS',
     title: 'Outer Ring Road Bypass',
     tagline: 'Longer distance • Open highway flow',
-    distanceKm: parseFloat((directDistanceKm * 1.45).toFixed(1)),
-    etaMinutes: Math.round(baseMinutes * 1.3 + rainDelay * 0.5),
-    baseEtaMinutes: Math.round(baseMinutes * 1.3),
+    distanceKm: parseFloat((directDistance * 1.42).toFixed(1)),
+    etaMinutes: Math.round(directMinutes * 1.25 + rainDelay * 0.5),
+    baseEtaMinutes: Math.round(directMinutes * 1.25),
     delayMinutes: Math.round(rainDelay * 0.5),
     safetyScore: Math.round(altSafety.safetyScore * 0.9 + 25),
     safetyRating: 'GOOD',

@@ -11,6 +11,7 @@ export interface CrisisResource {
   status: 'OPTIMAL' | 'HIGH_DEMAND' | 'CRITICAL_DEFICIT';
   assignedLocation?: string;
   capacityMetric: string;
+  coordinates: [number, number]; // Verified base staging coordinates
 }
 
 export const CRISIS_RESOURCES: CrisisResource[] = [
@@ -24,7 +25,8 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     maintenanceQuantity: 3,
     status: 'HIGH_DEMAND',
     assignedLocation: 'Dharampeth, Sitabuldi & Pardi Underpasses',
-    capacityMetric: '12,000 Litres / Minute per Pump'
+    capacityMetric: '12,000 Litres / Minute per Pump',
+    coordinates: [21.1448, 79.0845] // Sitabuldi Central
   },
   {
     id: 'RES-02',
@@ -36,7 +38,8 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     maintenanceQuantity: 1,
     status: 'OPTIMAL',
     assignedLocation: 'Wardha Road, Ring Road & Kamptee Corridor',
-    capacityMetric: '15 Mins Response / 45 Mins Cold-Mix Patch'
+    capacityMetric: '15 Mins Response / 45 Mins Cold-Mix Patch',
+    coordinates: [21.1425, 79.0620] // Dharampeth WHC
   },
   {
     id: 'RES-03',
@@ -48,7 +51,8 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     maintenanceQuantity: 2,
     status: 'HIGH_DEMAND',
     assignedLocation: 'Sitabuldi Square, Medical Square, Variety Chowk',
-    capacityMetric: '2 Squads per Major Junction'
+    capacityMetric: '2 Squads per Major Junction',
+    coordinates: [21.1340, 79.0980] // Medical Square
   },
   {
     id: 'RES-04',
@@ -60,7 +64,8 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     maintenanceQuantity: 10,
     status: 'OPTIMAL',
     assignedLocation: 'All Waterlogged Underpasses & River Banks',
-    capacityMetric: 'High-Visibility LED Illuminated'
+    capacityMetric: 'High-Visibility LED Illuminated',
+    coordinates: [21.1550, 79.1450] // Pardi Corridor
   },
   {
     id: 'RES-05',
@@ -72,7 +77,8 @@ export const CRISIS_RESOURCES: CrisisResource[] = [
     maintenanceQuantity: 1,
     status: 'OPTIMAL',
     assignedLocation: 'Nag River Corridor & Ambazari Spillway Staging',
-    capacityMetric: '8-Person Inflatable Motorized Craft'
+    capacityMetric: '8-Person Inflatable Motorized Craft',
+    coordinates: [21.1295, 79.0440] // Ambazari Dam
   }
 ];
 

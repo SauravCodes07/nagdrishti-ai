@@ -177,7 +177,7 @@ export const DemoSimulationProvider: React.FC<{ children: React.ReactNode }> = (
   const addCitizenReport = (newRep: Omit<CitizenReport, 'id' | 'timestamp' | 'timeAgo' | 'upvotes' | 'verificationStatus'>) => {
     const created: CitizenReport = {
       ...newRep,
-      id: `REP-${Math.floor(800 + Math.random() * 100)}`,
+      id: `REP-${800 + citizenReports.length + 1}`,
       timestamp: 'Just now',
       timeAgo: '1 min ago',
       upvotes: 1,

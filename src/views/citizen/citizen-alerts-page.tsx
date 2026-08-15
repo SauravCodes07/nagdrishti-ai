@@ -10,6 +10,19 @@ export const CitizenAlertsPage: React.FC = () => {
   const incidents = getIncidents();
   const constructions = getActiveConstructionProjects();
 
+  const userCenter: [number, number] = [21.1458, 79.0882];
+  const calcDistKm = (target: [number, number]): string => {
+    const [lat1, lon1] = userCenter;
+    const [lat2, lon2] = target;
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) * Math.cos(lat2 * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
+  };
+
   const alerts = [
     ...incidents.map(inc => ({
       id: inc.id,
@@ -19,7 +32,7 @@ export const CitizenAlertsPage: React.FC = () => {
       severity: inc.severity,
       timeAgo: inc.reportedTime,
       advice: inc.recommendedAction,
-      distanceKm: (Math.random() * 3 + 0.4).toFixed(1),
+      distanceKm: calcDistKm(inc.coordinates),
       source: 'NMC Crisis Verification'
     })),
     ...constructions.map(c => ({
@@ -30,7 +43,7 @@ export const CitizenAlertsPage: React.FC = () => {
       severity: c.trafficImpact === 'SEVERE' ? 'SEVERE' : 'HIGH',
       timeAgo: 'Ongoing Project',
       advice: c.detourAdvice,
-      distanceKm: (Math.random() * 4 + 1.0).toFixed(1),
+      distanceKm: calcDistKm(c.coordinates),
       source: 'Maha Metro / PWD'
     }))
   ];

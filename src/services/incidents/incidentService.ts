@@ -27,7 +27,7 @@ export const createCitizenReport = (reportData: {
   imageUrl?: string;
 }): CitizenReport => {
   const newReport: CitizenReport = {
-    id: `REP-${Math.floor(800 + Math.random() * 200)}`,
+    id: `REP-${800 + inMemoryReports.length + 1}`,
     citizenName: reportData.citizenName || 'Nagpur Citizen',
     issueType: reportData.issueType,
     locationName: reportData.locationName,

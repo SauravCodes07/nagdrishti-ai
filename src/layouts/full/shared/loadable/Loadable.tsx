@@ -1,6 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-
 import { Suspense, ComponentType, FC } from 'react';
 import Spinner from '../../../../views/spinner/Spinner';
 

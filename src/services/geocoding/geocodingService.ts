@@ -175,7 +175,7 @@ export const searchNagpurLocations = async (query: string): Promise<GeocodingRes
       return localMatches.length > 0 ? localMatches : [];
     }
 
-    const osmResults: GeocodingResult[] = data.map((item: any) => {
+    const osmResults: GeocodingResult[] = data.map((item: any, idx: number) => {
       let cat: GeocodingResult['category'] = 'LOCALITY';
       const type = (item.type || '').toLowerCase();
       const cls = (item.class || '').toLowerCase();
@@ -196,7 +196,7 @@ export const searchNagpurLocations = async (query: string): Promise<GeocodingRes
       }
 
       return {
-        id: `osm-${item.place_id || Math.random()}`,
+        id: `osm-${item.place_id || idx}`,
         name: name,
         displayName: item.display_name,
         category: cat,

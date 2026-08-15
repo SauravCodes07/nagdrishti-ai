@@ -306,7 +306,7 @@ export const LiveCrisisMap: React.FC<{ fullScreenMode?: boolean }> = ({ fullScre
     if (activeLayers.resources) {
       resources.forEach(res => {
         const icon = createCustomIcon('🚑', '#22A447');
-        const marker = L.marker([21.1448 + (Math.random() - 0.5) * 0.04, 79.0825 + (Math.random() - 0.5) * 0.04], { icon });
+        const marker = L.marker(res.coordinates || [21.1448, 79.0845], { icon });
         marker.bindPopup(`
           <div style="font-family: system-ui, sans-serif; padding: 4px;">
             <span style="font-size: 10px; font-weight: bold; color: #22A447; background: rgba(34, 164, 71, 0.1); padding: 2px 6px; border-radius: 4px;">

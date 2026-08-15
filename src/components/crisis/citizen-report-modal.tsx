@@ -40,7 +40,7 @@ export const CitizenReportModal: React.FC<{ children?: React.ReactNode }> = ({ c
       citizenName,
       issueType,
       locationName,
-      coordinates: [21.1425 + (Math.random() - 0.5) * 0.04, 79.0620 + (Math.random() - 0.5) * 0.04],
+      coordinates: [21.1425, 79.0620],
       severity,
       description,
       imageUrl
