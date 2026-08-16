@@ -1,14 +1,19 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+/* Configure Tailwind CSS v4 class-based dark variant */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @layer base {
-  :root {
+  :root,
+  [data-theme="light"],
+  .light {
     --bg-app: #F8FAFC;
     --bg-surface: #FFFFFF;
     --bg-surface-elevated: #F1F5F9;
     --bg-surface-alt: #E2E8F0;
     --text-primary: #0F172A;
-    --text-secondary: #475569;
+    --text-secondary: #334155;
     --text-muted: #64748B;
     --border-subtle: #E2E8F0;
     --border-medium: #CBD5E1;
@@ -25,9 +30,11 @@
     --risk-high: #EA580C;
     --risk-severe: #DC2626;
     --risk-sos: #B91C1C;
+    color-scheme: light;
   }
 
-  .dark {
+  .dark,
+  [data-theme="dark"] {
     --bg-app: #0B0F17;
     --bg-surface: #131B2A;
     --bg-surface-elevated: #182235;
@@ -50,6 +57,7 @@
     --risk-high: #F97316;
     --risk-severe: #EF4444;
     --risk-sos: #DC2626;
+    color-scheme: dark;
   }
 }
 
@@ -62,7 +70,7 @@ body {
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), color 0.2s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Custom Leaflet Styling for both Light & Dark themes */
@@ -72,7 +80,7 @@ body {
   border-radius: inherit;
   z-index: 10;
   font-family: inherit;
-  background: #0B0F17 !important;
+  background: #E2E8F0 !important;
 }
 
 .dark .leaflet-container {
@@ -81,7 +89,7 @@ body {
 
 .leaflet-popup-content-wrapper {
   border-radius: 16px !important;
-  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.25) !important;
+  box-shadow: 0 15px 30px -5px rgba(0, 0, 0, 0.15) !important;
   padding: 4px !important;
   background: #FFFFFF !important;
   color: #0F172A !important;
@@ -112,10 +120,10 @@ body {
 
 /* Leaflet controls */
 .leaflet-bar {
-  border: 1px solid #E2E8F0 !important;
+  border: 1px solid #CBD5E1 !important;
   border-radius: 12px !important;
   overflow: hidden !important;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
 }
 
 .dark .leaflet-bar {
@@ -168,7 +176,7 @@ body {
   animation: severePulse 2.2s infinite ease-in-out;
 }
 
-/* Custom scrollbar */
+/* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

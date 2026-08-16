@@ -80,21 +80,21 @@ export default function SafeRouteFinder({
   };
 
   return (
-    <div className="bg-[#131B2A] rounded-3xl p-5 sm:p-6 border border-[#1E293B] shadow-xl space-y-4 font-sans text-slate-100">
-      <div className="flex items-center justify-between pb-3 border-b border-[#1E293B]">
+    <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-4 font-sans text-slate-900 dark:text-slate-100">
+      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E293B]">
         <div className="flex items-center space-x-2.5">
-          <div className="p-2 bg-teal-500/10 rounded-2xl text-teal-400">
+          <div className="p-2 bg-teal-500/10 rounded-2xl text-teal-600 dark:text-teal-400">
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-black text-white">A* Safe Route Search</h2>
-            <p className="text-xs text-slate-400">Real OSM road network penalized by flood severity</p>
+            <h2 className="text-base font-black text-slate-900 dark:text-white">A* Safe Route Search</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Real OSM road network penalized by flood severity</p>
           </div>
         </div>
 
         <button
           onClick={handleSwapLocations}
-          className="text-xs font-bold text-slate-300 hover:text-white p-2 rounded-xl bg-[#0B0F17] hover:bg-[#1E293B] border border-[#1E293B] transition-colors flex items-center space-x-1.5"
+          className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] transition-colors flex items-center space-x-1.5"
           title="Swap start and destination"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -104,9 +104,9 @@ export default function SafeRouteFinder({
 
       {/* Origin Selection */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-400"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
             <span>Route Origin (A)</span>
           </span>
           <button
@@ -114,7 +114,7 @@ export default function SafeRouteFinder({
             className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors ${
               clickMode === "start"
                 ? "bg-teal-500 text-white animate-pulse"
-                : "text-teal-400 hover:underline"
+                : "text-teal-600 dark:text-teal-400 hover:underline"
             }`}
           >
             {clickMode === "start" ? "Click on Map..." : "Pick on Map"}
@@ -128,7 +128,7 @@ export default function SafeRouteFinder({
             const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
             setStartPoint({ name: hub ? hub.name : `Point (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
           }}
-          className="w-full text-xs font-semibold bg-[#0B0F17] border border-[#1E293B] rounded-2xl px-3.5 py-3 text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
         >
           {NAGPUR_HUBS.map((hub) => (
             <option key={`start-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -140,9 +140,9 @@ export default function SafeRouteFinder({
 
       {/* Destination Selection */}
       <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-400"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>
             <span>Destination (B)</span>
           </span>
           <button
@@ -150,7 +150,7 @@ export default function SafeRouteFinder({
             className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors ${
               clickMode === "end"
                 ? "bg-teal-500 text-white animate-pulse"
-                : "text-teal-400 hover:underline"
+                : "text-teal-600 dark:text-teal-400 hover:underline"
             }`}
           >
             {clickMode === "end" ? "Click on Map..." : "Pick on Map"}
@@ -164,7 +164,7 @@ export default function SafeRouteFinder({
             const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
             setEndPoint({ name: hub ? hub.name : `Point (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
           }}
-          className="w-full text-xs font-semibold bg-[#0B0F17] border border-[#1E293B] rounded-2xl px-3.5 py-3 text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
         >
           {NAGPUR_HUBS.map((hub) => (
             <option key={`end-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -186,38 +186,38 @@ export default function SafeRouteFinder({
 
       {/* Error Banner */}
       {error && (
-        <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs font-medium text-red-300 flex items-start space-x-2">
-          <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+        <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-red-700 dark:text-red-300 flex items-start space-x-2">
+          <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Route Result Card */}
       {routeResult && (
-        <div className="mt-4 p-4 rounded-2xl bg-[#0B0F17] text-white space-y-3 animate-in fade-in border border-[#1E293B]">
+        <div className="mt-4 p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white space-y-3 animate-in fade-in border border-slate-200 dark:border-[#1E293B]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2 text-emerald-400">
+            <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400">
               <ShieldCheck className="w-4 h-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Safe Route Verified</span>
             </div>
-            <span className="text-xs font-black text-white">
+            <span className="text-xs font-black text-slate-900 dark:text-white">
               {routeResult.distance_km || routeResult.total_distance_km} km
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2.5 rounded-xl bg-[#131B2A] border border-[#1E293B]">
+            <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B]">
               <span className="text-slate-400 text-[10px] uppercase font-bold block">Distance</span>
-              <span className="text-base font-black text-white">{routeResult.distance_km || routeResult.total_distance_km} km</span>
+              <span className="text-base font-black text-slate-900 dark:text-white">{routeResult.distance_km || routeResult.total_distance_km} km</span>
             </div>
-            <div className="p-2.5 rounded-xl bg-[#131B2A] border border-[#1E293B]">
+            <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B]">
               <span className="text-slate-400 text-[10px] uppercase font-bold block">Est. Time</span>
-              <span className="text-base font-black text-teal-400">~{routeResult.estimated_minutes || routeResult.estimated_time_min || 12} mins</span>
+              <span className="text-base font-black text-teal-600 dark:text-teal-400">~{routeResult.estimated_minutes || routeResult.estimated_time_min || 12} mins</span>
             </div>
           </div>
 
           {/* Safety Explanation */}
-          <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300">
+          <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300">
             <p className="text-[11px] leading-relaxed">
               {routeResult.safety_explanation || "Path computed successfully avoiding severe flood zones."}
             </p>

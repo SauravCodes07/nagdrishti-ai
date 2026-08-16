@@ -18,7 +18,10 @@ import {
   MapPin,
   Bell,
   User,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "./ThemeProvider";
 
 export default function Navbar({
   activeTab,
@@ -29,6 +32,7 @@ export default function Navbar({
   reports = [],
   onOpenReportModal,
 }) {
+  const { theme, toggleTheme } = useTheme();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
@@ -69,7 +73,7 @@ export default function Navbar({
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-[#0F172A] border-b border-[#1E293B] text-white shadow-lg">
+    <header className="sticky top-0 z-50 bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] text-slate-900 dark:text-white shadow-sm transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand */}
@@ -85,33 +89,33 @@ export default function Navbar({
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight text-white">NagDrishti</span>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-teal-500/20 text-teal-300 border border-teal-500/30">
+                <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">NagDrishti</span>
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30">
                   AI
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium hidden sm:block">
                 Nagpur Urban Crisis Management
               </p>
             </div>
           </div>
 
           {/* City Live Status Ticker (Desktop) */}
-          <div className="hidden md:flex items-center space-x-2 bg-[#131B2A] px-3.5 py-1.5 rounded-full border border-[#1E293B] text-xs">
+          <div className="hidden md:flex items-center space-x-2 bg-slate-100 dark:bg-[#131B2A] px-3.5 py-1.5 rounded-full border border-slate-200 dark:border-[#1E293B] text-xs">
             <span className="relative flex h-2 w-2">
               <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${severeCount > 0 ? "bg-red-400" : "bg-emerald-400"}`}></span>
               <span className={`relative inline-flex rounded-full h-2 w-2 ${severeCount > 0 ? "bg-red-500" : "bg-emerald-500"}`}></span>
             </span>
-            <span className="text-slate-400 font-medium">Nagpur Status:</span>
+            <span className="text-slate-500 dark:text-slate-400 font-medium">Nagpur Status:</span>
             {severeCount > 0 ? (
-              <span className="font-bold text-red-400">{severeCount} Severe Wards</span>
+              <span className="font-bold text-red-600 dark:text-red-400">{severeCount} Severe Wards</span>
             ) : highCount > 0 ? (
-              <span className="font-bold text-amber-400">{highCount} High Risk Wards</span>
+              <span className="font-bold text-amber-600 dark:text-amber-400">{highCount} High Risk Wards</span>
             ) : (
-              <span className="font-bold text-emerald-400">All Wards Normal</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">All Wards Normal</span>
             )}
             {pendingReportsCount > 0 && (
-              <span className="text-slate-500 pl-1">| {pendingReportsCount} Reports</span>
+              <span className="text-slate-400 dark:text-slate-500 pl-1">| {pendingReportsCount} Reports</span>
             )}
           </div>
 
@@ -135,8 +139,8 @@ export default function Navbar({
                     isActive
                       ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
                       : item.id === "report"
-                      ? "bg-teal-500/20 text-teal-300 hover:bg-teal-500/30 border border-teal-500/30"
-                      : "text-slate-300 hover:text-white hover:bg-slate-800/60"
+                      ? "bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20 border border-teal-500/30"
+                      : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -144,6 +148,16 @@ export default function Navbar({
                 </button>
               );
             })}
+
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#131B2A] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B] transition shadow-sm cursor-pointer"
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
+            </button>
 
             {/* Admin Command Center Link/Mode */}
             {setMode && (
@@ -155,17 +169,25 @@ export default function Navbar({
                 className={`ml-2 flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
                   mode === "admin"
                     ? "bg-teal-600 text-white border-teal-400 shadow"
-                    : "bg-[#131B2A] text-slate-300 border-[#1E293B] hover:bg-[#1E293B] hover:text-white"
+                    : "bg-slate-100 dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#1E293B]"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5 text-teal-400" />
+                <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 <span>{mode === "admin" ? "Admin Mode" : "Officer Desk"}</span>
               </button>
             )}
           </nav>
 
-          {/* Mobile Hamburger Button */}
+          {/* Mobile Hamburger Button & Controls */}
           <div className="flex items-center space-x-2 md:hidden">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-slate-100 dark:bg-[#131B2A] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B]"
+              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
+            </button>
+
             {onOpenReportModal && (
               <button
                 onClick={() => onOpenReportModal()}
@@ -177,7 +199,7 @@ export default function Navbar({
             )}
             <button
               onClick={() => setDrawerOpen(!drawerOpen)}
-              className="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 focus:outline-none"
+              className="p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
               aria-label="Toggle navigation drawer"
             >
               {drawerOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -189,19 +211,19 @@ export default function Navbar({
       {/* Mobile Drawer */}
       {drawerOpen && (
         <div className="md:hidden fixed inset-0 top-16 z-50 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-[#0F172A] border-b border-[#1E293B] p-6 space-y-4 shadow-2xl">
+          <div className="bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] p-6 space-y-4 shadow-2xl">
             {/* Status Summary Banner */}
-            <div className="p-3.5 rounded-2xl bg-[#131B2A] border border-[#1E293B] flex items-center justify-between">
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
                 <span className={`w-2.5 h-2.5 rounded-full ${severeCount > 0 ? "bg-red-500" : "bg-emerald-500"}`}></span>
                 <div>
-                  <p className="text-xs font-bold text-white">Nagpur Crisis Level</p>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white">Nagpur Crisis Level</p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400">
                     {severeCount > 0 ? `${severeCount} Severe Wards Affected` : "Normal Conditions"}
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-bold px-2 py-1 rounded bg-[#0B0F17] text-teal-400">
+              <span className="text-xs font-bold px-2 py-1 rounded bg-slate-200 dark:bg-[#0B0F17] text-teal-700 dark:text-teal-400">
                 {zones.length || 10} Wards
               </span>
             </div>
@@ -226,7 +248,7 @@ export default function Navbar({
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
                       isActive
                         ? "bg-teal-600 text-white font-bold"
-                        : "text-slate-300 hover:bg-[#131B2A]"
+                        : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#131B2A]"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
@@ -244,19 +266,19 @@ export default function Navbar({
                     setMode("admin");
                     if (setActiveTab) setActiveTab("admin");
                   }}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-teal-300 bg-teal-950/40 border border-teal-800/40 hover:bg-teal-900/40"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40"
                 >
                   <div className="flex items-center space-x-3">
-                    <Shield className="w-4 h-4 text-teal-400" />
+                    <Shield className="w-4 h-4 text-teal-600 dark:text-teal-400" />
                     <span>Admin Command Center</span>
                   </div>
-                  <Lock className="w-3.5 h-3.5 text-teal-400" />
+                  <Lock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                 </button>
               )}
             </div>
 
             {/* PWA Install Button */}
-            <div className="pt-3 border-t border-[#1E293B]">
+            <div className="pt-3 border-t border-slate-200 dark:border-[#1E293B]">
               <button
                 onClick={handleInstallPWA}
                 className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md active:scale-98 transition-transform"

@@ -74,24 +74,24 @@ export default function ReportHazardModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-      <div className="bg-[#131B2A] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-[#1E293B] relative animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto text-slate-100">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-[#131B2A] rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl border border-slate-200 dark:border-[#1E293B] relative animate-in fade-in zoom-in-95 duration-200 font-sans max-h-[90vh] overflow-y-auto text-slate-900 dark:text-slate-100">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-white hover:bg-[#1E293B] transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center space-x-3 mb-5">
-          <div className="p-2.5 rounded-2xl bg-teal-500/10 text-teal-400 border border-teal-500/20">
+          <div className="p-2.5 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
             <Camera className="w-6 h-6" />
           </div>
           <div>
-            <h2 className="text-lg font-black text-white">Report Road Hazard / Flood</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-lg font-black text-slate-900 dark:text-white">Report Road Hazard / Flood</h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
               AI Vision automatically verifies potholes & waterlogging
             </p>
           </div>
@@ -100,10 +100,10 @@ export default function ReportHazardModal({
         {!detectionResult ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Location coordinates */}
-            <div className="p-3.5 rounded-2xl bg-[#0B0F17] border border-[#1E293B] space-y-2">
-              <div className="flex items-center justify-between text-xs font-bold text-slate-300">
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <span className="flex items-center space-x-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-teal-400" />
+                  <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
                   <span>Hazard Coordinates (GPS)</span>
                 </span>
                 <button
@@ -112,7 +112,7 @@ export default function ReportHazardModal({
                     onClose();
                     if (onPickOnMap) onPickOnMap();
                   }}
-                  className="text-teal-400 hover:underline text-[11px] font-bold"
+                  className="text-teal-600 dark:text-teal-400 hover:underline text-[11px] font-bold"
                 >
                   Pick from Map
                 </button>
@@ -126,7 +126,7 @@ export default function ReportHazardModal({
                     step="0.0001"
                     value={lat}
                     onChange={(e) => setLat(parseFloat(e.target.value))}
-                    className="w-full mt-1 bg-[#131B2A] border border-[#1E293B] rounded-xl px-3 py-2 text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
+                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
                     required
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function ReportHazardModal({
                     step="0.0001"
                     value={lng}
                     onChange={(e) => setLng(parseFloat(e.target.value))}
-                    className="w-full mt-1 bg-[#131B2A] border border-[#1E293B] rounded-xl px-3 py-2 text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
+                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
                     required
                   />
                 </div>
@@ -146,11 +146,11 @@ export default function ReportHazardModal({
 
             {/* Photo Upload Input */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
                 Hazard Photo (Required for AI Vision Inference)
               </label>
 
-              <div className="relative border-2 border-dashed border-[#334155] rounded-2xl p-4 text-center hover:border-teal-500 transition-colors bg-[#0B0F17]">
+              <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-2xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50 dark:bg-[#0B0F17]">
                 {photoPreview ? (
                   <div className="relative rounded-xl overflow-hidden max-h-48 flex items-center justify-center bg-black">
                     <img src={photoPreview} alt="Hazard Preview" className="max-h-48 w-auto object-contain" />
@@ -167,13 +167,13 @@ export default function ReportHazardModal({
                   </div>
                 ) : (
                   <label className="cursor-pointer block py-4">
-                    <div className="mx-auto w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-400 mb-2">
+                    <div className="mx-auto w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-2">
                       <Camera className="w-6 h-6" />
                     </div>
-                    <span className="text-xs font-black text-white block">
+                    <span className="text-xs font-black text-slate-900 dark:text-white block">
                       Take Photo or Browse Image
                     </span>
-                    <span className="text-[11px] text-slate-400 block mt-0.5">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
                       JPEG, PNG or WebP road photo
                     </span>
                     <input
@@ -190,7 +190,7 @@ export default function ReportHazardModal({
 
             {/* Description textarea */}
             <div>
-              <label className="block text-xs font-bold text-slate-300 mb-1">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
                 Incident Description / Location Details
               </label>
               <textarea
@@ -198,14 +198,14 @@ export default function ReportHazardModal({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="E.g., Deep waterlogged underpass near Sitabuldi station blocking lane..."
                 rows={3}
-                className="w-full text-xs bg-[#0B0F17] border border-[#1E293B] rounded-2xl p-3 text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-500 leading-relaxed resize-none"
+                className="w-full text-xs bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-400 leading-relaxed resize-none font-medium"
               />
             </div>
 
             {/* Error Message */}
             {error && (
-              <div className="p-3.5 rounded-2xl bg-red-500/10 border border-red-500/30 text-xs font-medium text-red-300 flex items-center space-x-2">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
+              <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-red-700 dark:text-red-300 flex items-center space-x-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
                 <span>{error}</span>
               </div>
             )}
@@ -232,20 +232,20 @@ export default function ReportHazardModal({
         ) : (
           /* Detection Results Card */
           <div className="space-y-4 animate-in fade-in">
-            <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-start space-x-3">
-              <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-start space-x-3">
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-bold text-white">Incident Successfully Submitted!</h3>
-                <p className="text-xs text-slate-300 mt-0.5">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Incident Successfully Submitted!</h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                   Report #{detectionResult.id} has been registered and auto-assigned to{" "}
-                  <strong className="text-teal-400">{detectionResult.zone_name || "Nagpur City"}</strong>.
+                  <strong className="text-teal-600 dark:text-teal-400">{detectionResult.zone_name || "Nagpur City"}</strong>.
                 </p>
               </div>
             </div>
 
             {/* AI Results */}
-            <div className="p-4 rounded-2xl bg-[#0B0F17] text-white space-y-3 border border-[#1E293B]">
-              <div className="flex items-center space-x-2 text-teal-400">
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white space-y-3 border border-slate-200 dark:border-[#1E293B]">
+              <div className="flex items-center space-x-2 text-teal-700 dark:text-teal-400">
                 <Bot className="w-4 h-4" />
                 <span className="text-xs font-black uppercase tracking-wider">
                   Hugging Face AI Vision Analysis
@@ -254,15 +254,15 @@ export default function ReportHazardModal({
 
               <div className="space-y-2 text-xs">
                 {/* Pothole status */}
-                <div className="p-2.5 rounded-xl bg-[#131B2A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-slate-300 font-medium">Pothole Hazard:</span>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">Pothole Hazard:</span>
                   <span
                     className={`font-bold px-2 py-0.5 rounded text-[11px] ${
                       detectionResult.pothole_detected
-                        ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
                         : detectionResult.pothole_detected === null
-                        ? "bg-slate-800 text-slate-400"
-                        : "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     }`}
                   >
                     {detectionResult.pothole_detected === null
@@ -274,15 +274,15 @@ export default function ReportHazardModal({
                 </div>
 
                 {/* Waterlogging status */}
-                <div className="p-2.5 rounded-xl bg-[#131B2A] border border-[#1E293B] flex items-center justify-between">
-                  <span className="text-slate-300 font-medium">Waterlogging Flood:</span>
+                <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">Waterlogging Flood:</span>
                   <span
                     className={`font-bold px-2 py-0.5 rounded text-[11px] ${
                       detectionResult.waterlogging_detected
-                        ? "bg-red-500/20 text-red-400 border border-red-500/30"
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
                         : detectionResult.waterlogging_detected === null
-                        ? "bg-slate-800 text-slate-400"
-                        : "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                     }`}
                   >
                     {detectionResult.waterlogging_detected === null
@@ -293,9 +293,9 @@ export default function ReportHazardModal({
                   </span>
                 </div>
 
-                <div className="p-2.5 rounded-xl bg-[#131B2A] border border-[#1E293B] flex items-center justify-between text-[11px] text-slate-400">
+                <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                   <span>Verification Status:</span>
-                  <span className="font-bold text-amber-400">
+                  <span className="font-bold text-amber-600 dark:text-amber-400">
                     {detectionResult.verification_status || "Pending"} (Queued for Dispatch)
                   </span>
                 </div>
