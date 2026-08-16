@@ -74,9 +74,9 @@ export default function AlertsPage() {
           <button
             onClick={fetchAlerts}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
             <span>Sync Alerts</span>
           </button>
         </div>
@@ -92,9 +92,9 @@ export default function AlertsPage() {
             <button
               key={f.id}
               onClick={() => setFilterSeverity(f.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                 filterSeverity === f.id
-                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                  ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/20"
                   : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
               }`}
             >
@@ -104,88 +104,87 @@ export default function AlertsPage() {
         </div>
 
         {/* Alerts Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filteredAlerts.map((alert) => {
-            const isSevere = alert.severity === "Severe";
-            const isHigh = alert.severity === "High";
+        {loading ? (
+          <div className="text-center py-16 space-y-3">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#EA580C] dark:text-[#FF8A00]" />
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+              Retrieving Official Broadcast Dispatches...
+            </p>
+          </div>
+        ) : filteredAlerts.length === 0 ? (
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-12 text-center space-y-3">
+            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
+            <h3 className="text-base font-black text-slate-900 dark:text-white">
+              No Active Flood Alerts in Filter
+            </h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              All monitored drainage basins and major transport routes are currently within acceptable flow parameters.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredAlerts.map((alert) => {
+              const isSevere = alert.severity === "Severe" || alert.severity === "High";
+              return (
+                <div
+                  key={alert.id}
+                  className={`bg-white dark:bg-[#131B2A] border rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4 transition hover:shadow-md ${
+                    isSevere
+                      ? "border-red-200 dark:border-red-900/50 hover:border-red-500/50"
+                      : "border-slate-200 dark:border-[#1E293B] hover:border-[#FF8A00]/40"
+                  }`}
+                >
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span
+                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                          isSevere
+                            ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30"
+                            : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30"
+                        }`}
+                      >
+                        {alert.severity || "Advisory"}
+                      </span>
 
-            return (
-              <div
-                key={alert.id}
-                className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4 flex flex-col justify-between hover:border-teal-500/40 transition"
-              >
-                <div className="space-y-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
-                        <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                        <span>{alert.zone_name || "Nagpur Citywide"}</span>
+                      <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : "Live"}</span>
                       </div>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white">
-                        {alert.zone_name ? `Advisory: ${alert.zone_name}` : "Monsoon Crisis Warning"}
-                      </h3>
                     </div>
 
-                    <span
-                      className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full shrink-0 ${
-                        isSevere
-                          ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
-                          : isHigh
-                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30"
-                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
-                      }`}
-                    >
-                      {alert.severity || "Severe"}
-                    </span>
+                    <div>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00] shrink-0" />
+                        <span>{alert.zone_name || "Nagpur Citywide"}</span>
+                      </h3>
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed font-medium">
+                        {alert.message}
+                      </p>
+                    </div>
                   </div>
 
-                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
-                    {alert.message}
-                  </p>
-                </div>
-
-                <div className="pt-3 border-t border-slate-100 dark:border-[#1E293B] flex items-center justify-between gap-2">
-                  <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    <span>
-                      {alert.sent_at || alert.created_at
-                        ? new Date(alert.sent_at || alert.created_at).toLocaleTimeString()
-                        : "Active Broadcast"}
-                    </span>
-                  </span>
-
-                  <div className="flex items-center gap-1.5">
+                  <div className="pt-3 border-t border-slate-100 dark:border-[#1E293B] flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleCopyAlert(alert)}
-                      className="p-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-300 transition text-xs flex items-center gap-1"
-                      title="Copy Advisory Text"
+                      className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                     >
                       <Copy className="w-3.5 h-3.5" />
-                      <span className="text-[10px] font-bold">{copiedId === alert.id ? "Copied!" : "Copy"}</span>
+                      <span>{copiedId === alert.id ? "Copied!" : "Copy"}</span>
                     </button>
 
                     <button
                       onClick={() => handleWhatsAppShare(alert)}
-                      className="px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition text-xs font-bold flex items-center gap-1"
-                      title="Share to WhatsApp"
+                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      <span className="text-[10px]">WhatsApp</span>
+                      <span>WhatsApp</span>
                     </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
-
-          {filteredAlerts.length === 0 && (
-            <div className="col-span-full p-12 text-center text-slate-500 text-xs bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl space-y-2">
-              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
-              <p className="font-bold text-slate-800 dark:text-slate-200">No active alerts matching this filter.</p>
-              <p className="text-[11px] text-slate-400">Normal drainage conditions reported across Nagpur wards.</p>
-            </div>
-          )}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </CitizenLayout>
   );

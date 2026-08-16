@@ -79,14 +79,14 @@ export default function ReportHazardModal({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors"
+          className="absolute top-5 right-5 p-2 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition-colors cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
 
         {/* Modal Header */}
         <div className="flex items-center space-x-3 mb-5">
-          <div className="p-2.5 rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+          <div className="p-2.5 rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/10 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/20">
             <Camera className="w-6 h-6" />
           </div>
           <div>
@@ -103,7 +103,7 @@ export default function ReportHazardModal({
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-2">
               <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
                 <span className="flex items-center space-x-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <MapPin className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
                   <span>Hazard Coordinates (GPS)</span>
                 </span>
                 <button
@@ -112,7 +112,7 @@ export default function ReportHazardModal({
                     onClose();
                     if (onPickOnMap) onPickOnMap();
                   }}
-                  className="text-teal-600 dark:text-teal-400 hover:underline text-[11px] font-bold"
+                  className="text-[#EA580C] dark:text-[#FF8A00] hover:underline text-[11px] font-bold cursor-pointer"
                 >
                   Pick from Map
                 </button>
@@ -126,7 +126,7 @@ export default function ReportHazardModal({
                     step="0.0001"
                     value={lat}
                     onChange={(e) => setLat(parseFloat(e.target.value))}
-                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
+                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-[#FF8A00]"
                     required
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function ReportHazardModal({
                     step="0.0001"
                     value={lng}
                     onChange={(e) => setLng(parseFloat(e.target.value))}
-                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
+                    className="w-full mt-1 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-[#FF8A00]"
                     required
                   />
                 </div>
@@ -150,7 +150,7 @@ export default function ReportHazardModal({
                 Hazard Photo (Required for AI Vision Inference)
               </label>
 
-              <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-2xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50 dark:bg-[#0B0F17]">
+              <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-2xl p-4 text-center hover:border-[#FF8A00] transition-colors bg-slate-50 dark:bg-[#0B0F17]">
                 {photoPreview ? (
                   <div className="relative rounded-xl overflow-hidden max-h-48 flex items-center justify-center bg-black">
                     <img src={photoPreview} alt="Hazard Preview" className="max-h-48 w-auto object-contain" />
@@ -160,14 +160,14 @@ export default function ReportHazardModal({
                         setPhotoFile(null);
                         setPhotoPreview(null);
                       }}
-                      className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/90 text-white text-xs hover:bg-red-600 transition"
+                      className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/90 text-white text-xs hover:bg-red-600 transition cursor-pointer"
                     >
                       <X className="w-4 h-4" />
                     </button>
                   </div>
                 ) : (
                   <label className="cursor-pointer block py-4">
-                    <div className="mx-auto w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-2">
+                    <div className="mx-auto w-12 h-12 rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/10 flex items-center justify-center text-[#EA580C] dark:text-[#FF8A00] mb-2 border border-[#FF8A00]/20">
                       <Camera className="w-6 h-6" />
                     </div>
                     <span className="text-xs font-black text-slate-900 dark:text-white block">
@@ -198,7 +198,7 @@ export default function ReportHazardModal({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="E.g., Deep waterlogged underpass near Sitabuldi station blocking lane..."
                 rows={3}
-                className="w-full text-xs bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-400 leading-relaxed resize-none font-medium"
+                className="w-full text-xs bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] placeholder:text-slate-400 leading-relaxed resize-none font-medium"
               />
             </div>
 
@@ -214,7 +214,7 @@ export default function ReportHazardModal({
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-xl shadow-teal-600/30 transition-all flex items-center justify-center space-x-2 active:scale-98 disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shadow-xl shadow-[#FF8A00]/25 transition-all flex items-center justify-center space-x-2 active:scale-98 disabled:opacity-50 cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -238,14 +238,14 @@ export default function ReportHazardModal({
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Incident Successfully Submitted!</h3>
                 <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
                   Report #{detectionResult.id} has been registered and auto-assigned to{" "}
-                  <strong className="text-teal-600 dark:text-teal-400">{detectionResult.zone_name || "Nagpur City"}</strong>.
+                  <strong className="text-[#EA580C] dark:text-[#FF8A00]">{detectionResult.zone_name || "Nagpur City"}</strong>.
                 </p>
               </div>
             </div>
 
             {/* AI Results */}
             <div className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-white space-y-3 border border-slate-200 dark:border-[#1E293B]">
-              <div className="flex items-center space-x-2 text-teal-700 dark:text-teal-400">
+              <div className="flex items-center space-x-2 text-[#EA580C] dark:text-[#FF8A00]">
                 <Bot className="w-4 h-4" />
                 <span className="text-xs font-black uppercase tracking-wider">
                   Hugging Face AI Vision Analysis
@@ -311,7 +311,7 @@ export default function ReportHazardModal({
                 setDescription("");
                 onClose();
               }}
-              className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/30 transition-colors"
+              className="w-full py-3.5 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shadow-lg shadow-[#FF8A00]/25 transition-colors cursor-pointer"
             >
               Done & Return to Map
             </button>

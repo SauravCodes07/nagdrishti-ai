@@ -78,7 +78,7 @@ export default function Navbar({
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo & Brand */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setActiveTab && setActiveTab("map")}>
-            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-teal-500/40 shadow-sm p-1">
+            <div className="relative w-10 h-10 rounded-xl overflow-hidden bg-slate-950 flex items-center justify-center border border-[#FF8A00]/40 shadow-sm p-1">
               <Image
                 src="/brand/nagdrishti-logo.png"
                 alt="NagDrishti AI"
@@ -90,7 +90,7 @@ export default function Navbar({
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900 dark:text-white">NagDrishti</span>
-                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+                <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30">
                   AI
                 </span>
               </div>
@@ -135,11 +135,11 @@ export default function Navbar({
                       setMode("citizen");
                     }
                   }}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all ${
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                     isActive
-                      ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
+                      ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/25"
                       : item.id === "report"
-                      ? "bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 hover:bg-teal-500/20 border border-teal-500/30"
+                      ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] hover:bg-[#FFEDD5] border border-[#FF8A00]/30"
                       : "text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800/60"
                   }`}
                 >
@@ -156,7 +156,7 @@ export default function Navbar({
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
+              {theme === "dark" ? <Sun className="w-4 h-4 text-[#FFB000]" /> : <Moon className="w-4 h-4 text-[#EA580C]" />}
             </button>
 
             {/* Admin Command Center Link/Mode */}
@@ -166,13 +166,13 @@ export default function Navbar({
                   setMode(mode === "admin" ? "citizen" : "admin");
                   if (mode !== "admin" && setActiveTab) setActiveTab("admin");
                 }}
-                className={`ml-2 flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                className={`ml-2 flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${
                   mode === "admin"
-                    ? "bg-teal-600 text-white border-teal-400 shadow"
+                    ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 border-[#FF8A00] shadow"
                     : "bg-slate-100 dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border-slate-200 dark:border-[#1E293B] hover:bg-slate-200 dark:hover:bg-[#1E293B]"
                 }`}
               >
-                <Shield className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                <Shield className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
                 <span>{mode === "admin" ? "Admin Mode" : "Officer Desk"}</span>
               </button>
             )}
@@ -185,13 +185,13 @@ export default function Navbar({
               className="p-2 rounded-xl bg-slate-100 dark:bg-[#131B2A] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B]"
               title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-amber-400" /> : <Moon className="w-4 h-4 text-teal-600" />}
+              {theme === "dark" ? <Sun className="w-4 h-4 text-[#FFB000]" /> : <Moon className="w-4 h-4 text-[#EA580C]" />}
             </button>
 
             {onOpenReportModal && (
               <button
                 onClick={() => onOpenReportModal()}
-                className="px-3 py-1.5 rounded-xl bg-teal-600 text-white text-xs font-bold flex items-center space-x-1 shadow-md"
+                className="px-3 py-1.5 rounded-xl bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 text-xs font-bold flex items-center space-x-1 shadow-md cursor-pointer"
               >
                 <Camera className="w-3.5 h-3.5" />
                 <span>Report</span>
@@ -199,7 +199,7 @@ export default function Navbar({
             )}
             <button
               onClick={() => setDrawerOpen(!drawerOpen)}
-              className="p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none"
+              className="p-2 rounded-xl text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none cursor-pointer"
               aria-label="Toggle navigation drawer"
             >
               {drawerOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -210,8 +210,8 @@ export default function Navbar({
 
       {/* Mobile Drawer */}
       {drawerOpen && (
-        <div className="md:hidden fixed inset-0 top-16 z-50 bg-slate-950/80 backdrop-blur-md animate-in fade-in">
-          <div className="bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] p-6 space-y-4 shadow-2xl">
+        <div className="md:hidden fixed inset-0 top-16 z-50 bg-slate-950/80 backdrop-blur-md animate-in fade-in" onClick={() => setDrawerOpen(false)}>
+          <div className="bg-white dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] p-6 space-y-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Status Summary Banner */}
             <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
               <div className="flex items-center space-x-2.5">
@@ -223,7 +223,7 @@ export default function Navbar({
                   </p>
                 </div>
               </div>
-              <span className="text-xs font-bold px-2 py-1 rounded bg-slate-200 dark:bg-[#0B0F17] text-teal-700 dark:text-teal-400">
+              <span className="text-xs font-bold px-2 py-1 rounded bg-slate-200 dark:bg-[#0B0F17] text-[#EA580C] dark:text-[#FF8A00]">
                 {zones.length || 10} Wards
               </span>
             </div>
@@ -245,14 +245,14 @@ export default function Navbar({
                         setMode("citizen");
                       }
                     }}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
+                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold transition-all cursor-pointer ${
                       isActive
-                        ? "bg-teal-600 text-white font-bold"
+                        ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 font-bold"
                         : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#131B2A]"
                     }`}
                   >
                     <div className="flex items-center space-x-3">
-                      <Icon className="w-4 h-4" />
+                      <Icon className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
                       <span>{item.label}</span>
                     </div>
                   </button>
@@ -266,13 +266,13 @@ export default function Navbar({
                     setMode("admin");
                     if (setActiveTab) setActiveTab("admin");
                   }}
-                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/40"
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-sm font-semibold text-[#EA580C] dark:text-[#FF8A00] bg-[#FFF7ED] dark:bg-[#FF8A00]/10 border border-[#FF8A00]/30 cursor-pointer"
                 >
                   <div className="flex items-center space-x-3">
-                    <Shield className="w-4 h-4 text-teal-600 dark:text-teal-400" />
+                    <Shield className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
                     <span>Admin Command Center</span>
                   </div>
-                  <Lock className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <Lock className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
                 </button>
               )}
             </div>
@@ -281,7 +281,7 @@ export default function Navbar({
             <div className="pt-3 border-t border-slate-200 dark:border-[#1E293B]">
               <button
                 onClick={handleInstallPWA}
-                className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-sm shadow-md active:scale-98 transition-transform"
+                className="w-full flex items-center justify-center space-x-2 py-3 px-4 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-sm shadow-md active:scale-98 transition-transform cursor-pointer"
               >
                 <Download className="w-4 h-4" />
                 <span>{installed ? "App Installed ✓" : "Install NagDrishti App"}</span>

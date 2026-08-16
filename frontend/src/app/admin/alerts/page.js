@@ -65,9 +65,9 @@ export default function AdminAlertLogsPage() {
           <button
             onClick={fetchLogs}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
             <span>Refresh Logs</span>
           </button>
         </div>
@@ -81,7 +81,7 @@ export default function AdminAlertLogsPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search by Ward name, recipient phone, or alert text..."
-              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-400 shadow-sm"
+              className="w-full pl-10 pr-4 py-3 rounded-2xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] placeholder:text-slate-400 shadow-sm"
             />
           </div>
 
@@ -90,9 +90,9 @@ export default function AdminAlertLogsPage() {
               <button
                 key={ch}
                 onClick={() => setChannelFilter(ch)}
-                className={`px-4 py-3 rounded-2xl text-xs font-bold transition flex-1 sm:flex-initial whitespace-nowrap ${
+                className={`px-4 py-3 rounded-2xl text-xs font-bold transition flex-1 sm:flex-initial whitespace-nowrap cursor-pointer ${
                   channelFilter === ch
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                    ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/20"
                     : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
                 }`}
               >
@@ -105,86 +105,46 @@ export default function AdminAlertLogsPage() {
         {/* Logs Table */}
         <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider text-[10px]">
-                  <th className="p-4">Dispatch ID & Ward</th>
-                  <th className="p-4">Channel & Recipient</th>
-                  <th className="p-4">Broadcast Message</th>
-                  <th className="p-4">Delivery Status</th>
+                <tr className="border-b border-slate-200 dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-400 font-bold uppercase text-[10px]">
                   <th className="p-4">Timestamp</th>
+                  <th className="p-4">Ward / Target</th>
+                  <th className="p-4">Channel</th>
+                  <th className="p-4">Broadcast Message</th>
+                  <th className="p-4">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-[#1E293B] font-medium">
-                {filteredLogs.map((log) => {
-                  const isDelivered = log.status === "sent" || log.status === "delivered";
-                  const isLoggedOnly = log.status === "logged_only" || log.status === "pending";
+              <tbody className="divide-y divide-slate-100 dark:divide-[#1E293B]">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/40 transition">
+                    <td className="p-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">
+                      {log.created_at ? new Date(log.created_at).toLocaleString() : "Just now"}
+                    </td>
 
-                  return (
-                    <tr
-                      key={log.id}
-                      className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/50 transition"
-                    >
-                      {/* ID & Ward */}
-                      <td className="p-4">
-                        <div className="font-black text-sm text-slate-900 dark:text-white">
-                          {log.zone_name || `Ward #${log.zone || "NMC"}`}
-                        </div>
-                        <div className="text-[10px] text-slate-400">Dispatch #{log.id}</div>
-                      </td>
+                    <td className="p-4 font-bold text-slate-900 dark:text-white">
+                      {log.zone_name || "Nagpur Citywide"}
+                    </td>
 
-                      {/* Channel & Recipient */}
-                      <td className="p-4">
-                        <div className="flex items-center gap-1.5 font-bold text-slate-900 dark:text-white">
-                          {log.channel === "WhatsApp" ? (
-                            <MessageSquare className="w-3.5 h-3.5 text-emerald-500" />
-                          ) : (
-                            <Phone className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                          )}
-                          <span>{log.channel || "SMS"}</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">{log.recipient || "+91-Municipal-Desk"}</div>
-                      </td>
+                    <td className="p-4">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 font-mono">
+                        {log.channel || "SMS"}
+                      </span>
+                    </td>
 
-                      {/* Message Body */}
-                      <td className="p-4 max-w-md">
-                        <p className="line-clamp-2 text-slate-700 dark:text-slate-300 font-normal">
-                          {log.message}
-                        </p>
-                      </td>
+                    <td className="p-4 text-slate-700 dark:text-slate-300 font-medium max-w-md truncate">
+                      {log.message}
+                    </td>
 
-                      {/* Status */}
-                      <td className="p-4">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                            isDelivered
-                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
-                              : isLoggedOnly
-                              ? "bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/30"
-                              : "bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/30"
-                          }`}
-                        >
-                          {log.status || "Logged"}
-                        </span>
-                      </td>
-
-                      {/* Timestamp */}
-                      <td className="p-4 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap">
-                        {log.sent_at || log.created_at
-                          ? new Date(log.sent_at || log.created_at).toLocaleString()
-                          : "Just now"}
-                      </td>
-                    </tr>
-                  );
-                })}
+                    <td className="p-4">
+                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                        {log.status || "Delivered"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
-
-            {filteredLogs.length === 0 && (
-              <div className="p-8 text-center text-xs text-slate-500">
-                No alert dispatches matching criteria.
-              </div>
-            )}
           </div>
         </div>
       </div>

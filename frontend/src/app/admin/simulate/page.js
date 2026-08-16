@@ -93,126 +93,99 @@ export default function AdminSimulatePage() {
         {/* 8-Stage Scenario Stepper Grid */}
         <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
+            <h2 className="text-xs font-black uppercase tracking-wider text-[#EA580C] dark:text-[#FF8A00]">
               8-Stage Monsoon Demonstration Cycle
             </h2>
-            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">
+            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30">
               Interactive Runner
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {SCENARIO_STAGES.map((stage, idx) => {
-              const isActive = currentStageIdx === idx;
-              return (
-                <button
-                  key={stage.id}
-                  onClick={() => handleRunStage(stage.id, idx)}
-                  disabled={running}
-                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between space-y-2 transition active:scale-95 ${
-                    isActive
-                      ? "bg-teal-50 dark:bg-teal-500/10 border-teal-500 text-teal-700 dark:text-teal-300 shadow-md ring-1 ring-teal-500/30"
-                      : "bg-slate-50 dark:bg-[#0B0F17] border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-xl">{stage.icon}</span>
-                    <span className="text-[9px] font-black uppercase text-slate-400">Step {idx + 1}</span>
-                  </div>
-                  <div>
-                    <div className="font-black text-xs text-slate-900 dark:text-white">{stage.label}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight mt-0.5">
-                      {stage.desc}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {SCENARIO_STAGES.map((st, idx) => (
+              <button
+                key={st.id}
+                onClick={() => handleRunStage(st.id, idx)}
+                disabled={running}
+                className={`p-4 rounded-2xl border text-left transition flex flex-col justify-between space-y-2 cursor-pointer active:scale-95 ${
+                  currentStageIdx === idx
+                    ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 border-[#FF8A00] text-slate-900 dark:text-white shadow-sm"
+                    : "bg-slate-50 dark:bg-[#0B0F17] border-slate-200 dark:border-[#1E293B] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-[#334155]"
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-lg">{st.icon}</span>
+                  <Play className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
+                </div>
+                <div>
+                  <div className="text-xs font-black text-slate-900 dark:text-white">{st.label}</div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 leading-tight">{st.desc}</p>
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Custom Injection & Console Output */}
+        {/* Custom Rainfall Injector & Live Terminal Output */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Custom Injection Controls */}
+          {/* Left: Custom Parameter Injector */}
           <div className="lg:col-span-5 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4">
-            <h2 className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">
               Custom Rainfall Injection
-            </h2>
+            </h3>
 
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
-                <span>Rainfall Intensity (mm/h)</span>
-                <span className="text-teal-600 dark:text-teal-400 font-mono">{customRainfall} mm/h</span>
-              </div>
-              <input
-                type="range"
-                min="0"
-                max="120"
-                step="5"
-                value={customRainfall}
-                onChange={(e) => setCustomRainfall(e.target.value)}
-                className="w-full accent-teal-600 cursor-pointer"
-              />
-              <div className="flex justify-between text-[10px] text-slate-400">
-                <span>0 mm (Dry)</span>
-                <span>45 mm (Moderate)</span>
-                <span>120 mm (Extreme Flood)</span>
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                Precipitation Intensity (mm/hour)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  min="0"
+                  max="200"
+                  value={customRainfall}
+                  onChange={(e) => setCustomRainfall(e.target.value)}
+                  className="flex-1 px-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] text-slate-900 dark:text-white text-xs font-bold focus:outline-none focus:border-[#FF8A00]"
+                />
+                <button
+                  onClick={handleCustomRainfall}
+                  disabled={running}
+                  className="px-5 py-3 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shadow-md transition cursor-pointer"
+                >
+                  Inject
+                </button>
               </div>
             </div>
 
-            <button
-              onClick={handleCustomRainfall}
-              disabled={running}
-              className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/30 active:scale-95 transition flex items-center justify-center gap-2"
-            >
-              <CloudRain className="w-4 h-4" />
-              <span>Inject Custom Rainfall</span>
-            </button>
-
             {lastResult && (
-              <div className="p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-300 space-y-1">
+              <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                  <span>{lastResult.description || "Simulation Finished"}</span>
-                </div>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                  Affected Wards: {lastResult.affected_zones_count || (lastResult.results ? lastResult.results.length : 10)}
+                  <span>{lastResult.description || lastResult.message}</span>
                 </div>
               </div>
             )}
           </div>
 
-          {/* Live Telemetry Console Log */}
-          <div className="lg:col-span-7 bg-slate-900 dark:bg-[#0B0F17] text-slate-100 border border-slate-800 dark:border-[#1E293B] rounded-3xl p-5 shadow-2xl flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-slate-800 dark:border-[#1E293B] pb-3 mb-3">
-              <div className="flex items-center gap-2 text-xs font-black text-teal-400">
-                <Terminal className="w-4 h-4" />
-                <span>Simulation Event Console</span>
-              </div>
-              <span className="text-[10px] text-slate-400 font-mono">Live DRF Simulation Stream</span>
+          {/* Right: Real-Time Scenario Console Log */}
+          <div className="lg:col-span-7 bg-[#0B0F17] border border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-3 font-mono text-xs text-slate-300">
+            <div className="flex items-center gap-2 text-[#FF8A00] pb-2 border-b border-[#1E293B]">
+              <Terminal className="w-4 h-4" />
+              <span className="font-bold text-[11px] uppercase tracking-wider">
+                Crisis Engine Event Stream
+              </span>
             </div>
 
-            <div className="h-56 overflow-y-auto space-y-1 font-mono text-xs text-slate-300">
-              {logs.length > 0 ? (
-                logs.map((lg, idx) => (
-                  <div key={idx} className="leading-relaxed">
-                    <span className="text-teal-400">&gt;</span> {lg}
+            <div className="h-44 overflow-y-auto space-y-1.5 text-[11px] text-slate-400">
+              {logs.length === 0 ? (
+                <div className="text-slate-600 italic">Ready to run scenario stages...</div>
+              ) : (
+                logs.map((lg, i) => (
+                  <div key={i} className="leading-relaxed">
+                    <span className="text-[#FF8A00]">{">"}</span> {lg}
                   </div>
                 ))
-              ) : (
-                <div className="text-slate-500 py-8 text-center">
-                  Simulation console initialized. Click a scenario step above to run.
-                </div>
               )}
-            </div>
-
-            <div className="pt-2 border-t border-slate-800 dark:border-[#1E293B] flex justify-end">
-              <button
-                onClick={() => setLogs([])}
-                className="text-[10px] text-slate-400 hover:text-slate-200 underline font-mono"
-              >
-                Clear Log
-              </button>
             </div>
           </div>
         </div>

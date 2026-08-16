@@ -118,7 +118,7 @@ function SafeRouteContent() {
           <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-5">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E293B] pb-3">
               <div className="flex items-center gap-2">
-                <Compass className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+                <Compass className="w-5 h-5 text-[#EA580C] dark:text-[#FF8A00]" />
                 <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                   Journey Parameters
                 </h2>
@@ -126,7 +126,7 @@ function SafeRouteContent() {
 
               <button
                 onClick={handleSwap}
-                className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 transition"
+                className="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] text-slate-600 dark:text-slate-300 font-bold text-xs flex items-center gap-1 transition cursor-pointer"
                 title="Swap Origin and Destination"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -137,7 +137,7 @@ function SafeRouteContent() {
             {/* Origin Picker */}
             <div className="space-y-1.5">
               <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+                <span className="w-2.5 h-2.5 rounded-full bg-[#FF8A00]"></span>
                 <span>Origin (Start Location)</span>
               </label>
 
@@ -148,7 +148,7 @@ function SafeRouteContent() {
                   const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
                   setStartPoint(hub || { name: `Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
                 }}
-                className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] cursor-pointer"
               >
                 {NAGPUR_HUBS.map((hub) => (
                   <option key={`start-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -172,7 +172,7 @@ function SafeRouteContent() {
                   const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
                   setEndPoint(hub || { name: `Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
                 }}
-                className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] cursor-pointer"
               >
                 {NAGPUR_HUBS.map((hub) => (
                   <option key={`end-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -186,7 +186,7 @@ function SafeRouteContent() {
             <button
               onClick={handleCalculateRoute}
               disabled={loading}
-              className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-teal-600/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-[#FF8A00]/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
             >
               <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
               <span>{loading ? "Computing Risk-Penalized A* Path..." : "Find Flood-Safe Route"}</span>
@@ -222,7 +222,7 @@ function SafeRouteContent() {
                   </div>
                   <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B]">
                     <span className="text-[10px] text-slate-400 font-bold uppercase block">Estimated Time</span>
-                    <span className="text-base font-black text-teal-600 dark:text-teal-400">
+                    <span className="text-base font-black text-[#EA580C] dark:text-[#FF8A00]">
                       ~{routeResult.estimated_minutes || routeResult.estimated_time_min || 14} mins
                     </span>
                   </div>
@@ -242,7 +242,7 @@ function SafeRouteContent() {
             <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
               Live Route Topology & Flood Barriers
             </span>
-            <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">
+            <span className="text-[10px] font-bold text-[#EA580C] dark:text-[#FF8A00]">
               {routeResult ? "Safe Polyline Rendered" : "Select Points & Calculate"}
             </span>
           </div>

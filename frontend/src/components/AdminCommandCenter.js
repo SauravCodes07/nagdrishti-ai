@@ -186,7 +186,7 @@ export default function AdminCommandCenter({
     return (
       <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#131B2A] rounded-3xl p-8 border border-slate-200 dark:border-[#1E293B] shadow-2xl font-sans text-slate-900 dark:text-slate-100">
         <div className="text-center mb-6">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20 flex items-center justify-center mb-3">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 flex items-center justify-center mb-3">
             <Lock className="w-7 h-7" />
           </div>
           <h2 className="text-xl font-black text-slate-900 dark:text-white">Admin Command Center</h2>
@@ -204,7 +204,7 @@ export default function AdminCommandCenter({
               type="text"
               value={loginUsername}
               onChange={(e) => setLoginUsername(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00]"
               required
             />
           </div>
@@ -217,7 +217,7 @@ export default function AdminCommandCenter({
               type="password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00]"
               required
             />
           </div>
@@ -232,7 +232,7 @@ export default function AdminCommandCenter({
           <button
             type="submit"
             disabled={loginLoading}
-            className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-teal-600/30 transition-all active:scale-98 disabled:opacity-60 flex items-center justify-center space-x-2"
+            className="w-full py-3.5 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-[#FF8A00]/25 transition-all active:scale-98 disabled:opacity-60 flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Shield className="w-4 h-4" />
             <span>{loginLoading ? "Verifying Credentials..." : "Access Command Center"}</span>
@@ -267,7 +267,7 @@ export default function AdminCommandCenter({
       {/* Top Header Bar */}
       <div className="bg-white dark:bg-[#131B2A] text-slate-900 dark:text-white rounded-3xl p-5 border border-slate-200 dark:border-[#1E293B] shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-teal-500/10 dark:bg-teal-500/20 text-teal-600 dark:text-teal-400 rounded-2xl border border-teal-500/30">
+          <div className="p-2.5 bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] rounded-2xl border border-[#FF8A00]/30">
             <Shield className="w-6 h-6" />
           </div>
           <div>
@@ -286,16 +286,16 @@ export default function AdminCommandCenter({
         <div className="flex items-center space-x-2">
           <button
             onClick={loadAdminData}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#0B0F17] hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center space-x-1.5 transition"
+            className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#0B0F17] hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer"
             title="Refresh All Records"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${queueLoading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${queueLoading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
             <span>Sync Feeds</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 font-bold text-xs flex items-center space-x-1 transition"
+            className="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 font-bold text-xs flex items-center space-x-1 transition cursor-pointer"
             title="Sign Out"
           >
             <LogOut className="w-3.5 h-3.5" />
@@ -324,7 +324,7 @@ export default function AdminCommandCenter({
 
         <div className="bg-white dark:bg-[#131B2A] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B]">
           <span className="text-[10px] uppercase font-bold text-slate-400 block">Active Dispatches</span>
-          <div className="text-2xl font-black text-teal-600 dark:text-teal-400 mt-0.5">
+          <div className="text-2xl font-black text-[#EA580C] dark:text-[#FF8A00] mt-0.5">
             {dispatchedUnits}
           </div>
           <span className="text-[10px] text-slate-500">Pumps & QRT deployed</span>
@@ -353,9 +353,9 @@ export default function AdminCommandCenter({
             <button
               key={tab.id}
               onClick={() => setAdminTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 isActive
-                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
+                  ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/25"
                   : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#131B2A]"
               }`}
             >
@@ -364,7 +364,7 @@ export default function AdminCommandCenter({
               {tab.count !== undefined && (
                 <span
                   className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
-                    isActive ? "bg-white/20 text-white" : "bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-slate-300"
+                    isActive ? "bg-white/20 text-white dark:text-slate-950" : "bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-slate-300"
                   }`}
                 >
                   {tab.count}
@@ -387,7 +387,7 @@ export default function AdminCommandCenter({
                 Formula: 0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost
               </p>
             </div>
-            <span className="text-xs font-bold text-teal-600 dark:text-teal-400">
+            <span className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00]">
               {priorityQueue.length} Wards Ranked
             </span>
           </div>
@@ -409,7 +409,7 @@ export default function AdminCommandCenter({
                 {priorityQueue.map((item, idx) => (
                   <tr key={item.zone_id} className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/40 transition">
                     <td className="p-3 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-[#0B0F17] text-teal-700 dark:text-teal-400 text-[10px] font-black flex items-center justify-center">
+                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-[#0B0F17] text-[#EA580C] dark:text-[#FF8A00] text-[10px] font-black flex items-center justify-center">
                         #{idx + 1}
                       </span>
                       <span>{item.zone_name}</span>
@@ -439,7 +439,7 @@ export default function AdminCommandCenter({
                       <span
                         className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
                           item.dispatch_status === "Dispatched"
-                            ? "bg-teal-500/10 dark:bg-teal-500/20 text-teal-700 dark:text-teal-300 border border-teal-500/30"
+                            ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
                             : item.dispatch_status === "Resolved"
                             ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300"
                             : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
@@ -454,7 +454,7 @@ export default function AdminCommandCenter({
                         {item.dispatch_status !== "Dispatched" && (
                           <button
                             onClick={() => handleUpdateDispatch(item.zone_id, "Dispatched")}
-                            className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-500 text-white font-bold text-[10px] shadow-sm transition"
+                            className="px-2.5 py-1 rounded-lg bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-[10px] shadow-sm transition cursor-pointer"
                           >
                             Dispatch
                           </button>
@@ -462,7 +462,7 @@ export default function AdminCommandCenter({
                         {item.dispatch_status !== "Resolved" && (
                           <button
                             onClick={() => handleUpdateDispatch(item.zone_id, "Resolved")}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm transition"
+                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm transition cursor-pointer"
                           >
                             Resolve
                           </button>
@@ -495,9 +495,9 @@ export default function AdminCommandCenter({
                 <button
                   key={st}
                   onClick={() => setReportFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
                     reportFilter === st
-                      ? "bg-teal-600 text-white"
+                      ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950"
                       : "bg-slate-100 dark:bg-[#0B0F17] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
@@ -522,7 +522,7 @@ export default function AdminCommandCenter({
                 >
                   <div className="space-y-2">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-teal-600 dark:text-teal-400">Report #{rep.id}</span>
+                      <span className="font-bold text-[#EA580C] dark:text-[#FF8A00]">Report #{rep.id}</span>
                       <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
                         {rep.verification_status || "Pending"}
                       </span>
@@ -548,13 +548,13 @@ export default function AdminCommandCenter({
                   <div className="flex items-center space-x-2 pt-2 border-t border-slate-200 dark:border-[#1E293B]">
                     <button
                       onClick={() => handleVerifyReport(rep.id, "Verified")}
-                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition"
+                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer"
                     >
                       Verify
                     </button>
                     <button
                       onClick={() => handleVerifyReport(rep.id, "Rejected")}
-                      className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition"
+                      className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition cursor-pointer"
                     >
                       Reject
                     </button>
@@ -578,7 +578,7 @@ export default function AdminCommandCenter({
                 Audit trail of all automated civic emergency dispatches
               </p>
             </div>
-            <span className="text-xs font-bold text-teal-600 dark:text-teal-400">{alertLogs.length} Dispatches</span>
+            <span className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00]">{alertLogs.length} Dispatches</span>
           </div>
 
           <div className="space-y-2">
@@ -590,7 +590,7 @@ export default function AdminCommandCenter({
                 <div className="space-y-1">
                   <div className="flex items-center space-x-2">
                     <span className="font-bold text-slate-900 dark:text-white">{log.zone_name || "Nagpur Ward"}</span>
-                    <span className="text-[10px] text-teal-600 dark:text-teal-400 font-mono">[{log.channel || "SMS"}]</span>
+                    <span className="text-[10px] text-[#EA580C] dark:text-[#FF8A00] font-mono">[{log.channel || "SMS"}]</span>
                   </div>
                   <p className="text-slate-700 dark:text-slate-300 text-xs font-medium">{log.message}</p>
                 </div>
@@ -626,11 +626,11 @@ export default function AdminCommandCenter({
                 key={st.key}
                 onClick={() => handleRunSimulationStage(st.key)}
                 disabled={simLoading}
-                className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] hover:border-teal-500/50 text-left transition flex flex-col justify-between space-y-2 active:scale-95"
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] hover:border-[#FF8A00]/50 text-left transition flex flex-col justify-between space-y-2 active:scale-95 cursor-pointer"
               >
                 <div className="flex items-center justify-between">
                   <span className="font-black text-xs text-slate-900 dark:text-white">{st.title}</span>
-                  <Play className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                  <Play className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
                 </div>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{st.desc}</p>
               </button>
@@ -657,7 +657,7 @@ export default function AdminCommandCenter({
           <div className="relative max-w-2xl w-full bg-white dark:bg-[#131B2A] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#1E293B] shadow-2xl">
             <button
               onClick={() => setActivePhoto(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition z-10"
+              className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition z-10 cursor-pointer"
             >
               <XCircle className="w-5 h-5" />
             </button>

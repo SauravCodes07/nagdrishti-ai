@@ -24,7 +24,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0D9488",
+  themeColor: "#FF8A00",
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -59,7 +59,7 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 antialiased selection:bg-teal-500 selection:text-white transition-colors duration-200">
+      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 antialiased selection:bg-[#FF8A00] selection:text-white transition-colors duration-200">
         <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>

@@ -83,7 +83,7 @@ export default function SafeRouteFinder({
     <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-5 sm:p-6 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-4 font-sans text-slate-900 dark:text-slate-100">
       <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E293B]">
         <div className="flex items-center space-x-2.5">
-          <div className="p-2 bg-teal-500/10 rounded-2xl text-teal-600 dark:text-teal-400">
+          <div className="p-2 bg-[#FFF7ED] dark:bg-[#FF8A00]/10 rounded-2xl text-[#EA580C] dark:text-[#FF8A00]">
             <Compass className="w-5 h-5" />
           </div>
           <div>
@@ -94,7 +94,7 @@ export default function SafeRouteFinder({
 
         <button
           onClick={handleSwapLocations}
-          className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] transition-colors flex items-center space-x-1.5"
+          className="text-xs font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] transition-colors flex items-center space-x-1.5 cursor-pointer"
           title="Swap start and destination"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -106,15 +106,15 @@ export default function SafeRouteFinder({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
           <span className="flex items-center space-x-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-teal-500"></span>
+            <span className="w-2.5 h-2.5 rounded-full bg-[#FF8A00]"></span>
             <span>Route Origin (A)</span>
           </span>
           <button
             onClick={() => handleSetFromMap("start")}
-            className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors ${
+            className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors cursor-pointer ${
               clickMode === "start"
-                ? "bg-teal-500 text-white animate-pulse"
-                : "text-teal-600 dark:text-teal-400 hover:underline"
+                ? "bg-[#EA580C] text-white animate-pulse"
+                : "text-[#EA580C] dark:text-[#FF8A00] hover:underline"
             }`}
           >
             {clickMode === "start" ? "Click on Map..." : "Pick on Map"}
@@ -128,7 +128,7 @@ export default function SafeRouteFinder({
             const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
             setStartPoint({ name: hub ? hub.name : `Point (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
           }}
-          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] cursor-pointer"
         >
           {NAGPUR_HUBS.map((hub) => (
             <option key={`start-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -147,10 +147,10 @@ export default function SafeRouteFinder({
           </span>
           <button
             onClick={() => handleSetFromMap("end")}
-            className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors ${
+            className={`text-[11px] font-bold px-2 py-0.5 rounded transition-colors cursor-pointer ${
               clickMode === "end"
-                ? "bg-teal-500 text-white animate-pulse"
-                : "text-teal-600 dark:text-teal-400 hover:underline"
+                ? "bg-[#EA580C] text-white animate-pulse"
+                : "text-[#EA580C] dark:text-[#FF8A00] hover:underline"
             }`}
           >
             {clickMode === "end" ? "Click on Map..." : "Pick on Map"}
@@ -164,7 +164,7 @@ export default function SafeRouteFinder({
             const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
             setEndPoint({ name: hub ? hub.name : `Point (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
           }}
-          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+          className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl px-3.5 py-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] cursor-pointer"
         >
           {NAGPUR_HUBS.map((hub) => (
             <option key={`end-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
@@ -178,7 +178,7 @@ export default function SafeRouteFinder({
       <button
         onClick={handleCalculateRoute}
         disabled={loading}
-        className="w-full py-3.5 px-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs sm:text-sm shadow-xl shadow-teal-600/30 transition-all flex items-center justify-center space-x-2 active:scale-98 disabled:opacity-50"
+        className="w-full py-3.5 px-4 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-[#FF8A00]/25 transition-all flex items-center justify-center space-x-2 active:scale-98 disabled:opacity-50 cursor-pointer"
       >
         <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         <span>{loading ? "Computing Safe Path Across OSM Network..." : "Find Flood-Safe Route"}</span>
@@ -212,7 +212,7 @@ export default function SafeRouteFinder({
             </div>
             <div className="p-2.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B]">
               <span className="text-slate-400 text-[10px] uppercase font-bold block">Est. Time</span>
-              <span className="text-base font-black text-teal-600 dark:text-teal-400">~{routeResult.estimated_minutes || routeResult.estimated_time_min || 12} mins</span>
+              <span className="text-base font-black text-[#EA580C] dark:text-[#FF8A00]">~{routeResult.estimated_minutes || routeResult.estimated_time_min || 12} mins</span>
             </div>
           </div>
 

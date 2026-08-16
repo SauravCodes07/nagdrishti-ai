@@ -15,6 +15,7 @@ export default function MapComponent({
   zones = [],
   reports = [],
   routeData = null,
+  route = null,
   clickMode = null,
   onLocationSelected = null,
   selectedZone = null,
@@ -98,53 +99,56 @@ export default function MapComponent({
       const color = getRiskColor(category, riskScore);
       const isPhotoConfirmed = !!zone.photo_confirmed || category === "Severe";
 
+      const isSelected = selectedZone && (selectedZone.id === zone.id || selectedZone.zone_id === zone.zone_id || selectedZone.zone_name === zone.zone_name);
+
       const polygon = L.polygon(coords, {
-        color: color,
-        weight: isPhotoConfirmed ? 3.5 : 2,
-        opacity: 0.9,
+        color: isSelected ? "#FF8A00" : color,
+        weight: isSelected ? 4 : isPhotoConfirmed ? 3 : 2,
         fillColor: color,
-        fillOpacity: isPhotoConfirmed ? 0.38 : 0.20,
-        className: isPhotoConfirmed && category === "Severe" ? "severe-zone-pulse" : "",
+        fillOpacity: isSelected ? 0.45 : isPhotoConfirmed ? 0.35 : 0.22,
+        className: category === "Severe" ? "severe-zone-pulse" : "",
       });
 
-      const rainfallMm = zone.rainfall_mm ?? 0.0;
-      const dispatchStatus = zone.dispatch_status || "Unassigned";
+      polygon.on("click", () => {
+        if (onZoneClick) {
+          onZoneClick(zone);
+        }
+      });
 
-      const popupHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 200px; padding: 2px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 8px;">
-            <strong style="font-size: 13px;">${zone.name}</strong>
-            <span style="background: ${color}; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase;">
-              ${category} (${riskScore.toFixed(1)})
+      // Polygon Popup tooltip
+      const popupContent = `
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 200px; max-width: 260px; padding: 2px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+            <strong style="font-size: 13px;">${zone.zone_name}</strong>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: ${color}20; color: ${color};">
+              ${category}
             </span>
           </div>
 
-          ${isPhotoConfirmed && category === "Severe" ? `
-            <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 11px; color: #991B1B; font-weight: bold;">
-              📸 PHOTO-CONFIRMED FLOODING
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px; margin-bottom: 6px;">
+            <div>
+              <span style="color: #64748B;">Risk Index:</span>
+              <strong style="display: block; color: ${color}; font-size: 14px;">${riskScore.toFixed(1)}</strong>
             </div>
-          ` : ''}
+            <div>
+              <span style="color: #64748B;">Rainfall:</span>
+              <strong style="display: block; font-size: 14px;">${(zone.rainfall_mm ?? zone.rainfall_intensity_mm ?? 0).toFixed(1)} mm/h</strong>
+            </div>
+          </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
-            <div><strong>Rainfall:</strong> ${rainfallMm.toFixed(1)} mm/h</div>
-            <div><strong>Drainage:</strong> ${Math.round((zone.drainage_capacity || 0.5) * 100)}%</div>
-            <div><strong>Elevation:</strong> ${zone.elevation_factor || 0.4}</div>
-            <div><strong>Dispatch:</strong> <span style="font-weight: 700;">${dispatchStatus}</span></div>
+          <div style="font-size: 11px; color: #475569; border-top: 1px solid #e2e8f0; padding-top: 4px;">
+            <span>Drain Capacity: ${Math.round((zone.drainage_capacity || 0.5) * 100)}%</span>
+            ${zone.elevation_m ? ` | Elev: ${zone.elevation_m}m` : ''}
           </div>
         </div>
       `;
 
-      polygon.bindPopup(popupHtml);
-
-      polygon.on("click", () => {
-        if (onZoneClick) onZoneClick(zone);
-      });
-
+      polygon.bindPopup(popupContent);
       polygon.addTo(zonesLayerGroupRef.current);
     });
-  }, [zones, onZoneClick]);
+  }, [zones, selectedZone, onZoneClick]);
 
-  // Update Citizen Hazard Report Markers
+  // Update Citizen Reports & Hazard Markers
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !reportsLayerGroupRef.current) return;
@@ -203,8 +207,8 @@ export default function MapComponent({
 
           <p style="font-size: 12px; margin: 4px 0 8px 0;">${rep.description || 'Citizen hazard report.'}</p>
 
-          <div style="background: rgba(13, 148, 136, 0.1); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 8px; padding: 6px; font-size: 11px;">
-            <div style="font-weight: 700; color: #0d9488; margin-bottom: 2px;">🤖 Hugging Face AI Vision:</div>
+          <div style="background: rgba(255, 138, 0, 0.1); border: 1px solid rgba(255, 138, 0, 0.25); border-radius: 8px; padding: 6px; font-size: 11px;">
+            <div style="font-weight: 700; color: #EA580C; margin-bottom: 2px;">🤖 Hugging Face AI Vision:</div>
             <div style="display: flex; justify-content: space-between;">
               <span>Waterlogging:</span>
               <strong style="color: ${isWaterlogging ? '#DC2626' : '#64748B'}">
@@ -227,31 +231,33 @@ export default function MapComponent({
 
     routeLayerGroupRef.current.clearLayers();
 
-    if (routeData && routeData.coordinates && routeData.coordinates.length > 0) {
-      const latlngs = routeData.coordinates;
+    const activeRouteCoords = routeData?.coordinates || route;
 
-      // Glow outline (Teal)
+    if (activeRouteCoords && activeRouteCoords.length > 0) {
+      const latlngs = activeRouteCoords;
+
+      // Glow outline (Saffron)
       L.polyline(latlngs, {
-        color: "#14B8A6",
+        color: "#FFA726",
         weight: 9,
         opacity: 0.45,
         lineCap: "round",
       }).addTo(routeLayerGroupRef.current);
 
-      // Primary safe path (Teal/Emerald)
+      // Primary safe path (Saffron/Orange)
       const mainLine = L.polyline(latlngs, {
-        color: "#0D9488",
+        color: "#EA580C",
         weight: 5,
         opacity: 0.95,
         lineCap: "round",
         dashArray: "6, 8",
       }).addTo(routeLayerGroupRef.current);
 
-      // Start Marker (Teal)
+      // Start Marker (Saffron)
       const startPt = latlngs[0];
       const startIcon = L.divIcon({
         className: "route-start-marker",
-        html: `<div style="background-color: #0D9488; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">A</div>`,
+        html: `<div style="background-color: #EA580C; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">A</div>`,
         iconSize: [32, 32],
         iconAnchor: [16, 16],
       });
@@ -273,7 +279,7 @@ export default function MapComponent({
 
       mapInstanceRef.current.fitBounds(mainLine.getBounds(), { padding: [40, 40] });
     }
-  }, [routeData]);
+  }, [routeData, route]);
 
   // GPS User Locator
   const handleLocateMe = () => {
@@ -296,8 +302,8 @@ export default function MapComponent({
             className: "user-gps-marker",
             html: `
               <div style="position: relative; width: 24px; height: 24px;">
-                <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #0D9488; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-                <div style="position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: #0D9488; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
+                <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #FF8A00; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                <div style="position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: #EA580C; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
               </div>
             `,
             iconSize: [24, 24],
@@ -305,17 +311,13 @@ export default function MapComponent({
           });
 
           L.marker([latitude, longitude], { icon: userIcon })
-            .bindPopup("<strong>📍 Your Current Location</strong>")
+            .bindPopup("<strong>📍 Your Current GPS Location</strong>")
             .addTo(mapInstanceRef.current);
-        }
-
-        if (onLocationSelected) {
-          onLocationSelected({ lat: latitude, lng: longitude });
         }
       },
       (err) => {
+        alert("Could not detect location: " + err.message);
         setLocating(false);
-        alert("Could not access your GPS position.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -336,15 +338,15 @@ export default function MapComponent({
         <button
           onClick={handleLocateMe}
           disabled={locating}
-          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center backdrop-blur-sm"
+          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center backdrop-blur-sm cursor-pointer"
           title="Locate my position (GPS)"
         >
-          <Locate className={`w-4 h-4 text-teal-600 dark:text-teal-400 ${locating ? "animate-spin" : ""}`} />
+          <Locate className={`w-4 h-4 text-[#EA580C] dark:text-[#FF8A00] ${locating ? "animate-spin" : ""}`} />
         </button>
 
         <button
           onClick={handleResetView}
-          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center text-[10px] font-black backdrop-blur-sm"
+          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center text-[10px] font-black backdrop-blur-sm cursor-pointer hover:text-[#EA580C] dark:hover:text-[#FF8A00]"
           title="Reset to Zero Mile Nagpur"
         >
           0M

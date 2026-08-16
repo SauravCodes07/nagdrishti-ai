@@ -103,7 +103,7 @@ export default function HelpSafetyPage() {
 
                 <a
                   href={`tel:${serv.phone.replace(/[^0-9]/g, "")}`}
-                  className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-red-600/20 transition active:scale-95"
+                  className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-red-600/30 transition active:scale-95"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>Call {serv.phone}</span>
@@ -113,12 +113,12 @@ export default function HelpSafetyPage() {
           </div>
         </div>
 
-        {/* Monsoon Safety Guidelines */}
+        {/* Monsoon Survival Guidelines */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+            <Shield className="w-5 h-5 text-[#EA580C] dark:text-[#FF8A00]" />
             <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-              Urban Monsoon Safety Protocols
+              Urban Flash Flood Safety Guidelines
             </h2>
           </div>
 
@@ -129,12 +129,12 @@ export default function HelpSafetyPage() {
                 className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2"
               >
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-400 font-black text-xs flex items-center justify-center">
+                  <span className="w-6 h-6 rounded-xl bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] text-xs font-black flex items-center justify-center">
                     0{idx + 1}
                   </span>
-                  <h4 className="text-xs font-black text-slate-900 dark:text-white">{tip.title}</h4>
+                  <h3 className="text-xs font-black text-slate-900 dark:text-white">{tip.title}</h3>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-8">
+                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-8 font-medium">
                   {tip.desc}
                 </p>
               </div>
@@ -142,23 +142,26 @@ export default function HelpSafetyPage() {
           </div>
         </div>
 
-        {/* Municipal Officer Portal Banner */}
-        <div className="bg-slate-100 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="space-y-1 text-center sm:text-left">
-            <h3 className="text-sm font-black text-slate-900 dark:text-white">
-              Municipal Officer Command Center
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Authorized municipal administrators, dewatering pump dispatches, and priority moderation
+        {/* Officer Command Portal Link */}
+        <div className="bg-gradient-to-r from-[#FFF7ED] to-slate-50 dark:from-[#FF8A00]/10 dark:to-[#131B2A] border border-[#FF8A00]/30 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <Lock className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                Municipal Officer Command Portal
+              </h3>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Access the priority dispatch queue, moderate citizen photo reports, and trigger Twilio SMS/WhatsApp dispatches.
             </p>
           </div>
 
           <Link
             href="/admin/login"
-            className="px-5 py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs shadow-md flex items-center gap-2 active:scale-95 transition whitespace-nowrap"
+            className="px-5 py-3 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shrink-0 flex items-center justify-center gap-2 shadow-md shadow-[#FF8A00]/25 transition active:scale-95"
           >
-            <Lock className="w-4 h-4" />
-            <span>Officer Sign In</span>
+            <span>Officer Login</span>
+            <ExternalLink className="w-3.5 h-3.5" />
           </Link>
         </div>
       </div>

@@ -101,243 +101,229 @@ export default function ReportHazardPage() {
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-            Report Road Hazard or Waterlogging
+            Report Road Hazard & Flood
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
-            Submit photo evidence of road hazards. Hugging Face AI Vision automatically verifies depth and dispatches municipal units.
+            Submit geotagged photos of waterlogging, potholes, or blocked drains. Inferences are verified by Hugging Face Vision AI and dispatched to Nagpur Municipal Corporation QRT.
           </p>
         </div>
 
         {!detectionResult ? (
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
-            {/* Left Column: Category & Photo Upload */}
-            <div className="md:col-span-6 space-y-4">
-              {/* Category Picker */}
-              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Select Incident Category
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  {HAZARD_CATEGORIES.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => setCategory(c.id)}
-                      className={`p-3 rounded-2xl border text-left text-xs font-bold transition flex items-center gap-2 ${
-                        category === c.id
-                          ? "bg-teal-50 dark:bg-teal-500/10 border-teal-500 text-teal-700 dark:text-teal-300 shadow-sm"
-                          : "bg-slate-50 dark:bg-[#0B0F17] border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
-                      }`}
-                    >
-                      <span>{c.icon}</span>
-                      <span className="leading-tight">{c.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photo Evidence Dropzone */}
-              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Photo Evidence (AI Vision Input)
-                  </label>
-                  <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Hugging Face ViT</span>
-                </div>
-
-                <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-2xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50 dark:bg-[#0B0F17]">
-                  {photoPreview ? (
-                    <div className="relative rounded-xl overflow-hidden max-h-56 flex items-center justify-center bg-black">
-                      <img src={photoPreview} alt="Evidence Preview" className="max-h-56 w-auto object-contain" />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          setPhotoPreview(null);
-                        }}
-                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <label className="cursor-pointer block py-6">
-                      <div className="mx-auto w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-2">
-                        <Camera className="w-6 h-6" />
-                      </div>
-                      <span className="text-xs font-black text-slate-900 dark:text-white block">
-                        Take Photo or Browse Image
-                      </span>
-                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                        Supports JPEG, PNG or WebP
-                      </span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        capture="environment"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Column: Location & Details Form */}
-            <div className="md:col-span-6 space-y-4">
-              {/* Location Coordinates */}
-              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                    Incident Coordinates (GPS)
-                  </label>
+          <form onSubmit={handleSubmit} className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6">
+            {/* Category Selector */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                1. Select Incident Type
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {HAZARD_CATEGORIES.map((cat) => (
                   <button
+                    key={cat.id}
                     type="button"
-                    onClick={handleLocateMe}
-                    disabled={locating}
-                    className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
+                    onClick={() => setCategory(cat.id)}
+                    className={`p-3.5 rounded-2xl border text-left transition flex flex-col justify-between space-y-2 cursor-pointer ${
+                      category === cat.id
+                        ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 border-[#FF8A00] text-slate-900 dark:text-white shadow-sm"
+                        : "bg-slate-50 dark:bg-[#0B0F17] border-slate-200 dark:border-[#1E293B] text-slate-600 dark:text-slate-400 hover:border-slate-300 dark:hover:border-[#334155]"
+                    }`}
                   >
-                    <LocateFixed className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
-                    <span>{locating ? "Locating..." : "Auto-Detect GPS"}</span>
+                    <span className="text-xl">{cat.icon}</span>
+                    <span className="text-xs font-bold">{cat.label}</span>
                   </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <label className="text-[10px] text-slate-400 font-bold uppercase">Latitude</label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={lat}
-                      onChange={(e) => setLat(parseFloat(e.target.value))}
-                      className="w-full mt-1 bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] text-slate-400 font-bold uppercase">Longitude</label>
-                    <input
-                      type="number"
-                      step="0.0001"
-                      value={lng}
-                      onChange={(e) => setLng(parseFloat(e.target.value))}
-                      className="w-full mt-1 bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
-                      required
-                    />
-                  </div>
-                </div>
+                ))}
               </div>
-
-              {/* Description */}
-              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-                  Incident Description
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="e.g. Deep waterlogging near Sitabuldi station underpass, traffic stalled..."
-                  rows={4}
-                  className="w-full text-xs bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-400 leading-relaxed resize-none font-medium"
-                />
-
-                <label className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer pt-1">
-                  <input
-                    type="checkbox"
-                    checked={isAnonymous}
-                    onChange={(e) => setIsAnonymous(e.target.checked)}
-                    className="rounded accent-teal-600"
-                  />
-                  <span>Submit report anonymously</span>
-                </label>
-              </div>
-
-              {/* Error Message */}
-              {error && (
-                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-red-700 dark:text-red-300 flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={submitting}
-                className="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-sm shadow-xl shadow-teal-600/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
-              >
-                {submitting ? (
-                  <>
-                    <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Running Vision AI Inference & Submitting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    <span>Submit Incident to Municipal Desk</span>
-                  </>
-                )}
-              </button>
             </div>
+
+            {/* GPS Location Fields */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-black uppercase tracking-wider text-slate-400">
+                  2. Incident Coordinates (GPS)
+                </label>
+                <button
+                  type="button"
+                  onClick={handleLocateMe}
+                  disabled={locating}
+                  className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00] hover:underline flex items-center gap-1 cursor-pointer"
+                >
+                  <LocateFixed className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
+                  <span>{locating ? "Detecting GPS..." : "Auto-Detect My GPS"}</span>
+                </button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B]">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Latitude</span>
+                  <input
+                    type="number"
+                    step="0.00001"
+                    value={lat}
+                    onChange={(e) => setLat(parseFloat(e.target.value))}
+                    className="w-full bg-transparent text-sm font-black text-slate-900 dark:text-white font-mono focus:outline-none mt-0.5"
+                    required
+                  />
+                </div>
+                <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B]">
+                  <span className="text-[10px] text-slate-400 font-bold uppercase block">Longitude</span>
+                  <input
+                    type="number"
+                    step="0.00001"
+                    value={lng}
+                    onChange={(e) => setLng(parseFloat(e.target.value))}
+                    className="w-full bg-transparent text-sm font-black text-slate-900 dark:text-white font-mono focus:outline-none mt-0.5"
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Photo Upload Input */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                3. Hazard Photo Evidence (Vision AI Verification)
+              </label>
+
+              <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-3xl p-6 text-center hover:border-[#FF8A00] transition-colors bg-slate-50 dark:bg-[#0B0F17]">
+                {photoPreview ? (
+                  <div className="relative rounded-2xl overflow-hidden max-h-64 flex items-center justify-center bg-black">
+                    <img src={photoPreview} alt="Evidence" className="max-h-64 w-auto object-contain" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPhotoFile(null);
+                        setPhotoPreview(null);
+                      }}
+                      className="absolute top-3 right-3 p-2 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer block py-4">
+                    <div className="mx-auto w-14 h-14 rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/10 flex items-center justify-center text-[#EA580C] dark:text-[#FF8A00] mb-3 border border-[#FF8A00]/20">
+                      <Camera className="w-7 h-7" />
+                    </div>
+                    <span className="text-sm font-black text-slate-900 dark:text-white block">
+                      Take a Photo or Browse Device
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400 block mt-1">
+                      JPEG, PNG, or WebP road photo evidence
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      onChange={handlePhotoChange}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
+            {/* Description Textarea */}
+            <div className="space-y-2">
+              <label className="text-xs font-black uppercase tracking-wider text-slate-400 block">
+                4. Location Context & Notes
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="E.g., Narendra Nagar railway underpass submerged ~2 feet deep. Cars turning back, 1 auto stuck..."
+                rows={3}
+                className="w-full text-xs font-medium bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-4 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00] placeholder:text-slate-400 resize-none leading-relaxed"
+              />
+            </div>
+
+            {/* Anonymous Toggle */}
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="anon"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                className="w-4 h-4 accent-[#FF8A00] rounded"
+              />
+              <label htmlFor="anon" className="text-xs text-slate-600 dark:text-slate-400 font-medium cursor-pointer">
+                Submit anonymously (omit citizen contact details from municipal public logs)
+              </label>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-red-700 dark:text-red-300 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-red-500" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {/* Submit Action */}
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-4 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-sm shadow-xl shadow-[#FF8A00]/25 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+            >
+              <Upload className={`w-4 h-4 ${submitting ? "animate-spin" : ""}`} />
+              <span>{submitting ? "Analyzing with Hugging Face Vision AI..." : "Submit Incident Report"}</span>
+            </button>
           </form>
         ) : (
-          /* Submission Results & AI Inference Card */
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in">
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-start gap-3">
-              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+          /* Submission Feedback & Vision AI Results */
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 sm:p-8 shadow-xl space-y-6 animate-in fade-in">
+            <div className="flex items-center gap-3 p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0" />
               <div>
                 <h3 className="text-base font-black text-slate-900 dark:text-white">
-                  Report Registered & Queued!
+                  Hazard Report #{detectionResult.id} Registered!
                 </h3>
-                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
-                  Incident #{detectionResult.id} has been logged and assigned to{" "}
-                  <strong className="text-teal-600 dark:text-teal-400 font-bold">
-                    {detectionResult.zone_name || "Nagpur Urban Zone"}
-                  </strong>.
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-0.5">
+                  Your report was auto-assigned to <strong className="text-[#EA580C] dark:text-[#FF8A00]">{detectionResult.zone_name || "Nagpur City"}</strong>.
                 </p>
               </div>
             </div>
 
-            {/* Hugging Face AI Vision Results */}
-            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-3">
-              <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400">
+            {/* Hugging Face AI Inferences */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-4">
+              <div className="flex items-center gap-2 text-[#EA580C] dark:text-[#FF8A00]">
                 <Bot className="w-5 h-5" />
                 <span className="text-xs font-black uppercase tracking-wider">
-                  Hugging Face Vision AI Analysis
+                  Hugging Face AI Vision Analysis
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">Waterlogging Flood:</span>
+                <div className="p-3.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400 font-bold">Pothole Hazard:</span>
                   <span
-                    className={`font-black px-2 py-0.5 rounded text-[11px] ${
-                      detectionResult.waterlogging_detected
-                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
-                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    className={`font-black px-2.5 py-1 rounded text-[11px] ${
+                      detectionResult.pothole_detected
+                        ? "bg-red-500 text-white"
+                        : "bg-emerald-500 text-white"
                     }`}
                   >
-                    {detectionResult.waterlogging_detected
-                      ? `DETECTED (${Math.round((detectionResult.waterlogging_confidence || 0.85) * 100)}%)`
-                      : "NOT DETECTED"}
+                    {detectionResult.pothole_detected ? "DETECTED" : "CLEAR"}
                   </span>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
-                  <span className="text-slate-600 dark:text-slate-300 font-medium">Pothole Severity:</span>
+                <div className="p-3.5 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-400 font-bold">Waterlogging Flood:</span>
                   <span
-                    className={`font-black px-2 py-0.5 rounded text-[11px] ${
-                      detectionResult.pothole_detected
-                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
-                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    className={`font-black px-2.5 py-1 rounded text-[11px] ${
+                      detectionResult.waterlogging_detected
+                        ? "bg-red-500 text-white"
+                        : "bg-emerald-500 text-white"
                     }`}
                   >
-                    {detectionResult.pothole_detected
-                      ? `DETECTED (${Math.round((detectionResult.pothole_confidence || 0.8) * 100)}%)`
-                      : "NOT DETECTED"}
+                    {detectionResult.waterlogging_detected ? "CONFIRMED INUNDATION" : "CLEAR"}
                   </span>
                 </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-100 dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 text-xs flex justify-between items-center">
+                <span>Verification State:</span>
+                <span className="font-bold text-[#EA580C] dark:text-[#FF8A00]">
+                  {detectionResult.verification_status || "Pending Verification"}
+                </span>
               </div>
             </div>
 
@@ -348,9 +334,9 @@ export default function ReportHazardPage() {
                 setPhotoPreview(null);
                 setDescription("");
               }}
-              className="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-sm shadow-lg shadow-teal-600/30 transition active:scale-95"
+              className="w-full py-4 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shadow-md transition cursor-pointer"
             >
-              Submit Another Hazard Report
+              Submit Another Report
             </button>
           </div>
         )}

@@ -64,16 +64,16 @@ export default function AdminPriorityQueuePage() {
               Priority Dispatch Queue
             </h1>
             <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
-              Ranked by Multi-Variable Crisis Formula: <code className="text-teal-600 dark:text-teal-400 font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost</code>
+              Ranked by Multi-Variable Crisis Formula: <code className="text-[#EA580C] dark:text-[#FF8A00] font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost</code>
             </p>
           </div>
 
           <button
             onClick={fetchQueue}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
             <span>Refresh Queue</span>
           </button>
         </div>
@@ -84,9 +84,9 @@ export default function AdminPriorityQueuePage() {
             <button
               key={cat}
               onClick={() => setFilterCat(cat)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
                 filterCat === cat
-                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                  ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/20"
                   : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
               }`}
             >
@@ -98,101 +98,94 @@ export default function AdminPriorityQueuePage() {
         {/* Priority Table Container */}
         <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider text-[10px]">
+                <tr className="border-b border-slate-200 dark:border-[#1E293B] bg-slate-50 dark:bg-[#0B0F17] text-slate-400 font-bold uppercase text-[10px]">
                   <th className="p-4">Rank & Ward</th>
-                  <th className="p-4">Severity Score</th>
+                  <th className="p-4">Risk Index</th>
                   <th className="p-4">Rainfall (mm/h)</th>
-                  <th className="p-4">Drainage Cap</th>
-                  <th className="p-4">Reports</th>
-                  <th className="p-4">Dispatch Action</th>
+                  <th className="p-4">Drainage Capacity</th>
+                  <th className="p-4">Pending Reports</th>
+                  <th className="p-4">Dispatch Status</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-[#1E293B] font-medium">
-                {filteredQueue.map((item, idx) => {
-                  const isSevere = item.risk_category === "Severe";
-                  const isHigh = item.risk_category === "High";
+              <tbody className="divide-y divide-slate-100 dark:divide-[#1E293B]">
+                {filteredQueue.map((item, idx) => (
+                  <tr key={item.zone_id} className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/40 transition">
+                    <td className="p-4 font-bold text-slate-900 dark:text-white flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-xl bg-slate-100 dark:bg-[#0B0F17] text-[#EA580C] dark:text-[#FF8A00] font-black text-xs flex items-center justify-center">
+                        #{idx + 1}
+                      </span>
+                      <span>{item.zone_name}</span>
+                    </td>
 
-                  return (
-                    <tr
-                      key={item.zone_id}
-                      className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/50 transition"
-                    >
-                      {/* Rank & Ward */}
-                      <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#0B0F17] flex items-center justify-center font-black text-xs text-teal-700 dark:text-teal-400">
-                            #{idx + 1}
-                          </span>
-                          <div>
-                            <div className="font-black text-sm text-slate-900 dark:text-white">
-                              {item.zone_name}
-                            </div>
-                            <div className="text-[10px] text-slate-400">Ward ID #{item.zone_id}</div>
-                          </div>
-                        </div>
-                      </td>
+                    <td className="p-4">
+                      <span
+                        className={`font-black px-2.5 py-1 rounded text-[11px] ${
+                          item.risk_category === "Severe"
+                            ? "bg-red-500 text-white"
+                            : item.risk_category === "High"
+                            ? "bg-orange-500 text-white"
+                            : item.risk_category === "Medium"
+                            ? "bg-amber-500 text-white"
+                            : "bg-emerald-500 text-white"
+                        }`}
+                      >
+                        {item.risk_score?.toFixed(1)} ({item.risk_category})
+                      </span>
+                    </td>
 
-                      {/* Score Badge */}
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
-                              isSevere
-                                ? "bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/30"
-                                : isHigh
-                                ? "bg-orange-500/10 text-orange-600 dark:text-orange-300 border border-orange-500/30"
-                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
-                            }`}
+                    <td className="p-4 font-black text-slate-900 dark:text-white">
+                      {item.rainfall_mm?.toFixed(1)} mm/h
+                    </td>
+
+                    <td className="p-4 text-slate-600 dark:text-slate-300 font-semibold">
+                      {Math.round((item.drainage_capacity || 0.5) * 100)}%
+                    </td>
+
+                    <td className="p-4 text-slate-600 dark:text-slate-300">
+                      {item.pending_reports_count || 0} Reports
+                    </td>
+
+                    <td className="p-4">
+                      <span
+                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                          item.dispatch_status === "Dispatched"
+                            ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
+                            : item.dispatch_status === "Resolved"
+                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                            : "bg-slate-100 dark:bg-[#0B0F17] text-slate-500 dark:text-slate-400"
+                        }`}
+                      >
+                        {item.dispatch_status || "Unassigned"}
+                      </span>
+                    </td>
+
+                    <td className="p-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        {item.dispatch_status !== "Dispatched" && (
+                          <button
+                            onClick={() => handleStatusChange(item.zone_id, "Dispatched")}
+                            disabled={updatingId === item.zone_id}
+                            className="px-3 py-1.5 rounded-xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-[11px] transition shadow-sm cursor-pointer"
                           >
-                            {item.risk_category} ({item.risk_score.toFixed(1)})
-                          </span>
-
-                          {item.photo_confirmed && (
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">
-                              📸 Photo Boost
-                            </span>
-                          )}
-                        </div>
-                      </td>
-
-                      {/* Rainfall */}
-                      <td className="p-4 font-bold text-slate-900 dark:text-white">
-                        {item.rainfall_mm.toFixed(1)} mm/h
-                      </td>
-
-                      {/* Drainage */}
-                      <td className="p-4 font-bold text-slate-900 dark:text-white">
-                        {Math.round(item.drainage_capacity * 100)}%
-                      </td>
-
-                      {/* Reports */}
-                      <td className="p-4">
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          {item.pending_reports_count} Pending
-                        </span>
-                        <span className="text-[10px] text-slate-400 block">
-                          {item.verified_reports_count} Verified
-                        </span>
-                      </td>
-
-                      {/* Dispatch Action Dropdown */}
-                      <td className="p-4">
-                        <select
-                          value={item.dispatch_status || "Unassigned"}
-                          disabled={updatingId === item.zone_id}
-                          onChange={(e) => handleStatusChange(item.zone_id, e.target.value)}
-                          className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
-                        >
-                          <option value="Unassigned">⚪ Unassigned</option>
-                          <option value="Dispatched">🚒 Dispatched (QRT/Pump)</option>
-                          <option value="Resolved">🟢 Resolved</option>
-                        </select>
-                      </td>
-                    </tr>
-                  );
-                })}
+                            Dispatch QRT
+                          </button>
+                        )}
+                        {item.dispatch_status !== "Resolved" && (
+                          <button
+                            onClick={() => handleStatusChange(item.zone_id, "Resolved")}
+                            disabled={updatingId === item.zone_id}
+                            className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow-sm cursor-pointer"
+                          >
+                            Mark Resolved
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

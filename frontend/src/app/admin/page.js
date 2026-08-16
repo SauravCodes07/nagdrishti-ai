@@ -39,10 +39,9 @@ export default function AdminCommandCenterPage() {
   const [queue, setQueue] = useState([]);
   const [zones, setZones] = useState([]);
   const [reports, setReports] = useState([]);
-  const [weather, setWeather] = useState({ rainfall_intensity_mm: 18.5 });
-  const [updatingZoneId, setUpdatingZoneId] = useState(null);
+  const [weather, setWeather] = useState({ condition: "Showers", rainfall_intensity_mm: 18.5 });
 
-  const fetchDashboard = async () => {
+  const loadData = async () => {
     try {
       setLoading(true);
       const [qData, zData, rData, wData] = await Promise.allSettled([
@@ -65,201 +64,185 @@ export default function AdminCommandCenterPage() {
         setWeather(wData.value);
       }
     } catch (err) {
-      console.error("Dashboard fetch error:", err);
+      console.error("Admin dashboard load error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboard();
+    loadData();
   }, []);
 
-  const handleAdvanceDispatch = async (zoneId, currentStatus) => {
+  const handleQuickDispatch = async (zoneId) => {
     try {
-      setUpdatingZoneId(zoneId);
-      const nextStatus =
-        currentStatus === "Unassigned"
-          ? "Dispatched"
-          : currentStatus === "Dispatched"
-          ? "Resolved"
-          : "Unassigned";
-
-      await updateDispatchStatus(zoneId, nextStatus);
-      await fetchDashboard();
+      await updateDispatchStatus(zoneId, "Dispatched");
+      await loadData();
     } catch (err) {
-      alert("Failed to update dispatch status: " + err.message);
-    } finally {
-      setUpdatingZoneId(null);
+      alert("Failed to dispatch unit: " + err.message);
     }
   };
 
-  const severeCount = queue.filter((q) => q.risk_category === "Severe").length;
-  const highCount = queue.filter((q) => q.risk_category === "High").length;
-  const pendingReportsCount = reports.filter((r) => r.verification_status === "Pending").length;
-  const activeDispatchesCount = zones.filter((z) => z.dispatch_status === "Dispatched").length;
+  const severeCount = queue.filter((z) => (z.risk_category === "Severe" || z.risk_score >= 75)).length;
+  const pendingReports = reports.filter((r) => r.verification_status === "Pending").length;
+  const dispatchedUnits = queue.filter((z) => z.dispatch_status === "Dispatched").length;
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Top Header */}
+        {/* Top Control Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              Command Center Overview
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#EA580C] dark:text-[#FF8A00]">
+                Emergency Management Desk
+              </span>
+              <span className="px-2 py-0.5 rounded-full bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-[10px] font-bold">
+                {severeCount} Severe Inundations Active
+              </span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mt-0.5">
+              Nagpur Emergency Dispatch HQ
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
-              Real-time situational awareness & multi-variable crisis prioritization for Nagpur
-            </p>
           </div>
 
-          <button
-            onClick={fetchDashboard}
-            disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
-            <span>Sync Feeds</span>
-          </button>
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <button
+              onClick={loadData}
+              disabled={loading}
+              className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm active:scale-95 transition flex items-center gap-1.5 cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
+              <span>Sync Network</span>
+            </button>
+
+            <Link
+              href="/admin/simulate"
+              className="px-4 py-2 rounded-xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-xs shadow-md shadow-[#FF8A00]/25 flex items-center gap-1.5 transition active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Simulate Scenario</span>
+            </Link>
+          </div>
         </div>
 
-        {/* 4 KPI Summary Cards */}
+        {/* 4 Top KPI Command Counters */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2 hover:border-teal-500/40 transition">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Critical Wards</span>
-              <AlertOctagon className="w-5 h-5 text-red-500" />
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Critical Priority Basins</span>
+            <div className="text-3xl font-black text-red-600 dark:text-red-400 mt-1">
+              {severeCount}
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {severeCount + highCount}
-            </div>
-            <div className="text-xs text-red-600 dark:text-red-400 font-semibold">
-              {severeCount} Severe, {highCount} High Risk
-            </div>
+            <p className="text-xs text-red-500 font-semibold">Immediate pump dispatch required</p>
           </div>
 
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2 hover:border-teal-500/40 transition">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Pending Reports</span>
-              <FileCheck2 className="w-5 h-5 text-amber-500" />
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Pending Citizen Reports</span>
+            <div className="text-3xl font-black text-amber-600 dark:text-amber-400 mt-1">
+              {pendingReports}
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {pendingReportsCount}
-            </div>
-            <div className="text-xs text-amber-600 dark:text-amber-400 font-semibold">
-              Awaiting officer moderation
-            </div>
+            <p className="text-xs text-amber-500 font-semibold">Awaiting officer moderation</p>
           </div>
 
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2 hover:border-teal-500/40 transition">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Active Dispatches</span>
-              <Truck className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400">Active Dispatches</span>
+            <div className="text-3xl font-black text-[#EA580C] dark:text-[#FF8A00] mt-1">
+              {dispatchedUnits}
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {activeDispatchesCount}
-            </div>
-            <div className="text-xs text-teal-700 dark:text-teal-400 font-semibold">
-              Pumps & QRT units deployed
-            </div>
+            <p className="text-xs text-[#EA580C] dark:text-[#FF8A00] font-semibold">Dewatering units in field</p>
           </div>
 
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2 hover:border-teal-500/40 transition">
-            <div className="flex items-center justify-between text-slate-500 dark:text-slate-400">
-              <span className="text-xs font-bold uppercase tracking-wider">Peak Rainfall</span>
-              <CloudRain className="w-5 h-5 text-teal-600 dark:text-teal-400" />
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-1">
+            <span className="text-[10px] uppercase font-bold text-slate-400">IMD Radar Live</span>
+            <div className="text-3xl font-black text-slate-900 dark:text-white mt-1">
+              {weather.rainfall_intensity_mm ?? 18.5} <span className="text-xs font-normal text-slate-400">mm/h</span>
             </div>
-            <div className="text-3xl font-black text-slate-900 dark:text-white">
-              {weather.rainfall_intensity_mm ?? 0} <span className="text-sm font-normal text-slate-400">mm/h</span>
-            </div>
-            <div className="text-xs text-teal-700 dark:text-teal-400 font-semibold">
-              IMD Doppler radar telemetry
-            </div>
+            <p className="text-xs text-slate-500 font-semibold">{weather.condition || "Live Radar Stream"}</p>
           </div>
         </div>
 
-        {/* Side-by-Side: Leaflet GIS Map & Priority Queue Preview */}
+        {/* 2-Column Responsive Officer Command Suite */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Map Column */}
-          <div className="lg:col-span-7 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
-                Citywide Flood Topology
-              </h2>
-              <Link
-                href="/map"
-                target="_blank"
-                className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
-              >
-                <span>Full Map Screen</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="h-[460px] w-full rounded-3xl overflow-hidden shadow-xl border border-slate-200 dark:border-[#1E293B] relative bg-white dark:bg-[#131B2A]">
-              <MapComponent zones={zones} reports={reports} />
-            </div>
-          </div>
-
-          {/* Priority Queue Column */}
-          <div className="lg:col-span-5 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-black uppercase tracking-wider text-teal-700 dark:text-teal-400">
-                Priority Dispatch Queue
-              </h2>
-              <Link
-                href="/admin/queue"
-                className="text-xs font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
-              >
-                <span>Full Queue ({queue.length})</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-4 shadow-sm space-y-2.5 max-h-[460px] overflow-y-auto">
-              {queue.slice(0, 6).map((q, idx) => (
-                <div
-                  key={q.zone_id}
-                  className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between gap-3 hover:border-teal-500/30 transition"
+          {/* Left Column: Priority Dispatch Queue Overview */}
+          <div className="lg:col-span-7 space-y-4">
+            <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-[#1E293B] pb-3">
+                <div>
+                  <h2 className="text-base font-black text-slate-900 dark:text-white">
+                    Multi-Variable Dispatch Queue
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Calculated by: <code className="text-[#EA580C] dark:text-[#FF8A00] font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Boost</code>
+                  </p>
+                </div>
+                <Link
+                  href="/admin/queue"
+                  className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00] hover:underline flex items-center gap-1"
                 >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-7 h-7 rounded-xl bg-slate-200 dark:bg-[#1E293B] font-black text-xs flex items-center justify-center text-teal-700 dark:text-teal-400 shrink-0">
-                      #{idx + 1}
-                    </div>
-                    <div className="min-w-0">
-                      <div className="text-xs font-black text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
-                        <span>{q.zone_name}</span>
-                        {q.photo_confirmed && (
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-red-500/10 text-red-600 dark:text-red-400 shrink-0">
-                            📸 Photo
+                  <span>Full Queue</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-[#1E293B]">
+                {queue.slice(0, 5).map((item, idx) => (
+                  <div key={item.zone_id || idx} className="py-3 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-xl bg-slate-100 dark:bg-[#0B0F17] text-slate-900 dark:text-white font-black text-xs flex items-center justify-center">
+                        #{idx + 1}
+                      </span>
+                      <div>
+                        <div className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-1.5">
+                          <span>{item.zone_name}</span>
+                          <span
+                            className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded-full ${
+                              item.risk_category === "Severe"
+                                ? "bg-red-500 text-white"
+                                : item.risk_category === "High"
+                                ? "bg-orange-500 text-white"
+                                : "bg-emerald-500 text-white"
+                            }`}
+                          >
+                            {item.risk_score?.toFixed(1) || 10}
                           </span>
-                        )}
+                        </div>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                          Rain: {item.rainfall_mm?.toFixed(1) || 0} mm/h | Status: {item.dispatch_status || "Unassigned"}
+                        </p>
                       </div>
-                      <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold truncate">
-                        Score: {q.risk_score.toFixed(1)} • {q.rainfall_mm.toFixed(1)} mm/h • {q.dispatch_status}
-                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      {item.dispatch_status !== "Dispatched" && (
+                        <button
+                          onClick={() => handleQuickDispatch(item.zone_id)}
+                          className="px-3 py-1.5 rounded-xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-[11px] transition cursor-pointer"
+                        >
+                          Dispatch QRT
+                        </button>
+                      )}
                     </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                  <button
-                    onClick={() => handleAdvanceDispatch(q.zone_id, q.dispatch_status)}
-                    disabled={updatingZoneId === q.zone_id}
-                    className="px-3 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-[10px] shadow-sm transition flex items-center gap-1 shrink-0"
-                  >
-                    {updatingZoneId === q.zone_id ? (
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                    ) : (
-                      <span>Advance</span>
-                    )}
-                  </button>
-                </div>
-              ))}
+          {/* Right Column: Live GIS Catchment Map */}
+          <div className="lg:col-span-5 space-y-4">
+            <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-xl space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-slate-900 dark:text-white">
+                  PostGIS Catchment Topology
+                </span>
+                <span className="text-[10px] font-bold text-[#EA580C] dark:text-[#FF8A00]">
+                  10 Zones Connected
+                </span>
+              </div>
 
-              {queue.length === 0 && (
-                <div className="p-8 text-center text-xs text-slate-500">
-                  No priority items queued. All drainage operating normally.
-                </div>
-              )}
+              <div className="h-[360px] w-full rounded-2xl overflow-hidden relative border border-slate-200 dark:border-[#1E293B]">
+                <MapComponent zones={zones} reports={reports} />
+              </div>
             </div>
           </div>
         </div>
