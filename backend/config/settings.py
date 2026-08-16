@@ -44,6 +44,7 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
     "https://nagdrishti-ai-backend.onrender.com",
     "https://nagdrishti-backend.onrender.com",
+    "https://*.vercel.app",
     "https://nagdrishti.netlify.app",
     "https://*.netlify.app",
     "http://localhost:3000",

@@ -2,7 +2,7 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
-from .models import Zone
+from .models import Zone, WeatherReading
 from .serializers import ZoneRiskSerializer
 from risk.models import RiskScore
 from risk.scoring import compute_zone_risk
@@ -46,3 +46,46 @@ class ZoneDispatchView(APIView):
 
         serializer = ZoneRiskSerializer(zone)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class CityWeatherView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        """
+        GET /api/zones/weather/ (public)
+        Returns current citywide weather aggregates from latest readings.
+        """
+        latest_readings = WeatherReading.objects.all().order_by("-recorded_at")[:10]
+        if latest_readings:
+            avg_rain = sum(r.rainfall_intensity_mm for r in latest_readings) / len(latest_readings)
+            max_rain = max(r.rainfall_intensity_mm for r in latest_readings)
+            source = latest_readings[0].source
+            rec_at = latest_readings[0].recorded_at.isoformat() if latest_readings[0].recorded_at else None
+
+            if max_rain >= 50.0:
+                condition = "Torrential Downpour / Severe Thunderstorms"
+            elif max_rain >= 25.0:
+                condition = "Heavy Monsoon Rain"
+            elif max_rain >= 5.0:
+                condition = "Moderate Showers"
+            elif max_rain > 0.0:
+                condition = "Light Drizzle"
+            else:
+                condition = "Clear / Overcast"
+
+            return Response({
+                "rainfall_intensity_mm": round(max_rain, 1),
+                "average_rainfall_mm": round(avg_rain, 1),
+                "condition": condition,
+                "source": source,
+                "recorded_at": rec_at,
+            }, status=status.HTTP_200_OK)
+
+        return Response({
+            "rainfall_intensity_mm": 0.0,
+            "average_rainfall_mm": 0.0,
+            "condition": "Clear",
+            "source": "open_meteo",
+            "recorded_at": None,
+        }, status=status.HTTP_200_OK)

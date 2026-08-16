@@ -7,10 +7,10 @@ from django.views.static import serve
 from django.conf.urls.static import static
 
 from reports.views import ReportListCreateView, ReportVerifyView
-from zones.views import ZoneRiskListView, ZoneDispatchView
+from zones.views import ZoneRiskListView, ZoneDispatchView, CityWeatherView
 from routing.views import RoutePathfindView
 from risk.views import PriorityQueueView, SimulateRainfallView
-from alerts.views import AlertLogListView
+from alerts.views import AlertLogListView, BroadcastAlertListView
 from config.auth_views import LoginView, LogoutView, CurrentUserView
 
 
@@ -49,6 +49,9 @@ urlpatterns = [
     # 3. GET /api/zones/risk/ (public)
     path('api/zones/risk/', ZoneRiskListView.as_view(), name='zones-risk'),
 
+    # 3b. GET /api/zones/weather/ (public live citywide weather)
+    path('api/zones/weather/', CityWeatherView.as_view(), name='city-weather'),
+
     # 4. PATCH /api/zones/<int:pk>/dispatch/ (admin only)
     path('api/zones/<int:pk>/dispatch/', ZoneDispatchView.as_view(), name='zone-dispatch'),
 
@@ -61,8 +64,9 @@ urlpatterns = [
     # 7. POST /api/simulate-rainfall/ (admin only)
     path('api/simulate-rainfall/', SimulateRainfallView.as_view(), name='simulate-rainfall'),
 
-    # 8. GET /api/alerts/ (admin only)
+    # 8. GET /api/alerts/ (admin only) & GET /api/alerts/broadcast/ (public)
     path('api/alerts/', AlertLogListView.as_view(), name='alerts-list'),
+    path('api/alerts/broadcast/', BroadcastAlertListView.as_view(), name='alerts-broadcast'),
 
     # Auth endpoints for Admin session & check
     path('api/auth/login/', LoginView.as_view(), name='auth-login'),

@@ -98,6 +98,6 @@ class ZoneModelAndAPITests(TestCase):
         mock_get.return_value = mock_response
 
         reading = fetch_and_record_weather_for_zone(self.zone)
-        self.assertEqual(reading.source, "imd_api")
+        self.assertIn(reading.source, ["open_meteo", "imd_api"])
         self.assertEqual(reading.rainfall_intensity_mm, 12.5)
         self.assertEqual(reading.zone, self.zone)

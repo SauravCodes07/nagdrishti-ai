@@ -70,10 +70,10 @@ def fetch_and_record_weather_for_zone(zone: Zone) -> WeatherReading:
             reading = WeatherReading.objects.create(
                 zone=zone,
                 rainfall_intensity_mm=float(precip),
-                source="imd_api",
+                source="open_meteo",
                 recorded_at=now,
             )
-            logger.info(f"Recorded live weather reading for {zone.name}: {precip}mm (source: imd_api)")
+            logger.info(f"Recorded live weather reading for {zone.name}: {precip}mm (source: open_meteo)")
             return reading
         else:
             logger.warning(f"Open-Meteo returned status {response.status_code}, falling back to simulated reading.")
