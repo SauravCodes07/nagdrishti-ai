@@ -1,27 +1,39 @@
 """
 Routing and pathfinding module for NagDrishti AI.
-Calculates risk-aware safe routes across Nagpur using OSMnx/NetworkX and A* pathfinding.
-Dynamic edge weights are penalized by real-time zone risk scores and waterlogging hazards.
-Supports arbitrary start and destination coordinates across Nagpur.
+
+Calculates risk-aware safe routes across Nagpur using OSMnx and NetworkX A* pathfinding.
+Pulls real OpenStreetMap road network data for Nagpur (south=21.08, north=21.22, west=79.02, east=79.18),
+caches the graph to disk (backend/routing/cache/nagpur_graph.graphml), and dynamically penalizes
+edge weights based on real-time zone risk scores and waterlogging hazards.
 """
 
+import os
 import json
 import math
 import logging
 from typing import Dict, List, Tuple, Any, Optional
+from pathlib import Path
 import networkx as nx
+import osmnx as ox
 from shapely.geometry import Point, Polygon
 from zones.models import Zone
 from risk.models import RiskScore
 
 logger = logging.getLogger(__name__)
 
-# Nagpur Geographic Bounding Box
-# South: 21.08, North: 21.22, West: 79.02, East: 79.18
-NAGPUR_CENTER = (21.1458, 79.0882)
+# Nagpur Bounding Box Coordinates (South, North, West, East)
+NAGPUR_SOUTH = 21.08
+NAGPUR_NORTH = 21.22
+NAGPUR_WEST = 79.02
+NAGPUR_EAST = 79.18
 
-# Cached road graph in memory
-_CACHED_ROAD_GRAPH: Optional[nx.Graph] = None
+# Cache file path
+BASE_DIR = Path(__file__).resolve().parent.parent
+CACHE_DIR = BASE_DIR / "routing" / "cache"
+CACHE_FILE = CACHE_DIR / "nagpur_graph.graphml"
+
+# In-memory cached road graph
+_CACHED_ROAD_GRAPH: Optional[nx.MultiDiGraph] = None
 
 
 def get_zone_for_point(lat: float, lng: float, zones: List[Zone]) -> Optional[Zone]:
@@ -69,205 +81,129 @@ def haversine_distance_m(lat1: float, lng1: float, lat2: float, lng2: float) -> 
     return 6371000.0 * 2.0 * math.atan2(math.sqrt(a), math.sqrt(1.0 - a))
 
 
-def build_nagpur_road_network() -> nx.Graph:
+def build_nagpur_road_network(force_refresh: bool = False) -> nx.MultiDiGraph:
     """
-    Builds the high-fidelity topological road network graph of Nagpur city,
-    incorporating all primary corridors, ring roads, ward connectors, and arterial roads.
+    Loads or downloads the real OpenStreetMap drivable road network of Nagpur
+    using OSMnx for bbox (south=21.08, north=21.22, west=79.02, east=79.18).
+    Caches the graph to disk at backend/routing/cache/nagpur_graph.graphml.
     """
     global _CACHED_ROAD_GRAPH
-    if _CACHED_ROAD_GRAPH is not None:
+    if _CACHED_ROAD_GRAPH is not None and not force_refresh:
         return _CACHED_ROAD_GRAPH
 
-    G = nx.Graph()
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # High-density Nagpur road network intersections & key nodes
-    nodes_data = {
-        # Central Hubs
-        "Zero_Mile": (21.1458, 79.0882),
-        "Sitabuldi_Junction": (21.1465, 79.0825),
-        "RBI_Square": (21.1510, 79.0870),
-        "Nagpur_Railway_Station": (21.1520, 79.0895),
-        "Cotton_Market": (21.1440, 79.0930),
-        
-        # West & Dharampeth Ward Corridors
-        "Dharampeth_Square": (21.1472, 79.0664),
-        "Law_College_Square": (21.1480, 79.0580),
-        "Ram_Nagar_Square": (21.1530, 79.0540),
-        "Ravi_Nagar_Square": (21.1545, 79.0490),
-        "Amravati_Road_Junction": (21.1560, 79.0400),
-        "Shankar_Nagar_Square": (21.1390, 79.0600),
-        "Laxmi_Nagar_Square": (21.1270, 79.0620),
-        "Bajaj_Nagar_Square": (21.1290, 79.0690),
-        
-        # North & Sadar / Mangalwari Corridors
-        "Sadar_Residency_Road": (21.1605, 79.0830),
-        "Katol_Road_Square": (21.1680, 79.0650),
-        "Mangalwari_Sadar": (21.1750, 79.0750),
-        "Jaripatka_Square": (21.1850, 79.0900),
-        "Kadbi_Chowk": (21.1690, 79.0860),
-        "Kamptee_Road_Toll": (21.1880, 79.1100),
-        
-        # East & Mahal / Gandhibagh / Itwari / Lakadganj Corridors
-        "Mahal_Gandhi_Gate": (21.1470, 79.1020),
-        "Badkas_Chowk": (21.1445, 79.1040),
-        "Gandhibagh_Market": (21.1560, 79.1010),
-        "Itwari_Railway_Station": (21.1590, 79.1180),
-        "Central_Avenue_Square": (21.1510, 79.1120),
-        "Lakadganj_Square": (21.1550, 79.1300),
-        "Pardi_Naka": (21.1560, 79.1550),
-        "Bhandara_Road_Flyover": (21.1520, 79.1420),
-        
-        # South & Dhantoli / Hanuman Nagar / Nehru Nagar Corridors
-        "Dhantoli_Lokmat_Square": (21.1330, 79.0810),
-        "Rahate_Colony_Square": (21.1260, 79.0780),
-        "Wardha_Road_Ajni": (21.1180, 79.0780),
-        "Chhatrapati_Square": (21.1080, 79.0620),
-        "Medical_Square": (21.1310, 79.0980),
-        "Hanuman_Nagar_Square": (21.1250, 79.1050),
-        "Reshimbagh_Square": (21.1330, 79.1100),
-        "Nehru_Nagar_Square": (21.1200, 79.1350),
-        "Sakkardara_Square": (21.1240, 79.1210),
-        "Dighori_Naka": (21.1100, 79.1450),
-        
-        # Outer Ring Road Bypass Interconnects
-        "Ring_Road_West": (21.1400, 79.0380),
-        "Ring_Road_South": (21.1000, 79.0800),
-        "Ring_Road_East": (21.1350, 79.1600),
-        "Ring_Road_North": (21.1900, 79.0650),
-    }
+    # 1. Load from disk cache if present and valid
+    if CACHE_FILE.exists() and not force_refresh:
+        try:
+            logger.info(f"Loading cached Nagpur OSM road network from {CACHE_FILE}...")
+            G = ox.load_graphml(CACHE_FILE)
+            if len(G.nodes) > 100:
+                _CACHED_ROAD_GRAPH = G
+                logger.info(f"Successfully loaded {len(G.nodes)} nodes and {len(G.edges)} edges from cache.")
+                return G
+        except Exception as exc:
+            logger.warning(f"Failed to load cached graph from {CACHE_FILE}: {exc}. Re-downloading from OSM...")
 
-    for name, (lat, lng) in nodes_data.items():
-        G.add_node(name, lat=lat, lng=lng)
+    # 2. Fetch from OpenStreetMap via OSMnx
+    try:
+        logger.info("Downloading real Nagpur drivable road network from OpenStreetMap...")
+        # bbox in OSMnx 2.x: (north, south, east, west)
+        G = ox.graph_from_bbox(
+            bbox=(NAGPUR_NORTH, NAGPUR_SOUTH, NAGPUR_EAST, NAGPUR_WEST),
+            network_type="drive",
+            simplify=True,
+        )
+        if len(G.nodes) == 0:
+            raise ValueError("Downloaded OSM graph contains 0 nodes.")
 
-    # Road Segments & Corridors
-    corridor_edges = [
-        # Central Core
-        ("Zero_Mile", "Sitabuldi_Junction"),
-        ("Zero_Mile", "RBI_Square"),
-        ("RBI_Square", "Nagpur_Railway_Station"),
-        ("Nagpur_Railway_Station", "Cotton_Market"),
-        ("Cotton_Market", "Sitabuldi_Junction"),
-        ("Sitabuldi_Junction", "Dhantoli_Lokmat_Square"),
-        
-        # West Corridors (Amravati Rd / West Ward Connections)
-        ("Sitabuldi_Junction", "Dharampeth_Square"),
-        ("Dharampeth_Square", "Law_College_Square"),
-        ("Law_College_Square", "Ram_Nagar_Square"),
-        ("Ram_Nagar_Square", "Ravi_Nagar_Square"),
-        ("Ravi_Nagar_Square", "Amravati_Road_Junction"),
-        ("Amravati_Road_Junction", "Ring_Road_West"),
-        ("Dharampeth_Square", "Shankar_Nagar_Square"),
-        ("Shankar_Nagar_Square", "Bajaj_Nagar_Square"),
-        ("Bajaj_Nagar_Square", "Laxmi_Nagar_Square"),
-        ("Laxmi_Nagar_Square", "Chhatrapati_Square"),
-        ("Shankar_Nagar_Square", "Dhantoli_Lokmat_Square"),
-        
-        # North Corridors (Sadar / Katol Rd / Mangalwari)
-        ("Zero_Mile", "Sadar_Residency_Road"),
-        ("RBI_Square", "Sadar_Residency_Road"),
-        ("Sadar_Residency_Road", "Katol_Road_Square"),
-        ("Katol_Road_Square", "Mangalwari_Sadar"),
-        ("Mangalwari_Sadar", "Ring_Road_North"),
-        ("Sadar_Residency_Road", "Kadbi_Chowk"),
-        ("Kadbi_Chowk", "Jaripatka_Square"),
-        ("Jaripatka_Square", "Kamptee_Road_Toll"),
-        ("Kadbi_Chowk", "Gandhibagh_Market"),
-        
-        # East Corridors (Central Avenue / Mahal / Gandhibagh / Itwari / Lakadganj)
-        ("Zero_Mile", "Mahal_Gandhi_Gate"),
-        ("Cotton_Market", "Mahal_Gandhi_Gate"),
-        ("Mahal_Gandhi_Gate", "Badkas_Chowk"),
-        ("Mahal_Gandhi_Gate", "Gandhibagh_Market"),
-        ("Gandhibagh_Market", "Itwari_Railway_Station"),
-        ("Itwari_Railway_Station", "Central_Avenue_Square"),
-        ("Central_Avenue_Square", "Lakadganj_Square"),
-        ("Lakadganj_Square", "Bhandara_Road_Flyover"),
-        ("Bhandara_Road_Flyover", "Pardi_Naka"),
-        ("Pardi_Naka", "Ring_Road_East"),
-        ("Sitabuldi_Junction", "Central_Avenue_Square"),
-        
-        # South Corridors (Wardha Rd / Medical / Hanuman Nagar / Nehru Nagar)
-        ("Dhantoli_Lokmat_Square", "Rahate_Colony_Square"),
-        ("Rahate_Colony_Square", "Wardha_Road_Ajni"),
-        ("Wardha_Road_Ajni", "Chhatrapati_Square"),
-        ("Chhatrapati_Square", "Ring_Road_South"),
-        ("Dhantoli_Lokmat_Square", "Medical_Square"),
-        ("Medical_Square", "Hanuman_Nagar_Square"),
-        ("Hanuman_Nagar_Square", "Reshimbagh_Square"),
-        ("Reshimbagh_Square", "Sakkardara_Square"),
-        ("Sakkardara_Square", "Nehru_Nagar_Square"),
-        ("Nehru_Nagar_Square", "Dighori_Naka"),
-        ("Dighori_Naka", "Ring_Road_East"),
-        ("Mahal_Gandhi_Gate", "Medical_Square"),
-        ("Badkas_Chowk", "Reshimbagh_Square"),
-        ("Lakadganj_Square", "Nehru_Nagar_Square"),
-        ("Central_Avenue_Square", "Reshimbagh_Square"),
-        
-        # Outer Ring Road Interconnects (Safe Bypass Corridors)
-        ("Ring_Road_West", "Ring_Road_North"),
-        ("Ring_Road_North", "Kamptee_Road_Toll"),
-        ("Kamptee_Road_Toll", "Pardi_Naka"),
-        ("Ring_Road_East", "Ring_Road_South"),
-        ("Ring_Road_South", "Ring_Road_West"),
-    ]
+        # Save to disk cache
+        try:
+            ox.save_graphml(G, CACHE_FILE)
+            logger.info(f"Saved Nagpur road graph ({len(G.nodes)} nodes) to cache at {CACHE_FILE}.")
+        except Exception as save_err:
+            logger.warning(f"Could not write graph cache to {CACHE_FILE}: {save_err}")
 
-    for u, v in corridor_edges:
-        lat1, lng1 = nodes_data[u]
-        lat2, lng2 = nodes_data[v]
-        dist_m = haversine_distance_m(lat1, lng1, lat2, lng2)
-        mid_lat = (lat1 + lat2) / 2.0
-        mid_lng = (lng1 + lng2) / 2.0
-        G.add_edge(u, v, length=dist_m, mid_lat=mid_lat, mid_lng=mid_lng)
+        _CACHED_ROAD_GRAPH = G
+        return G
 
-    _CACHED_ROAD_GRAPH = G
-    return G
+    except Exception as exc:
+        logger.error(f"Failed to download Nagpur road graph from OSMnx/Overpass: {exc}")
+        raise RuntimeError(
+            f"routing_unavailable: Could not fetch real Nagpur road network from OpenStreetMap Overpass API ({exc})"
+        )
 
 
-def find_nearest_node(G: nx.Graph, lat: float, lng: float) -> str:
-    """Finds the closest road network node to any arbitrary lat/lng coordinates."""
-    best_node = "Zero_Mile"
-    min_dist = float("inf")
-    for n, data in G.nodes(data=True):
-        n_lat = data.get("lat", 21.1458)
-        n_lng = data.get("lng", 79.0882)
-        dist = haversine_distance_m(lat, lng, n_lat, n_lng)
-        if dist < min_dist:
-            min_dist = dist
-            best_node = n
-    return best_node
+def find_nearest_node(G: Any, lat: float, lng: float) -> int:
+    """Finds the nearest OSM node ID (integer) for given lat, lng coordinates."""
+    try:
+        # Use OSMnx built-in nearest_nodes (expects X=longitude, Y=latitude)
+        node_id = ox.nearest_nodes(G, X=float(lng), Y=float(lat))
+        return int(node_id)
+    except Exception as exc:
+        logger.warning(f"ox.nearest_nodes failed ({exc}), falling back to distance scan...")
+        best_node = None
+        min_dist = float("inf")
+        for n, data in G.nodes(data=True):
+            n_lat = data.get("y", data.get("lat"))
+            n_lng = data.get("x", data.get("lng"))
+            if n_lat is not None and n_lng is not None:
+                dist = haversine_distance_m(lat, lng, float(n_lat), float(n_lng))
+                if dist < min_dist:
+                    min_dist = dist
+                    best_node = n
+        if best_node is not None:
+            return int(best_node) if str(best_node).isdigit() else best_node
+        raise RuntimeError("No nodes found in road network graph.")
 
 
 def calculate_safe_route(from_lat: float, from_lng: float, to_lat: float, to_lng: float) -> Dict[str, Any]:
     """
-    Computes a risk-aware safest path across Nagpur road network using A* search.
+    Computes a risk-aware safest path across Nagpur road network using A* search on the real OSM graph.
     Road segment edge costs are dynamically penalized by zone crisis scores.
     """
-    G = build_nagpur_road_network()
+    try:
+        G = build_nagpur_road_network()
+    except Exception as exc:
+        return {
+            "status": "routing_unavailable",
+            "error": str(exc),
+            "message": "Real OSM routing is currently unavailable due to network/Overpass reachability.",
+        }
+
     zones = list(Zone.objects.all())
     zone_risks = get_latest_zone_risks()
 
     start_node = find_nearest_node(G, from_lat, from_lng)
     target_node = find_nearest_node(G, to_lat, to_lng)
 
-    # Heuristic for A* (Euclidean haversine distance in meters to target node)
-    target_lat = G.nodes[target_node]["lat"]
-    target_lng = G.nodes[target_node]["lng"]
+    start_data = G.nodes[start_node]
+    target_data = G.nodes[target_node]
+    target_lat = target_data.get("y", target_data.get("lat", NAGPUR_NORTH))
+    target_lng = target_data.get("x", target_data.get("lng", NAGPUR_EAST))
 
     def heuristic(u, v):
-        u_lat = G.nodes[u]["lat"]
-        u_lng = G.nodes[u]["lng"]
-        v_lat = G.nodes[v]["lat"]
-        v_lng = G.nodes[v]["lng"]
-        return haversine_distance_m(u_lat, u_lng, v_lat, v_lng)
+        u_data = G.nodes[u]
+        v_data = G.nodes[v]
+        u_lat = u_data.get("y", u_data.get("lat", 21.1458))
+        u_lng = u_data.get("x", u_data.get("lng", 79.0882))
+        v_lat = v_data.get("y", v_data.get("lat", 21.1458))
+        v_lng = v_data.get("x", v_data.get("lng", 79.0882))
+        return haversine_distance_m(float(u_lat), float(u_lng), float(v_lat), float(v_lng))
 
-    # Dynamic cost function: Base distance + zone risk penalty
-    # Score 0 (Low): 1.0x | Score 50 (Medium): 2.5x | Score 75+ (Severe/Waterlogged): 5.0x-8.0x
     avoided_zones = set()
 
     def weight_func(u, v, d):
-        base_len = d.get("length", 100.0)
-        mid_lat = d.get("mid_lat", (G.nodes[u]["lat"] + G.nodes[v]["lat"]) / 2.0)
-        mid_lng = d.get("mid_lng", (G.nodes[u]["lng"] + G.nodes[v]["lng"]) / 2.0)
+        base_len = float(d.get("length", 100.0))
+        u_data = G.nodes[u]
+        v_data = G.nodes[v]
+        u_lat = float(u_data.get("y", u_data.get("lat", 21.1458)))
+        u_lng = float(u_data.get("x", u_data.get("lng", 79.0882)))
+        v_lat = float(v_data.get("y", v_data.get("lat", 21.1458)))
+        v_lng = float(v_data.get("x", v_data.get("lng", 79.0882)))
+
+        mid_lat = (u_lat + v_lat) / 2.0
+        mid_lng = (u_lng + v_lng) / 2.0
 
         zone = get_zone_for_point(mid_lat, mid_lng, zones)
         risk = zone_risks.get(zone.id, 10.0) if zone else 10.0
@@ -275,61 +211,88 @@ def calculate_safe_route(from_lat: float, from_lng: float, to_lat: float, to_lng
         if risk >= 60.0 and zone:
             avoided_zones.add(zone.name)
 
-        # Risk penalty weight
+        # Exponential risk penalty on edge traversal
         risk_penalty = 1.0 + ((risk / 20.0) ** 1.6)
         return base_len * risk_penalty
 
-    # Execute NetworkX A* pathfinding
+    # Execute NetworkX A* or Dijkstra pathfinding on MultiDiGraph / converted Graph
     try:
-        path_nodes = nx.astar_path(G, start_node, target_node, heuristic=heuristic, weight=weight_func)
-    except nx.NetworkXNoPath:
-        # Fallback to standard shortest path if constrained
-        path_nodes = nx.shortest_path(G, start_node, target_node, weight="length")
+        if isinstance(G, nx.MultiDiGraph):
+            # For MultiDiGraph, find path using shortest_path / astar
+            # Create lightweight weighted view
+            path_nodes = nx.astar_path(G, start_node, target_node, heuristic=heuristic, weight=weight_func)
+        else:
+            path_nodes = nx.astar_path(G, start_node, target_node, heuristic=heuristic, weight=weight_func)
+    except (nx.NetworkXNoPath, nx.NodeNotFound):
+        try:
+            # Fallback to standard length-weighted shortest path on connected component
+            path_nodes = nx.shortest_path(G, start_node, target_node, weight="length")
+        except Exception:
+            # If graph is strongly directed and disconnected between specific points, try undirected
+            G_undirected = G.to_undirected()
+            try:
+                path_nodes = nx.astar_path(G_undirected, start_node, target_node, heuristic=heuristic, weight=weight_func)
+            except Exception as no_path_err:
+                return {
+                    "status": "routing_unavailable",
+                    "error": f"No connected street path found between ({from_lat}, {from_lng}) and ({to_lat}, {to_lng})",
+                    "message": "No road connection found between the selected coordinates in the road network.",
+                }
 
-    # Build detailed route polyline and calculate statistics
+    # Extract coordinates along the path
     coordinates: List[List[float]] = [[from_lat, from_lng]]
-    total_distance_m = haversine_distance_m(from_lat, from_lng, G.nodes[start_node]["lat"], G.nodes[start_node]["lng"])
+    total_distance_m = haversine_distance_m(
+        from_lat, from_lng, float(start_data.get("y", start_data.get("lat"))), float(start_data.get("x", start_data.get("lng")))
+    )
     traversed_zones = set()
-    corridor_steps = []
 
     for i in range(len(path_nodes)):
         node_id = path_nodes[i]
-        n_lat = G.nodes[node_id]["lat"]
-        n_lng = G.nodes[node_id]["lng"]
+        n_data = G.nodes[node_id]
+        n_lat = float(n_data.get("y", n_data.get("lat")))
+        n_lng = float(n_data.get("x", n_data.get("lng")))
         coordinates.append([n_lat, n_lng])
 
         if i > 0:
             prev_node = path_nodes[i - 1]
-            edge_data = G.get_edge_data(prev_node, node_id)
-            seg_len = edge_data.get("length", 100.0) if edge_data else 100.0
-            total_distance_m += seg_len
-            
-            mid_lat = (G.nodes[prev_node]["lat"] + n_lat) / 2.0
-            mid_lng = (G.nodes[prev_node]["lng"] + n_lng) / 2.0
-            z = get_zone_for_point(mid_lat, mid_lng, zones)
-            z_name = z.name if z else "General"
-            traversed_zones.add(z_name)
-            
-            corridor_steps.append({
-                "from": prev_node.replace("_", " "),
-                "to": node_id.replace("_", " "),
-                "distance_m": round(seg_len),
-                "zone": z_name,
-            })
+            if G.has_edge(prev_node, node_id):
+                edge_dict = G.get_edge_data(prev_node, node_id)
+                # In MultiDiGraph, edge_dict has key indices {0: {...}}
+                if isinstance(edge_dict, dict) and 0 in edge_dict:
+                    seg_len = float(edge_dict[0].get("length", 100.0))
+                elif isinstance(edge_dict, dict):
+                    seg_len = float(next(iter(edge_dict.values())).get("length", 100.0) if edge_dict else 100.0)
+                else:
+                    seg_len = 100.0
+            else:
+                seg_len = 100.0
 
-    # Add final destination leg
-    dest_leg = haversine_distance_m(G.nodes[target_node]["lat"], G.nodes[target_node]["lng"], to_lat, to_lng)
+            total_distance_m += seg_len
+
+            p_data = G.nodes[prev_node]
+            p_lat = float(p_data.get("y", p_data.get("lat")))
+            p_lng = float(p_data.get("x", p_data.get("lng")))
+            mid_lat = (p_lat + n_lat) / 2.0
+            mid_lng = (p_lng + n_lng) / 2.0
+
+            z = get_zone_for_point(mid_lat, mid_lng, zones)
+            if z:
+                traversed_zones.add(z.name)
+
+    # Destination final leg
+    dest_leg = haversine_distance_m(
+        float(target_data.get("y", target_data.get("lat"))), float(target_data.get("x", target_data.get("lng"))), to_lat, to_lng
+    )
     total_distance_m += dest_leg
     coordinates.append([to_lat, to_lng])
 
     dist_km = round(total_distance_m / 1000.0, 2)
     est_minutes = max(3, round(dist_km * 2.8))
 
-    # Generate safety explanation
     if avoided_zones:
         explanation = (
             f"Safe route actively diverts away from High/Severe waterlogging zones ({', '.join(avoided_zones)}). "
-            f"Passes via safer corridors ({', '.join(list(traversed_zones)[:3])})."
+            f"Passes via safer corridors ({', '.join(list(traversed_zones)[:3]) if traversed_zones else 'general roads'})."
         )
     else:
         explanation = "Route verified through normal risk zones with low waterlogging probability."
@@ -337,7 +300,7 @@ def calculate_safe_route(from_lat: float, from_lng: float, to_lat: float, to_lng
     return {
         "from": {"lat": from_lat, "lng": from_lng},
         "to": {"lat": to_lat, "lng": to_lng},
-        "path_nodes": path_nodes,
+        "path_nodes": [int(n) if str(n).isdigit() else str(n) for n in path_nodes],
         "coordinates": coordinates,
         "distance_meters": round(total_distance_m, 1),
         "distance_km": dist_km,
@@ -345,6 +308,6 @@ def calculate_safe_route(from_lat: float, from_lng: float, to_lat: float, to_lng
         "traversed_zones": list(traversed_zones),
         "avoided_high_risk_zones": list(avoided_zones),
         "safety_explanation": explanation,
-        "corridor_steps": corridor_steps[:8],
+        "total_nodes_in_network": len(G.nodes),
         "status": "safe_route_found",
     }

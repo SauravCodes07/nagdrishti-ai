@@ -38,9 +38,11 @@ class RoutePathfindView(APIView):
 
         try:
             route_result = calculate_safe_route(from_lat, from_lng, to_lat, to_lng)
+            if route_result.get("status") == "routing_unavailable":
+                return Response(route_result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             return Response(route_result, status=status.HTTP_200_OK)
         except Exception as exc:
             return Response(
-                {"error": f"Pathfinding failed: {exc}"},
+                {"status": "routing_unavailable", "error": f"Pathfinding failed: {exc}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
