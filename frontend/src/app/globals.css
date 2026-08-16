@@ -1,21 +1,33 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
+@theme {
+  --color-brand: #FFC107;
+  --color-action: #FF8A00;
+  --color-ink: #111111;
+  --color-muted: #666666;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F7F7F7;
+  --color-border: #E5E5E5;
+  --color-success: #22A447;
+  --color-danger: #E53935;
+}
+
 :root {
-  --primary-yellow: #FFC107;
-  --action-orange: #FF8A00;
-  --dark-text: #111111;
-  --secondary-text: #666666;
-  --bg-surface: #FFFFFF;
-  --bg-secondary: #F7F7F7;
-  --border-color: #E5E5E5;
-  --success-green: #22A447;
-  --error-red: #E53935;
+  --brand: #FFC107;
+  --action: #FF8A00;
+  --ink: #111111;
+  --muted: #666666;
+  --surface: #FFFFFF;
+  --surface-alt: #F7F7F7;
+  --border: #E5E5E5;
+  --success: #22A447;
+  --danger: #E53935;
 }
 
 body {
-  background-color: var(--bg-secondary);
-  color: var(--dark-text);
+  background-color: var(--surface-alt);
+  color: var(--ink);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
   margin: 0;
   padding: 0;
@@ -44,7 +56,7 @@ body {
   line-height: 1.5 !important;
 }
 
-/* Pulse animation for photo-confirmed severe waterlogging */
+/* Severe risk pulse animation */
 @keyframes severePulse {
   0% {
     stroke-opacity: 0.9;

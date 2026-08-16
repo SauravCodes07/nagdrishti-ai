@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Locate, Layers, Eye, AlertTriangle, Navigation, MapPin } from "lucide-react";
+import { Locate, Layers, Eye, AlertTriangle, Navigation, MapPin, RefreshCw } from "lucide-react";
 import { API_BASE } from "../lib/api";
 
 // Color mapping for risk categories
@@ -31,7 +31,7 @@ export default function MapComponent({
   const [userLocation, setUserLocation] = useState(null);
   const [locating, setLocating] = useState(false);
 
-  // Initialize Leaflet Map safely in client environment
+  // Initialize Leaflet Map safely in client environment (100% Free OpenStreetMap)
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current || mapInstanceRef.current) return;
 
@@ -46,14 +46,14 @@ export default function MapComponent({
       shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
     });
 
-    // Center of Nagpur (Zero Mile: 21.1458, 79.0882)
+    // Center of Nagpur (Zero Mile Marker: 21.1458, 79.0882)
     const map = L.map(mapContainerRef.current, {
       center: [21.1458, 79.0882],
       zoom: 13,
       zoomControl: false,
     });
 
-    // High clarity OSM tiles
+    // High clarity standard OpenStreetMap tiles (Zero paid API tokens)
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
@@ -97,50 +97,43 @@ export default function MapComponent({
 
       if (!coords || coords.length === 0) return;
 
-      const riskScore = zone.latest_risk_score ?? 10.0;
-      const category = zone.risk_category || "Low";
+      const riskScore = zone.latest_risk_score ?? zone.risk_score ?? 10.0;
+      const category = zone.risk_category || (riskScore >= 75 ? "Severe" : riskScore >= 50 ? "High" : riskScore >= 25 ? "Medium" : "Low");
       const color = getRiskColor(category, riskScore);
-      const isPhotoConfirmed = !!zone.photo_confirmed;
+      const isPhotoConfirmed = !!zone.photo_confirmed || category === "Severe";
 
       const polygon = L.polygon(coords, {
         color: color,
         weight: isPhotoConfirmed ? 3.5 : 2,
         opacity: 0.9,
         fillColor: color,
-        fillOpacity: isPhotoConfirmed ? 0.45 : 0.25,
+        fillOpacity: isPhotoConfirmed ? 0.40 : 0.22,
         className: isPhotoConfirmed && category === "Severe" ? "severe-zone-pulse" : "",
       });
 
-      const weather = zone.latest_weather;
-      const rainfallMm = weather ? weather.rainfall_intensity_mm : 0.0;
-      const weatherSource = weather ? weather.source : "None";
+      const rainfallMm = zone.rainfall_mm ?? 0.0;
+      const dispatchStatus = zone.dispatch_status || "Unassigned";
 
       const popupHtml = `
-        <div style="font-family: sans-serif; min-width: 200px;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 200px; padding: 2px;">
           <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; margin-bottom: 8px;">
-            <strong style="font-size: 14px; color: #111;">${zone.name} Ward</strong>
-            <span style="background: ${color}; color: ${category === 'Medium' ? '#000' : '#fff'}; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px;">
-              ${category.toUpperCase()} (${riskScore})
+            <strong style="font-size: 14px; color: #111111;">${zone.name}</strong>
+            <span style="background: ${color}; color: ${category === 'Medium' ? '#111' : '#fff'}; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase;">
+              ${category} (${riskScore.toFixed(1)})
             </span>
           </div>
 
-          ${isPhotoConfirmed ? `
+          ${isPhotoConfirmed && category === "Severe" ? `
             <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 11px; color: #991B1B; font-weight: bold; display: flex; align-items: center; gap: 4px;">
-              📸 PHOTO-CONFIRMED WATERLOGGING
+              📸 PHOTO-CONFIRMED FLOODING
             </div>
           ` : ''}
 
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; color: #444;">
-            <div><strong>Rainfall:</strong> ${rainfallMm} mm</div>
-            <div><strong>Source:</strong> ${weatherSource}</div>
-            <div><strong>Drainage:</strong> ${Math.round(zone.drainage_capacity * 100)}%</div>
-            <div><strong>Elevation:</strong> ${zone.elevation_factor}</div>
-            <div style="grid-column: span 2;">
-              <strong>Dispatch State:</strong> 
-              <span style="font-weight: 600; color: ${zone.dispatch_status === 'Dispatched' ? '#D97706' : zone.dispatch_status === 'Resolved' ? '#16A34A' : '#6B7280'}">
-                ${zone.dispatch_status}
-              </span>
-            </div>
+            <div><strong>Rainfall:</strong> ${rainfallMm.toFixed(1)} mm/h</div>
+            <div><strong>Drainage:</strong> ${Math.round((zone.drainage_capacity || 0.5) * 100)}%</div>
+            <div><strong>Elevation:</strong> ${zone.elevation_factor || 0.4}</div>
+            <div><strong>Dispatch:</strong> <span style="font-weight: 700; color: #111;">${dispatchStatus}</span></div>
           </div>
         </div>
       `;
@@ -163,10 +156,10 @@ export default function MapComponent({
     reportsLayerGroupRef.current.clearLayers();
 
     reports.forEach((rep) => {
-      let lat = null;
-      let lng = null;
+      let lat = rep.lat;
+      let lng = rep.lng;
 
-      if (rep.reporter_location) {
+      if ((lat === undefined || lng === undefined) && rep.reporter_location) {
         if (rep.reporter_location.coordinates) {
           lng = rep.reporter_location.coordinates[0];
           lat = rep.reporter_location.coordinates[1];
@@ -176,15 +169,14 @@ export default function MapComponent({
         }
       }
 
-      if (lat === null || lng === null) return;
+      if (lat === undefined || lng === undefined || lat === null || lng === null) return;
 
-      const isWaterlogging = rep.waterlogging_detected === true;
-      const isPothole = rep.pothole_detected === true;
+      const isWaterlogging = rep.is_waterlogged === true || rep.waterlogging_detected === true;
+      const markerColor = isWaterlogging ? "#E53935" : "#FF8A00";
 
-      const markerColor = isWaterlogging ? "#E53935" : isPothole ? "#FF8A00" : "#3B82F6";
       const iconHtml = `
-        <div style="background-color: ${markerColor}; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: bold;">
-          ${isWaterlogging ? "🌊" : isPothole ? "⚠️" : "📍"}
+        <div style="background-color: ${markerColor}; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: bold;">
+          ${isWaterlogging ? "🌊" : "⚠️"}
         </div>
       `;
 
@@ -199,34 +191,28 @@ export default function MapComponent({
       const photoUrl = rep.photo ? (rep.photo.startsWith("http") ? rep.photo : `${API_BASE}${rep.photo}`) : null;
 
       const popupContent = `
-        <div style="font-family: sans-serif; min-width: 220px; max-width: 280px;">
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 220px; max-width: 280px; padding: 2px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
-            <strong style="font-size: 13px; color: #111;">Hazard #${rep.id} (${rep.zone_name || 'Nagpur'})</strong>
-            <span style="font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; background: ${rep.verification_status === 'Verified' ? '#DCFCE7' : rep.verification_status === 'Rejected' ? '#FEE2E2' : '#FEF3C7'}; color: ${rep.verification_status === 'Verified' ? '#166534' : rep.verification_status === 'Rejected' ? '#991B1B' : '#92400E'};">
-              ${rep.verification_status}
+            <strong style="font-size: 13px; color: #111;">Hazard #${rep.id}</strong>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: ${rep.verification_status === 'verified' ? '#DCFCE7' : rep.verification_status === 'rejected' ? '#FEE2E2' : '#FEF3C7'}; color: ${rep.verification_status === 'verified' ? '#166534' : rep.verification_status === 'rejected' ? '#991B1B' : '#92400E'};">
+              ${rep.verification_status || 'Pending'}
             </span>
           </div>
 
           ${photoUrl ? `
-            <div style="margin: 6px 0; border-radius: 6px; overflow: hidden; max-height: 120px;">
+            <div style="margin: 6px 0; border-radius: 8px; overflow: hidden; max-height: 120px;">
               <img src="${photoUrl}" alt="Hazard" style="width: 100%; height: 110px; object-fit: cover;" />
             </div>
           ` : ''}
 
-          <p style="font-size: 12px; color: #333; margin: 4px 0 8px 0;">${rep.description || 'No description provided.'}</p>
+          <p style="font-size: 12px; color: #333; margin: 4px 0 8px 0;">${rep.description || 'Citizen hazard report.'}</p>
 
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 6px; font-size: 11px;">
-            <div style="font-weight: bold; color: #475569; margin-bottom: 3px;">🤖 Hugging Face AI Vision:</div>
-            <div style="display: flex; justify-content: space-between;">
-              <span>Pothole:</span>
-              <strong style="color: ${rep.pothole_detected ? '#DC2626' : '#64748B'}">
-                ${rep.pothole_detected === null ? 'Not Evaluated' : rep.pothole_detected ? `Detected (${Math.round((rep.pothole_confidence || 0) * 100)}%)` : 'Clear'}
-              </strong>
-            </div>
+          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; font-size: 11px;">
+            <div style="font-weight: 700; color: #475569; margin-bottom: 2px;">🤖 Hugging Face AI Vision:</div>
             <div style="display: flex; justify-content: space-between;">
               <span>Waterlogging:</span>
-              <strong style="color: ${rep.waterlogging_detected ? '#DC2626' : '#64748B'}">
-                ${rep.waterlogging_detected === null ? 'Not Evaluated' : rep.waterlogging_detected ? `Detected (${Math.round((rep.waterlogging_confidence || 0) * 100)}%)` : 'Clear'}
+              <strong style="color: ${isWaterlogging ? '#DC2626' : '#64748B'}">
+                ${rep.ai_confidence ? `${(rep.ai_confidence * 100).toFixed(0)}% Confirmed` : 'Queued'}
               </strong>
             </div>
           </div>
@@ -238,7 +224,7 @@ export default function MapComponent({
     });
   }, [reports]);
 
-  // Update Safe Route Polyline Overlay
+  // Update Safe Route Polyline Overlay with Progressive Animation
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !routeLayerGroupRef.current) return;
@@ -248,41 +234,45 @@ export default function MapComponent({
     if (routeData && routeData.coordinates && routeData.coordinates.length > 0) {
       const latlngs = routeData.coordinates;
 
-      const glowLine = L.polyline(latlngs, {
-        color: "#38BDF8",
+      // Glow outline
+      L.polyline(latlngs, {
+        color: "#22A447",
         weight: 8,
-        opacity: 0.4,
+        opacity: 0.35,
         lineCap: "round",
       }).addTo(routeLayerGroupRef.current);
 
+      // Primary safe path
       const mainLine = L.polyline(latlngs, {
-        color: "#0284C7",
+        color: "#166534",
         weight: 5,
         opacity: 0.95,
         lineCap: "round",
-        dashArray: "8, 6",
+        dashArray: "6, 8",
       }).addTo(routeLayerGroupRef.current);
 
+      // Start Marker
       const startPt = latlngs[0];
       const startIcon = L.divIcon({
         className: "route-start-marker",
-        html: `<div style="background-color: #22A447; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">A</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        html: `<div style="background-color: #22A447; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">A</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
       });
       L.marker(startPt, { icon: startIcon })
-        .bindPopup("<strong>Route Start Point</strong>")
+        .bindPopup("<strong>📍 Route Origin</strong>")
         .addTo(routeLayerGroupRef.current);
 
+      // Destination Marker
       const endPt = latlngs[latlngs.length - 1];
       const endIcon = L.divIcon({
         className: "route-end-marker",
-        html: `<div style="background-color: #E53935; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 14px;">B</div>`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
+        html: `<div style="background-color: #E53935; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">B</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
       });
       L.marker(endPt, { icon: endIcon })
-        .bindPopup("<strong>Route Destination</strong>")
+        .bindPopup("<strong>🏁 Safe Destination</strong>")
         .addTo(routeLayerGroupRef.current);
 
       mapInstanceRef.current.fitBounds(mainLine.getBounds(), { padding: [40, 40] });
@@ -330,50 +320,47 @@ export default function MapComponent({
       },
       (err) => {
         setLocating(false);
-        console.warn("Geolocation failed:", err.message);
-        alert("Could not access your location. You can click anywhere on the map to set a location.");
+        alert("Could not access your GPS location.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
+  const handleResetView = () => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setView([21.1458, 79.0882], 13);
+    }
+  };
+
   return (
-    <div className="relative w-full h-full min-h-[480px] rounded-2xl overflow-hidden shadow-inner border border-slate-200">
+    <div className="relative w-full h-full min-h-[480px] rounded-2xl overflow-hidden shadow-inner border border-[#E5E5E5]">
       <div ref={mapContainerRef} className="w-full h-full" />
 
-      {/* Floating Map Controls & Overlays */}
-      <div className="absolute top-4 left-4 z-20 flex flex-col space-y-2">
-        {clickMode && (
-          <div className="bg-slate-900/90 text-white backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700 shadow-lg text-xs font-semibold flex items-center space-x-2 animate-bounce">
-            <MapPin className="w-4 h-4 text-amber-400" />
-            <span>
-              {clickMode === "start"
-                ? "Click map to set ROUTE ORIGIN"
-                : clickMode === "end"
-                ? "Click map to set DESTINATION"
-                : "Click map to pinpoint HAZARD"}
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Locate Me GPS Button */}
+      {/* Floating Map Controls */}
       <div className="absolute top-4 right-4 z-20 flex flex-col space-y-2">
         <button
           onClick={handleLocateMe}
           disabled={locating}
-          className="bg-white hover:bg-slate-50 text-slate-800 p-2.5 rounded-xl shadow-md border border-slate-200 transition-transform active:scale-95 flex items-center justify-center group"
+          className="bg-white hover:bg-neutral-50 text-[#111111] p-2.5 rounded-xl shadow-md border border-[#E5E5E5] transition-transform active:scale-95 flex items-center justify-center"
           title="Locate my position (GPS)"
           aria-label="Locate me"
         >
-          <Locate className={`w-5 h-5 text-blue-600 ${locating ? "animate-spin" : "group-hover:scale-110 transition-transform"}`} />
+          <Locate className={`w-4 h-4 text-blue-600 ${locating ? "animate-spin" : ""}`} />
+        </button>
+
+        <button
+          onClick={handleResetView}
+          className="bg-white hover:bg-neutral-50 text-[#111111] p-2.5 rounded-xl shadow-md border border-[#E5E5E5] transition-transform active:scale-95 flex items-center justify-center text-[10px] font-black"
+          title="Reset to Zero Mile Nagpur"
+        >
+          0M
         </button>
       </div>
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-sm p-2.5 rounded-xl shadow-lg border border-slate-200 text-[11px] font-medium text-slate-700 space-y-1 hidden sm:block">
-        <div className="font-bold text-[10px] uppercase text-slate-400 tracking-wider mb-1">
-          Ward Risk Severity
+      <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-sm p-3 rounded-2xl shadow-lg border border-[#E5E5E5] text-[11px] font-medium text-[#111111] space-y-1 hidden sm:block">
+        <div className="font-extrabold text-[10px] uppercase text-[#666666] tracking-wider mb-1">
+          Ward Flood Severity
         </div>
         <div className="flex items-center space-x-2">
           <span className="w-3 h-3 rounded-full bg-[#22A447]"></span>

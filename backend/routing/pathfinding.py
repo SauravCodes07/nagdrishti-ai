@@ -21,6 +21,11 @@ from risk.models import RiskScore
 
 logger = logging.getLogger(__name__)
 
+# Configure OSMnx fast Overpass endpoint and timeout
+ox.settings.overpass_url = "https://overpass.kumi.systems/api"
+ox.settings.requests_timeout = 60
+ox.settings.overpass_rate_limit = False
+
 # Nagpur Bounding Box Coordinates (South, North, West, East)
 NAGPUR_SOUTH = 21.08
 NAGPUR_NORTH = 21.22

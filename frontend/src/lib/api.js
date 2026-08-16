@@ -105,9 +105,18 @@ export async function getPriorityQueue() {
   return request("/api/priority-queue/");
 }
 
-// 5. Emergency Alert Logs (Admin)
+// 5. Emergency Alert Logs & Broadcasts
+export async function getBroadcastAlerts() {
+  return request("/api/alerts/broadcast/");
+}
+
 export async function getAlertLogs() {
   return request("/api/alerts/");
+}
+
+// 5b. Live Weather Feed
+export async function getWeather() {
+  return request("/api/zones/weather/");
 }
 
 // 6. Rainfall Simulation (8-stage demo workflow)
