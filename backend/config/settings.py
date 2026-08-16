@@ -26,10 +26,36 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key-replace-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DJANGO_DEBUG", "True") == "True"
 
-ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,testserver").split(",")
+raw_allowed_hosts = os.environ.get(
+    "DJANGO_ALLOWED_HOSTS",
+    "localhost,127.0.0.1,testserver,.onrender.com,nagdrishti-ai-backend.onrender.com,nagdrishti-backend.onrender.com"
+)
+ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed_hosts.split(",") if h.strip()]
+for host in [".onrender.com", "nagdrishti-ai-backend.onrender.com", "nagdrishti-backend.onrender.com", "localhost", "127.0.0.1", "testserver"]:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
 
+# Render HTTPS reverse proxy configuration
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
 
-# Application definition
+# CSRF Trusted Origins for Render & Netlify production deployments
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "https://nagdrishti-ai-backend.onrender.com",
+    "https://nagdrishti-backend.onrender.com",
+    "https://nagdrishti.netlify.app",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+csrf_trusted_env = os.environ.get("CSRF_TRUSTED_ORIGINS", "")
+if csrf_trusted_env:
+    for origin in csrf_trusted_env.split(","):
+        origin = origin.strip().strip('"').strip("'")
+        if origin and origin not in CSRF_TRUSTED_ORIGINS:
+            CSRF_TRUSTED_ORIGINS.append(origin)
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

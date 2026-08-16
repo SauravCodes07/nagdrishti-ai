@@ -3,7 +3,17 @@
  * Connects Next.js frontend to Django REST Framework backend.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const getApiBase = () => {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    return "https://nagdrishti-ai-backend.onrender.com";
+  }
+  return "http://localhost:8000";
+};
+
+const API_BASE = getApiBase();
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
