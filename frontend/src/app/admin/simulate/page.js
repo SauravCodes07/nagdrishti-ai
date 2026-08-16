@@ -79,24 +79,24 @@ export default function AdminSimulatePage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black text-slate-900 dark:text-white">
+            <h1 className="text-2xl sm:text-3xl font-black text-white">
               Crisis Scenario Simulator
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <p className="text-xs text-slate-400 font-medium mt-0.5">
               Inject synthetic rainfall patterns, trigger automated alert dispatches, and validate crisis progression
             </p>
           </div>
         </div>
 
         {/* 8-Stage Scenario Stepper Grid */}
-        <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+            <h2 className="text-xs font-black uppercase tracking-wider text-teal-400">
               8-Stage Monsoon Demonstration Cycle
             </h2>
-            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+            <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
               Interactive Runner
             </span>
           </div>
@@ -109,19 +109,19 @@ export default function AdminSimulatePage() {
                   key={stage.id}
                   onClick={() => handleRunStage(stage.id, idx)}
                   disabled={running}
-                  className={`p-3.5 rounded-2xl border text-left flex flex-col justify-between space-y-2 transition active:scale-95 ${
+                  className={`p-4 rounded-2xl border text-left flex flex-col justify-between space-y-2 transition active:scale-95 ${
                     isActive
-                      ? "bg-teal-500/10 border-teal-500 text-teal-700 dark:text-teal-300 shadow-md ring-2 ring-teal-500/20"
-                      : "bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                      ? "bg-teal-500/10 border-teal-500 text-teal-300 shadow-md ring-1 ring-teal-500/30"
+                      : "bg-[#0B0F17] border-[#1E293B] text-slate-300 hover:bg-[#1E293B]"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <span className="text-xl">{stage.icon}</span>
-                    <span className="text-[9px] font-black uppercase text-slate-400">Step {idx + 1}</span>
+                    <span className="text-[9px] font-black uppercase text-slate-500">Step {idx + 1}</span>
                   </div>
                   <div>
-                    <div className="font-bold text-xs">{stage.label}</div>
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">
+                    <div className="font-black text-xs text-white">{stage.label}</div>
+                    <div className="text-[10px] text-slate-400 leading-tight mt-0.5">
                       {stage.desc}
                     </div>
                   </div>
@@ -134,15 +134,15 @@ export default function AdminSimulatePage() {
         {/* Custom Injection & Console Output */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Custom Injection Controls */}
-          <div className="lg:col-span-5 bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
-            <h2 className="text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white">
+          <div className="lg:col-span-5 bg-[#131B2A] border border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4">
+            <h2 className="text-xs font-black uppercase tracking-wider text-teal-400">
               Custom Rainfall Injection
             </h2>
 
             <div className="space-y-2">
-              <div className="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <div className="flex justify-between text-xs font-bold text-slate-300">
                 <span>Rainfall Intensity (mm/h)</span>
-                <span className="text-teal-600 dark:text-teal-400">{customRainfall} mm/h</span>
+                <span className="text-teal-400 font-mono">{customRainfall} mm/h</span>
               </div>
               <input
                 type="range"
@@ -151,7 +151,7 @@ export default function AdminSimulatePage() {
                 step="5"
                 value={customRainfall}
                 onChange={(e) => setCustomRainfall(e.target.value)}
-                className="w-full accent-teal-600 cursor-pointer"
+                className="w-full accent-teal-500 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400">
                 <span>0 mm (Dry)</span>
@@ -163,19 +163,19 @@ export default function AdminSimulatePage() {
             <button
               onClick={handleCustomRainfall}
               disabled={running}
-              className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/20 active:scale-95 transition flex items-center justify-center gap-2"
+              className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/30 active:scale-95 transition flex items-center justify-center gap-2"
             >
               <CloudRain className="w-4 h-4" />
               <span>Inject Custom Rainfall</span>
             </button>
 
             {lastResult && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-800 dark:text-emerald-300 space-y-1">
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-300 space-y-1">
                 <div className="flex items-center gap-1.5 font-bold">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   <span>{lastResult.description || "Simulation Finished"}</span>
                 </div>
-                <div className="text-[11px] text-slate-600 dark:text-slate-400">
+                <div className="text-[11px] text-slate-400">
                   Affected Wards: {lastResult.affected_zones_count || (lastResult.results ? lastResult.results.length : 10)}
                 </div>
               </div>
@@ -183,13 +183,13 @@ export default function AdminSimulatePage() {
           </div>
 
           {/* Live Telemetry Console Log */}
-          <div className="lg:col-span-7 bg-slate-950 border border-slate-800 rounded-3xl p-5 shadow-2xl flex flex-col justify-between">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+          <div className="lg:col-span-7 bg-[#0B0F17] border border-[#1E293B] rounded-3xl p-5 shadow-2xl flex flex-col justify-between">
+            <div className="flex items-center justify-between border-b border-[#1E293B] pb-3 mb-3">
               <div className="flex items-center gap-2 text-xs font-black text-teal-400">
                 <Terminal className="w-4 h-4" />
                 <span>Simulation Event Console</span>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">Live WebSocket/DRF stream</span>
+              <span className="text-[10px] text-slate-500 font-mono">Live DRF Simulation Stream</span>
             </div>
 
             <div className="h-56 overflow-y-auto space-y-1 font-mono text-xs text-slate-300">
@@ -206,7 +206,7 @@ export default function AdminSimulatePage() {
               )}
             </div>
 
-            <div className="pt-2 border-t border-slate-900 flex justify-end">
+            <div className="pt-2 border-t border-[#1E293B] flex justify-end">
               <button
                 onClick={() => setLogs([])}
                 className="text-[10px] text-slate-500 hover:text-slate-300 underline font-mono"
