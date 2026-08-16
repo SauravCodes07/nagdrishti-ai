@@ -91,7 +91,7 @@ class NagDrishtiCoreTests(TestCase):
     def test_03_weather_ingestion(self):
         """Test weather ingestion service records reading with valid source."""
         reading = fetch_and_record_weather_for_zone(self.zone)
-        self.assertIn(reading.source, ["imd_api", "simulated"])
+        self.assertIn(reading.source, ["open_meteo", "imd_api", "simulated"])
         self.assertEqual(reading.zone, self.zone)
 
     def test_04_endpoint_post_report_public(self):
@@ -104,16 +104,13 @@ class NagDrishtiCoreTests(TestCase):
         res = self.client.post('/api/reports/', payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertIn("id", res.data)
-        # Verify spatial auto-assignment assigned Dharampeth zone
         self.assertEqual(res.data["zone_name"], "Dharampeth")
 
     def test_05_endpoint_get_reports_admin_only(self):
         """GET /api/reports/ (admin only)"""
-        # Unauthenticated request -> 401/403
         res_anon = self.client.get('/api/reports/')
         self.assertIn(res_anon.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
-        # Admin request -> 200 OK
         self.client.force_authenticate(user=self.admin_user)
         res_admin = self.client.get('/api/reports/')
         self.assertEqual(res_admin.status_code, status.HTTP_200_OK)
@@ -126,12 +123,10 @@ class NagDrishtiCoreTests(TestCase):
             zone=self.zone
         )
 
-        # Anon should be forbidden
         self.client.force_authenticate(user=None)
         res_anon = self.client.patch(f'/api/reports/{rep.id}/verify/', {'verification_status': 'Verified'}, format='json')
         self.assertIn(res_anon.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
-        # Admin should succeed
         self.client.force_authenticate(user=self.admin_user)
         res_admin = self.client.patch(f'/api/reports/{rep.id}/verify/', {'verification_status': 'Verified'}, format='json')
         self.assertEqual(res_admin.status_code, status.HTTP_200_OK)
@@ -179,7 +174,35 @@ class NagDrishtiCoreTests(TestCase):
         self.assertIn(res_anon.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
 
         self.client.force_authenticate(user=self.admin_user)
-        res_admin = self.client.post('/api/simulate-rainfall/', {'rainfall_intensity_mm': 45.0, 'zone_id': self.zone.id}, format='json')
+        res_admin = self.client.post('/api/simulate-rainfall/', {'stage': 'downpour'}, format='json')
         self.assertEqual(res_admin.status_code, status.HTTP_200_OK)
-        self.assertEqual(res_admin.data["affected_zones_count"], 1)
-        self.assertEqual(WeatherReading.objects.filter(zone=self.zone, source="simulated").count(), 1)
+        self.assertIn("stage", res_admin.data)
+        self.assertEqual(res_admin.data["stage"], "downpour")
+
+    def test_12_endpoint_get_alerts_admin_only(self):
+        """GET /api/alerts/ (admin only)"""
+        AlertLog.objects.create(
+            zone=self.zone,
+            risk_category_at_send="High",
+            channel="SMS",
+            status="sent_test",
+        )
+        self.client.force_authenticate(user=None)
+        res_anon = self.client.get('/api/alerts/')
+        self.assertIn(res_anon.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+        self.client.force_authenticate(user=self.admin_user)
+        res_admin = self.client.get('/api/alerts/')
+        self.assertEqual(res_admin.status_code, status.HTTP_200_OK)
+        self.assertGreaterEqual(len(res_admin.data), 1)
+
+    def test_13_auth_login_and_current_user(self):
+        """Test Admin login and /api/auth/me/"""
+        # Test valid login
+        res_login = self.client.post('/api/auth/login/', {'username': 'admin_tester', 'password': 'pass123'}, format='json')
+        self.assertEqual(res_login.status_code, status.HTTP_200_OK)
+        self.assertTrue(res_login.data["user"]["is_superuser"])
+
+        # Test invalid password
+        res_fail = self.client.post('/api/auth/login/', {'username': 'admin_tester', 'password': 'wrongpassword'}, format='json')
+        self.assertEqual(res_fail.status_code, status.HTTP_401_UNAUTHORIZED)

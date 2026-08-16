@@ -1,14 +1,17 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, re_path
 from django.http import JsonResponse
 from django.db import connection
 from django.conf import settings
+from django.views.static import serve
 from django.conf.urls.static import static
 
 from reports.views import ReportListCreateView, ReportVerifyView
 from zones.views import ZoneRiskListView, ZoneDispatchView
 from routing.views import RoutePathfindView
 from risk.views import PriorityQueueView, SimulateRainfallView
+from alerts.views import AlertLogListView
+from config.auth_views import LoginView, LogoutView, CurrentUserView
 
 
 def health(request):
@@ -40,13 +43,13 @@ urlpatterns = [
     # 1. POST /api/reports/ (public) & GET /api/reports/ (admin only)
     path('api/reports/', ReportListCreateView.as_view(), name='reports-list-create'),
 
-    # 2. PATCH /api/reports/{id}/verify/ (admin only)
+    # 2. PATCH /api/reports/<int:pk>/verify/ (admin only)
     path('api/reports/<int:pk>/verify/', ReportVerifyView.as_view(), name='report-verify'),
 
     # 3. GET /api/zones/risk/ (public)
     path('api/zones/risk/', ZoneRiskListView.as_view(), name='zones-risk'),
 
-    # 4. PATCH /api/zones/{id}/dispatch/ (admin only)
+    # 4. PATCH /api/zones/<int:pk>/dispatch/ (admin only)
     path('api/zones/<int:pk>/dispatch/', ZoneDispatchView.as_view(), name='zone-dispatch'),
 
     # 5. GET /api/route/?from=lat,lng&to=lat,lng (public)
@@ -57,7 +60,15 @@ urlpatterns = [
 
     # 7. POST /api/simulate-rainfall/ (admin only)
     path('api/simulate-rainfall/', SimulateRainfallView.as_view(), name='simulate-rainfall'),
-]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL if hasattr(settings, 'MEDIA_URL') else '/media/', document_root=settings.MEDIA_ROOT if hasattr(settings, 'MEDIA_ROOT') else settings.BASE_DIR / 'media')
+    # 8. GET /api/alerts/ (admin only)
+    path('api/alerts/', AlertLogListView.as_view(), name='alerts-list'),
+
+    # Auth endpoints for Admin session & check
+    path('api/auth/login/', LoginView.as_view(), name='auth-login'),
+    path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
+    path('api/auth/me/', CurrentUserView.as_view(), name='auth-me'),
+
+    # Media files serving for citizen hazard photos
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]

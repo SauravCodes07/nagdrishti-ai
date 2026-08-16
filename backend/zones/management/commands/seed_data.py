@@ -2,7 +2,10 @@ import random
 from datetime import timedelta
 from django.core.management.base import BaseCommand
 from django.utils import timezone
+from django.contrib.auth.models import User
 from zones.models import Zone, TrafficReading
+from zones.services.weather import ingest_weather_for_all_zones
+from risk.scoring import compute_zone_risk
 
 # Real Nagpur wards with approximate polygon boundaries (Lon, Lat)
 NAGPUR_WARDS = [
@@ -170,7 +173,7 @@ NAGPUR_WARDS = [
 
 
 class Command(BaseCommand):
-    help = "Seed Nagpur ward zones and simulated traffic readings"
+    help = "Seed Nagpur ward zones, simulated traffic readings, live weather, and default admin user"
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.NOTICE("Starting database seed for Nagpur wards..."))
@@ -192,15 +195,13 @@ class Command(BaseCommand):
             if created:
                 created_zones_count += 1
 
-            # Seed past 3 days of TrafficReading rows (4 readings per day: morning, noon, evening, night)
-            # WeatherReading is intentionally left empty for Step 3 live ingestion
+            # Seed past 3 days of realistic traffic readings
             TrafficReading.objects.filter(zone=zone).delete()
             for day_offset in range(3, 0, -1):
                 day_base = now - timedelta(days=day_offset)
                 hours = [8, 12, 18, 22]
                 for h in hours:
                     rec_time = day_base.replace(hour=h, minute=random.randint(0, 59), second=0, microsecond=0)
-                    # Congestion peak at 8-10 AM and 6-8 PM
                     if h in [8, 18]:
                         congestion = random.randint(55, 90)
                     else:
@@ -218,6 +219,19 @@ class Command(BaseCommand):
                 f"Successfully seeded {len(NAGPUR_WARDS)} Nagpur ward zones and {traffic_readings_count} traffic readings."
             )
         )
-        self.stdout.write(
-            self.style.SUCCESS("WeatherReading left empty as required for Step 3 live ingestion.")
-        )
+
+        # Ingest initial weather readings
+        self.stdout.write(self.style.NOTICE("Ingesting real weather from Open-Meteo..."))
+        readings = ingest_weather_for_all_zones()
+        self.stdout.write(self.style.SUCCESS(f"Recorded weather readings for {len(readings)} zones."))
+
+        # Compute initial risk scores
+        for zone in Zone.objects.all():
+            compute_zone_risk(zone)
+
+        # Create default admin superuser if none exists
+        if not User.objects.filter(is_superuser=True).exists():
+            User.objects.create_superuser("admin", "admin@nagdrishti.ai", "admin123")
+            self.stdout.write(self.style.SUCCESS("Created default superuser: admin / admin123"))
+
+        self.stdout.write(self.style.SUCCESS("NagDrishti AI database initialization completed successfully."))

@@ -7,6 +7,8 @@ Reads credentials strictly from environment variables.
 
 import os
 import logging
+from datetime import timedelta
+from django.utils import timezone
 from alerts.models import AlertLog
 
 logger = logging.getLogger(__name__)
@@ -14,9 +16,24 @@ logger = logging.getLogger(__name__)
 
 def check_and_send_zone_alert(zone, score: float, category: str, channel: str = "SMS") -> AlertLog:
     """
-    Sends an alert via Twilio if risk category is High or Severe, and logs to AlertLog.
+    Sends an alert via Twilio if risk category is High or Severe, with deduplication.
+    Logs to AlertLog table.
     """
     if category not in ["High", "Severe"]:
+        return None
+
+    # Deduplication check: Avoid sending identical alerts if one was sent for this zone/category in the past 60 mins
+    recent_cutoff = timezone.now() - timedelta(minutes=60)
+    recent_duplicate = AlertLog.objects.filter(
+        zone=zone,
+        risk_category_at_send=category,
+        sent_at__gte=recent_cutoff
+    ).first()
+
+    if recent_duplicate:
+        logger.info(
+            f"Alert suppressed for {zone.name} ({category}): recent alert already logged at {recent_duplicate.sent_at}."
+        )
         return None
 
     account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
@@ -26,7 +43,7 @@ def check_and_send_zone_alert(zone, score: float, category: str, channel: str = 
 
     alert_message = (
         f"[NAGDRISHTI ALERT] Zone '{zone.name}' has entered {category.upper()} risk "
-        f"(Score: {score}/100). Emergency waterlogging & road hazard protocols triggered."
+        f"(Crisis Index: {score:.1f}/100). Emergency civic protocols active."
     )
 
     if not account_sid or not auth_token or not from_number:
@@ -37,7 +54,7 @@ def check_and_send_zone_alert(zone, score: float, category: str, channel: str = 
             zone=zone,
             risk_category_at_send=category,
             channel=channel,
-            status="credentials_missing",
+            status="simulated_logged (Twilio credentials not set)",
         )
 
     try:
@@ -59,7 +76,7 @@ def check_and_send_zone_alert(zone, score: float, category: str, channel: str = 
             to=msg_to,
         )
 
-        status_str = f"sent (SID: {message.sid})"
+        status_str = f"Sent (SID: {message.sid})"
         logger.info(f"Twilio alert sent for {zone.name}: {status_str}")
 
         return AlertLog.objects.create(
@@ -70,7 +87,7 @@ def check_and_send_zone_alert(zone, score: float, category: str, channel: str = 
         )
 
     except Exception as exc:
-        err_msg = f"failed: {str(exc)[:40]}"
+        err_msg = f"Failed: {str(exc)[:60]}"
         logger.error(f"Failed to send Twilio alert for zone {zone.name}: {exc}")
         return AlertLog.objects.create(
             zone=zone,

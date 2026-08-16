@@ -1,9 +1,11 @@
 """
 Weather ingestion service for NagDrishti AI.
 Fetches real precipitation/rainfall data from Open-Meteo for Nagpur zones.
-Writes to WeatherReading with source="imd_api" for live feeds, or source="simulated" on fallback.
+Writes to WeatherReading with source="open_meteo" for live Open-Meteo feeds,
+or source="simulated" on fallback/simulations.
 """
 
+import json
 import logging
 import requests
 from django.utils import timezone
@@ -16,19 +18,34 @@ OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 
 def get_zone_centroid(zone: Zone) -> tuple:
     """Returns approximate (lat, lng) center for a given zone."""
-    if isinstance(zone.boundary, dict) and "coordinates" in zone.boundary:
-        coords = zone.boundary["coordinates"][0]
+    boundary = zone.boundary
+    # Handle GeoDjango GEOSGeometry centroid
+    if hasattr(boundary, "centroid"):
+        try:
+            return boundary.centroid.y, boundary.centroid.x
+        except Exception:
+            pass
+
+    if isinstance(boundary, str):
+        try:
+            boundary = json.loads(boundary)
+        except Exception:
+            pass
+
+    if isinstance(boundary, dict) and "coordinates" in boundary:
+        coords = boundary["coordinates"][0]
         lngs = [p[0] for p in coords]
         lats = [p[1] for p in coords]
         return sum(lats) / len(lats), sum(lngs) / len(lngs)
+
     # Default Nagpur city center
     return 21.1458, 79.0882
 
 
 def fetch_and_record_weather_for_zone(zone: Zone) -> WeatherReading:
     """
-    Fetches precipitation data from Open-Meteo API for a specific zone.
-    Writes to WeatherReading with source="imd_api" on success, or source="simulated" on failure.
+    Fetches real precipitation data from Open-Meteo API for a specific zone.
+    Writes to WeatherReading with source="open_meteo" on success, or source="simulated" on failure.
     """
     lat, lng = get_zone_centroid(zone)
     now = timezone.now()
@@ -53,10 +70,10 @@ def fetch_and_record_weather_for_zone(zone: Zone) -> WeatherReading:
             reading = WeatherReading.objects.create(
                 zone=zone,
                 rainfall_intensity_mm=float(precip),
-                source="imd_api",
+                source="open_meteo",
                 recorded_at=now,
             )
-            logger.info(f"Recorded live weather reading for {zone.name}: {precip}mm (source: imd_api)")
+            logger.info(f"Recorded live weather reading for {zone.name}: {precip}mm (source: open_meteo)")
             return reading
         else:
             logger.warning(f"Open-Meteo returned status {response.status_code}, falling back to simulated reading.")

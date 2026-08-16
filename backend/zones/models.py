@@ -13,6 +13,7 @@ DISPATCH_STATUS_CHOICES = [
 ]
 
 WEATHER_SOURCE_CHOICES = [
+    ('open_meteo', 'open_meteo'),
     ('imd_api', 'imd_api'),
     ('simulated', 'simulated'),
 ]

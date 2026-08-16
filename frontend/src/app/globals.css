@@ -1,26 +1,87 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --primary-yellow: #FFC107;
+  --action-orange: #FF8A00;
+  --dark-text: #111111;
+  --secondary-text: #666666;
+  --bg-surface: #FFFFFF;
+  --bg-secondary: #F7F7F7;
+  --border-color: #E5E5E5;
+  --success-green: #22A447;
+  --error-red: #E53935;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-secondary);
+  color: var(--dark-text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* Custom Leaflet styling */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  z-index: 10;
+  font-family: inherit;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
+  background: #ffffff !important;
+  color: #111111 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px 14px !important;
+  line-height: 1.5 !important;
+}
+
+/* Pulse animation for photo-confirmed severe waterlogging */
+@keyframes severePulse {
+  0% {
+    stroke-opacity: 0.9;
+    stroke-width: 2.5;
+    fill-opacity: 0.45;
+  }
+  50% {
+    stroke-opacity: 1;
+    stroke-width: 4.5;
+    fill-opacity: 0.70;
+  }
+  100% {
+    stroke-opacity: 0.9;
+    stroke-width: 2.5;
+    fill-opacity: 0.45;
+  }
+}
+
+.severe-zone-pulse {
+  animation: severePulse 2s infinite ease-in-out;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
