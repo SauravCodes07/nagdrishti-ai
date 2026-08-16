@@ -23,8 +23,17 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import dynamic from "next/dynamic";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
-import MapComponent from "../../components/MapComponent";
+
+const MapComponent = dynamic(() => import("../../components/MapComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[440px] rounded-2xl bg-slate-100 dark:bg-[#131B2A] flex items-center justify-center text-xs font-bold text-slate-400">
+      Loading GIS Map Layer...
+    </div>
+  ),
+});
 import { getRiskZones, getReports, getBroadcastAlerts, getWeather } from "../../lib/api";
 
 export default function AppDashboardPage() {

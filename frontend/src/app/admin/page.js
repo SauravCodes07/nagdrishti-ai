@@ -14,9 +14,17 @@ import {
   Sparkles,
   Layers,
   Activity,
-} from "lucide-react";
+import dynamic from "next/dynamic";
 import AdminLayout from "../../components/layouts/AdminLayout";
-import MapComponent from "../../components/MapComponent";
+
+const MapComponent = dynamic(() => import("../../components/MapComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[460px] rounded-2xl bg-slate-100 dark:bg-[#131B2A] flex items-center justify-center text-xs font-bold text-slate-400">
+      Loading GIS Map Layer...
+    </div>
+  ),
+});
 import {
   getPriorityQueue,
   getRiskZones,

@@ -15,8 +15,17 @@ import {
   Navigation,
 } from "lucide-react";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
-import MapComponent from "../../components/MapComponent";
+
+const MapComponent = dynamic(() => import("../../components/MapComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full min-h-[520px] rounded-2xl bg-slate-100 dark:bg-[#131B2A] flex items-center justify-center text-xs font-bold text-slate-400">
+      Loading GIS Map Layer...
+    </div>
+  ),
+});
 import { getRiskZones, getReports, getWeather } from "../../lib/api";
 
 export default function MapPage() {
