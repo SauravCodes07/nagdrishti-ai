@@ -1,19 +1,29 @@
 /**
  * NagDrishti AI — Production API Service Layer
- * Connects Next.js frontend to Django REST Framework backend.
+ * Connects Next.js frontend to Django REST Framework backend with full Token & Session auth support.
  */
 
-const getApiBase = () => {
+export const getApiBase = () => {
   if (process.env.NEXT_PUBLIC_API_URL) {
     return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
   }
-  if (typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname !== "localhost" &&
+    window.location.hostname !== "127.0.0.1"
+  ) {
     return "https://nagdrishti-ai-backend.onrender.com";
   }
   return "http://localhost:8000";
 };
 
-const API_BASE = getApiBase();
+export const API_BASE = getApiBase();
+
+function getCookie(name) {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie.match(new RegExp(`(^|;\\s*)(${name})=([^;]*)`));
+  return match ? decodeURIComponent(match[3]) : null;
+}
 
 async function request(endpoint, options = {}) {
   const url = `${API_BASE}${endpoint}`;
@@ -21,6 +31,23 @@ async function request(endpoint, options = {}) {
 
   if (!(options.body instanceof FormData)) {
     defaultHeaders["Content-Type"] = "application/json";
+  }
+
+  // Attach token if stored from login
+  if (typeof window !== "undefined") {
+    const adminToken = localStorage.getItem("admin_token");
+    if (adminToken) {
+      defaultHeaders["Authorization"] = `Token ${adminToken}`;
+    }
+  }
+
+  // Attach CSRF token for mutating requests if cookie exists
+  const method = (options.method || "GET").toUpperCase();
+  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+    const csrfToken = getCookie("csrftoken");
+    if (csrfToken) {
+      defaultHeaders["X-CSRFToken"] = csrfToken;
+    }
   }
 
   const config = {
@@ -37,6 +64,7 @@ async function request(endpoint, options = {}) {
     const res = await fetch(url, config);
     const contentType = res.headers.get("content-type");
     let data = null;
+
     if (contentType && contentType.includes("application/json")) {
       data = await res.json();
     } else {
@@ -44,10 +72,24 @@ async function request(endpoint, options = {}) {
     }
 
     if (!res.ok) {
-      const errorMsg =
-        (data && (data.error || data.detail || (typeof data === "object" ? JSON.stringify(data) : data))) ||
-        `HTTP ${res.status}: ${res.statusText}`;
-      throw new Error(errorMsg);
+      let errorMsg = `HTTP ${res.status}: ${res.statusText}`;
+      if (data) {
+        if (typeof data === "string") {
+          errorMsg = data;
+        } else if (data.error) {
+          errorMsg = data.error;
+        } else if (data.message) {
+          errorMsg = data.message;
+        } else if (data.detail) {
+          errorMsg = data.detail;
+        } else {
+          errorMsg = JSON.stringify(data);
+        }
+      }
+      const err = new Error(errorMsg);
+      err.status = res.status;
+      err.data = data;
+      throw err;
     }
     return data;
   } catch (err) {
@@ -70,8 +112,8 @@ export async function updateDispatchStatus(zoneId, dispatchStatus) {
 
 // 2. Safe Routing (OSMnx + NetworkX + A*)
 export async function getSafeRoute(fromLat, fromLng, toLat, toLng) {
-  const fromParam = `${fromLat.toFixed(5)},${fromLng.toFixed(5)}`;
-  const toParam = `${toLat.toFixed(5)},${toLng.toFixed(5)}`;
+  const fromParam = `${Number(fromLat).toFixed(5)},${Number(fromLng).toFixed(5)}`;
+  const toParam = `${Number(toLat).toFixed(5)},${Number(toLng).toFixed(5)}`;
   return request(`/api/route/?from=${fromParam}&to=${toParam}`);
 }
 
@@ -80,12 +122,13 @@ export async function getReports() {
   return request("/api/reports/");
 }
 
-export async function submitReport({ lat, lng, description, photoFile }) {
+export async function submitReport({ lat, lng, description, photoFile, is_anonymous }) {
   const formData = new FormData();
   if (lat !== undefined && lat !== null) formData.append("lat", lat.toString());
   if (lng !== undefined && lng !== null) formData.append("lng", lng.toString());
   if (description) formData.append("description", description);
   if (photoFile) formData.append("photo", photoFile);
+  if (is_anonymous) formData.append("is_anonymous", "true");
 
   return request("/api/reports/", {
     method: "POST",
@@ -127,18 +170,28 @@ export async function simulateRainfall(payload) {
   });
 }
 
-// 7. Auth (Admin Session)
+// 7. Auth (Admin Session + Token)
 export async function loginAdmin(username, password) {
-  return request("/api/auth/login/", {
+  const res = await request("/api/auth/login/", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
+  if (res && res.token && typeof window !== "undefined") {
+    localStorage.setItem("admin_token", res.token);
+  }
+  return res;
 }
 
 export async function logoutAdmin() {
-  return request("/api/auth/logout/", {
-    method: "POST",
-  });
+  try {
+    await request("/api/auth/logout/", {
+      method: "POST",
+    });
+  } finally {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("admin_token");
+    }
+  }
 }
 
 export async function getCurrentUser() {
@@ -149,5 +202,3 @@ export async function getCurrentUser() {
 export async function checkBackendHealth() {
   return request("/api/health/");
 }
-
-export { API_BASE };

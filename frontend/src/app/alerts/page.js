@@ -1,209 +1,222 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import CitizenLayout from "../../components/layouts/CitizenLayout";
-import { getBroadcastAlerts } from "../../lib/api";
+import { useEffect, useState } from "react";
 import {
   Bell,
-  AlertTriangle,
   Radio,
-  Clock,
-  MapPin,
-  RefreshCw,
   Share2,
-  ShieldAlert,
+  Copy,
+  Check,
+  AlertTriangle,
+  RefreshCw,
   ShieldCheck,
-  CheckCircle2,
+  PhoneCall,
+  MessageSquare,
 } from "lucide-react";
-import { motion } from "framer-motion";
+import CitizenLayout from "../../components/layouts/CitizenLayout";
+import { getBroadcastAlerts } from "../../lib/api";
 
 export default function CitizenAlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterSeverity, setFilterSeverity] = useState("All");
   const [copiedId, setCopiedId] = useState(null);
 
-  const loadAlerts = async () => {
+  const fetchAlerts = async () => {
     try {
       setLoading(true);
       const data = await getBroadcastAlerts();
-      setAlerts(Array.isArray(data) ? data : []);
+      if (Array.isArray(data)) {
+        setAlerts(data);
+      }
     } catch (err) {
-      console.error("Alerts error:", err);
+      console.error("Alerts fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadAlerts();
-    const interval = setInterval(loadAlerts, 20000);
-    return () => clearInterval(interval);
+    fetchAlerts();
   }, []);
 
-  const handleShare = (alert) => {
-    if (navigator.share) {
-      navigator.share({
-        title: `NagDrishti Alert: ${alert.zone_name || "Nagpur"}`,
-        text: alert.message,
-        url: window.location.href,
-      }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(`[NagDrishti Alert] ${alert.message}`);
-      setCopiedId(alert.id);
+  const filteredAlerts = alerts.filter((a) => {
+    if (filterSeverity === "All") return true;
+    return (a.severity || "Severe").toLowerCase() === filterSeverity.toLowerCase();
+  });
+
+  const handleCopyAlert = (id, text) => {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     }
   };
 
-  const getSeverityStyle = (severity) => {
-    const s = (severity || "").toLowerCase();
-    if (s.includes("critical") || s.includes("severe") || s.includes("emergency")) {
-      return {
-        badge: "bg-red-100 text-red-700 border-red-200",
-        border: "border-red-200",
-        icon: ShieldAlert,
-        iconColor: "text-red-600",
-      };
-    }
-    if (s.includes("warning") || s.includes("high")) {
-      return {
-        badge: "bg-amber-100 text-amber-700 border-amber-200",
-        border: "border-amber-200",
-        icon: AlertTriangle,
-        iconColor: "text-amber-600",
-      };
-    }
-    if (s.includes("resolved") || s.includes("clear")) {
-      return {
-        badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
-        border: "border-emerald-200",
-        icon: ShieldCheck,
-        iconColor: "text-emerald-600",
-      };
-    }
-    return {
-      badge: "bg-neutral-100 text-neutral-700 border-neutral-200",
-      border: "border-neutral-200",
-      icon: Bell,
-      iconColor: "text-neutral-600",
-    };
+  const handleShareWhatsApp = (msg) => {
+    const text = encodeURIComponent(`🚨 *NagDrishti AI Crisis Alert*\n${msg}\n\nStay safe & check live flood routes.`);
+    window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   return (
     <CitizenLayout>
-      <div className="p-4 space-y-4">
-        
-        {/* Page Header */}
+      <div className="space-y-4">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-lg font-black text-[#111111] tracking-tight">
-              Emergency Alerts & Advisories
+            <h1 className="text-xl font-black text-slate-900 dark:text-white">
+              Civic Broadcasts
             </h1>
-            <p className="text-xs text-[#666666] font-medium">
-              Live broadcast messages issued by Nagpur Municipal Disaster Cell
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Official emergency alerts issued by Nagpur Disaster Cell
             </p>
           </div>
 
           <button
-            onClick={loadAlerts}
-            className="p-2 rounded-full bg-white border border-[#E5E5E5] text-[#111111] hover:bg-neutral-100 transition active:rotate-180"
-            title="Refresh Alerts"
+            onClick={fetchAlerts}
+            disabled={loading}
+            className="p-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm active:scale-95 transition"
+            title="Refresh alerts"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-teal-600" : ""}`} />
           </button>
         </div>
 
-        {/* Live Broadcast Ticker Banner */}
-        <div className="p-3.5 rounded-2xl bg-neutral-900 text-white flex items-center justify-between shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FFC107] animate-ping"></span>
-            <div>
-              <div className="text-xs font-black tracking-tight">
-                SMS & WhatsApp Broadcast Gateway
-              </div>
-              <div className="text-[10px] text-neutral-400">
-                Automated Twilio Dispatch & Public Cell Broadcaster
-              </div>
-            </div>
-          </div>
-          <Radio className="w-4 h-4 text-[#FFC107] animate-pulse" />
+        {/* Severity Filter Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {["All", "Severe", "High", "Medium"].map((sev) => {
+            const isSelected = filterSeverity === sev;
+            return (
+              <button
+                key={sev}
+                onClick={() => setFilterSeverity(sev)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                  isSelected
+                    ? "bg-teal-600 text-white shadow-sm shadow-teal-600/30"
+                    : "bg-white dark:bg-[#131B2A] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {sev}
+              </button>
+            );
+          })}
         </div>
 
         {/* Alerts List */}
-        {alerts.length > 0 ? (
-          <div className="space-y-3">
-            {alerts.map((alert) => {
-              const style = getSeverityStyle(alert.severity);
-              const Icon = style.icon;
+        <div className="space-y-3">
+          {filteredAlerts.map((alert) => {
+            const isSevere = alert.severity === "Severe" || (alert.severity || "").toLowerCase() === "severe";
+            const isHigh = alert.severity === "High" || (alert.severity || "").toLowerCase() === "high";
 
-              return (
-                <motion.div
-                  key={alert.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`bg-white rounded-2xl p-4 border ${style.border} shadow-xs space-y-3`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-7 h-7 rounded-xl flex items-center justify-center bg-neutral-100 ${style.iconColor}`}>
-                        <Icon className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-black text-[#111111]">
-                          {alert.zone_name || "Nagpur Citywide"}
-                        </div>
-                        <div className="flex items-center gap-2 text-[10px] text-[#666666] mt-0.5">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {alert.created_at
-                              ? new Date(alert.created_at).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                              : "Just now"}
-                          </span>
-                          <span>•</span>
-                          <span className="capitalize">{alert.channel || "Broadcast"}</span>
-                        </div>
-                      </div>
+            return (
+              <div
+                key={alert.id}
+                className={`bg-white dark:bg-[#131B2A] border rounded-3xl p-4 shadow-sm space-y-3 transition ${
+                  isSevere
+                    ? "border-red-500/40 dark:border-red-900/50"
+                    : isHigh
+                    ? "border-orange-500/30 dark:border-orange-900/40"
+                    : "border-slate-200 dark:border-slate-800"
+                }`}
+              >
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className={`p-2 rounded-xl ${
+                        isSevere
+                          ? "bg-red-500/10 text-red-600"
+                          : isHigh
+                          ? "bg-orange-500/10 text-orange-600"
+                          : "bg-teal-500/10 text-teal-600"
+                      }`}
+                    >
+                      <Radio className="w-4 h-4 animate-pulse" />
                     </div>
+                    <div>
+                      <h3 className="font-black text-sm text-slate-900 dark:text-white">
+                        {alert.zone_name || `Ward Alert #${alert.id}`}
+                      </h3>
+                      <p className="text-[10px] text-slate-600 dark:text-slate-300">
+                        {alert.created_at ? new Date(alert.created_at).toLocaleString() : "Just Now"}
+                      </p>
+                    </div>
+                  </div>
 
-                    <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full border ${style.badge}`}>
-                      {alert.severity || "Alert"}
+                  <span
+                    className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full ${
+                      isSevere
+                        ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                        : isHigh
+                        ? "bg-orange-500/10 text-orange-600 border border-orange-500/20"
+                        : "bg-amber-500/10 text-amber-600 border border-amber-500/20"
+                    }`}
+                  >
+                    {alert.severity || "Severe"}
+                  </span>
+                </div>
+
+                {/* Message Body */}
+                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+                  {alert.message}
+                </p>
+
+                {/* Channels & Share Actions */}
+                <div className="flex items-center justify-between border-t border-slate-100 dark:border-slate-800/80 pt-2.5">
+                  <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3 text-teal-500" />
+                      <span>{alert.channel || "SMS & WhatsApp"}</span>
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#111111] leading-relaxed font-medium bg-[#F7F7F7] p-3 rounded-xl border border-[#E5E5E5]">
-                    {alert.message}
-                  </p>
-
-                  <div className="flex items-center justify-between text-[11px] text-[#666666] pt-1">
-                    <span>Target: {alert.recipient || "Public Advisory Feed"}</span>
+                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => handleShare(alert)}
-                      className="flex items-center gap-1 font-bold text-[#111111] hover:text-[#FF8A00] transition"
+                      onClick={() => handleCopyAlert(alert.id, alert.message)}
+                      className="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-[10px] flex items-center gap-1 hover:bg-slate-200 transition"
+                      title="Copy alert text"
                     >
-                      <Share2 className="w-3.5 h-3.5" />
-                      <span>{copiedId === alert.id ? "Copied!" : "Share"}</span>
+                      {copiedId === alert.id ? (
+                        <>
+                          <Check className="w-3 h-3 text-emerald-500" />
+                          <span>Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      onClick={() => handleShareWhatsApp(alert.message)}
+                      className="px-2.5 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] flex items-center gap-1 transition"
+                      title="Share to WhatsApp"
+                    >
+                      <Share2 className="w-3 h-3" />
+                      <span>Share</span>
                     </button>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="bg-white rounded-2xl p-8 border border-[#E5E5E5] text-center space-y-2">
-            <div className="w-10 h-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <h3 className="font-extrabold text-sm text-[#111111]">
-              No Active Emergency Alerts
-            </h3>
-            <p className="text-xs text-[#666666] max-w-xs mx-auto">
-              Weather conditions and drainage corridors across Nagpur are currently operating within normal safety limits.
-            </p>
-          </div>
-        )}
+                </div>
+              </div>
+            );
+          })}
 
+          {filteredAlerts.length === 0 && (
+            <div className="p-8 rounded-3xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 text-center space-y-2">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+                No Active Emergency Alerts
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-300">
+                All wards across Nagpur are operating with clear drainage channels.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </CitizenLayout>
   );

@@ -1,214 +1,202 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import CitizenLayout from "../../components/layouts/CitizenLayout";
-import { getRiskZones, getReports, getWeather } from "../../lib/api";
 import {
-  CloudRain,
   Layers,
-  AlertTriangle,
-  Navigation,
-  X,
-  ShieldAlert,
-  ShieldCheck,
-  RefreshCw,
   MapPin,
-  ChevronRight,
-  Info,
+  AlertTriangle,
+  Droplets,
+  CloudRain,
+  Navigation,
+  RefreshCw,
+  X,
+  ShieldCheck,
+  CheckCircle2,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import CitizenLayout from "../../components/layouts/CitizenLayout";
+import MapComponent from "../../components/MapComponent";
+import { getRiskZones, getReports, getWeather } from "../../lib/api";
 
-const MapComponent = dynamic(() => import("../../components/MapComponent"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full min-h-[500px] bg-neutral-100 flex flex-col items-center justify-center text-neutral-500 text-xs">
-      <div className="w-8 h-8 border-3 border-[#FFC107] border-t-transparent rounded-full animate-spin mb-2"></div>
-      <span className="font-semibold text-[#111111]">Loading Nagpur Live Flood Map...</span>
-    </div>
-  ),
-});
-
-export default function LiveMapPage() {
+export default function CitizenMapPage() {
   const [zones, setZones] = useState([]);
   const [reports, setReports] = useState([]);
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedZone, setSelectedZone] = useState(null);
-  const [layerFilter, setLayerFilter] = useState("all"); // "all" | "severe" | "reports"
 
-  const loadMapData = async () => {
+  const fetchData = async () => {
     try {
-      const [z, r, w] = await Promise.all([
-        getRiskZones().catch(() => []),
-        getReports().catch(() => []),
-        getWeather().catch(() => null),
+      setLoading(true);
+      const [zData, rData, wData] = await Promise.allSettled([
+        getRiskZones(),
+        getReports(),
+        getWeather(),
       ]);
-      setZones(Array.isArray(z) ? z : []);
-      setReports(Array.isArray(r) ? r : []);
-      setWeather(w);
+
+      if (zData.status === "fulfilled" && Array.isArray(zData.value)) setZones(zData.value);
+      if (rData.status === "fulfilled" && Array.isArray(rData.value)) setReports(rData.value);
+      if (wData.status === "fulfilled" && wData.value) setWeather(wData.value);
     } catch (err) {
-      console.error("Map data error:", err);
+      console.error("Map page fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadMapData();
-    const interval = setInterval(loadMapData, 30000);
-    return () => clearInterval(interval);
+    fetchData();
   }, []);
 
-  const filteredZones = layerFilter === "severe"
-    ? zones.filter((z) => (z.latest_risk_score ?? z.risk_score ?? 0) >= 50)
-    : zones;
+  const filterChips = ["All", "Severe", "High", "Medium", "Low", "Dispatches"];
 
-  const filteredReports = layerFilter === "severe"
-    ? reports.filter((r) => r.is_waterlogged || r.verification_status === "verified")
-    : reports;
+  const filteredZones = zones.filter((z) => {
+    if (selectedCategory === "All") return true;
+    if (selectedCategory === "Dispatches") return z.dispatch_status && z.dispatch_status !== "Unassigned";
+    const cat = z.risk_category || ((z.latest_risk_score ?? z.risk_score) >= 75 ? "Severe" : (z.latest_risk_score ?? z.risk_score) >= 50 ? "High" : (z.latest_risk_score ?? z.risk_score) >= 25 ? "Medium" : "Low");
+    return cat.toLowerCase() === selectedCategory.toLowerCase();
+  });
 
   return (
     <CitizenLayout>
-      <div className="relative w-full h-[calc(100vh-130px)] flex flex-col overflow-hidden">
-        
-        {/* Floating Top Status Bar */}
-        <div className="absolute top-3 left-3 right-3 z-30 flex items-center justify-between pointer-events-none">
-          <div className="pointer-events-auto flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 backdrop-blur border border-[#E5E5E5] shadow-sm text-xs font-bold text-[#111111]">
-            <CloudRain className="w-4 h-4 text-[#FF8A00]" />
-            <span>
-              Rainfall: {weather?.nagpur_city_average_rain_mm?.toFixed(1) || "0.0"} mm/h
-            </span>
+      <div className="space-y-3">
+        {/* Top Header & Weather Status */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-black text-slate-900 dark:text-white">
+              Live Flood Map
+            </h1>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Nagpur Municipal GIS & Hazard Feeds
+            </p>
           </div>
 
           <button
-            onClick={loadMapData}
-            className="pointer-events-auto p-2 rounded-full bg-white/95 backdrop-blur border border-[#E5E5E5] shadow-sm text-[#111111] hover:bg-neutral-100 transition active:rotate-180"
-            title="Refresh Map Data"
+            onClick={fetchData}
+            disabled={loading}
+            className="p-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 shadow-sm active:scale-95 transition"
+            title="Refresh Live Map"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin text-teal-600" : ""}`} />
           </button>
         </div>
 
-        {/* Floating Layer Filter Chips */}
-        <div className="absolute top-14 left-3 z-30 flex items-center gap-1.5 pointer-events-auto">
-          <button
-            onClick={() => setLayerFilter("all")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shadow-xs ${
-              layerFilter === "all"
-                ? "bg-[#111111] text-white"
-                : "bg-white/90 text-[#666666] border border-[#E5E5E5]"
-            }`}
-          >
-            All Wards ({zones.length})
-          </button>
-          <button
-            onClick={() => setLayerFilter("severe")}
-            className={`px-3 py-1 rounded-full text-xs font-bold transition shadow-xs ${
-              layerFilter === "severe"
-                ? "bg-red-600 text-white"
-                : "bg-white/90 text-[#666666] border border-[#E5E5E5]"
-            }`}
-          >
-            High Risk Only
-          </button>
+        {/* Filter Chips Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          {filterChips.map((chip) => {
+            const isSelected = selectedCategory === chip;
+            return (
+              <button
+                key={chip}
+                onClick={() => setSelectedCategory(chip)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                  isSelected
+                    ? "bg-teal-600 text-white shadow-sm shadow-teal-600/30"
+                    : "bg-white dark:bg-[#131B2A] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {chip}
+                {chip === "Severe" && zones.filter((z) => (z.risk_category === "Severe" || (z.latest_risk_score ?? z.risk_score) >= 75)).length > 0 && (
+                  <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-red-500 text-white text-[9px]">
+                    {zones.filter((z) => (z.risk_category === "Severe" || (z.latest_risk_score ?? z.risk_score) >= 75)).length}
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
 
-        {/* The Leaflet Map Instance */}
-        <div className="flex-1 w-full h-full">
+        {/* Interactive Leaflet Map Container */}
+        <div className="h-[460px] w-full rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 relative">
           <MapComponent
             zones={filteredZones}
-            reports={filteredReports}
-            selectedZone={selectedZone}
+            reports={reports}
             onZoneClick={(zone) => setSelectedZone(zone)}
           />
         </div>
 
-        {/* Zone Details Bottom Sheet */}
-        <AnimatePresence>
-          {selectedZone && (
-            <motion.div
-              initial={{ y: 250, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 250, opacity: 0 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="absolute bottom-2 left-2 right-2 z-40 bg-white rounded-2xl p-4 border border-[#E5E5E5] shadow-lg space-y-3"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-extrabold text-base text-[#111111]">
-                      {selectedZone.name}
-                    </h3>
-                    <span
-                      className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
-                        (selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 0) >= 60
-                          ? "bg-red-100 text-red-700"
-                          : (selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 0) >= 30
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-emerald-100 text-emerald-700"
-                      }`}
-                    >
-                      {selectedZone.risk_category || "Moderate"}
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-[#666666] mt-0.5">
-                    Drainage: {(selectedZone.drainage_capacity * 100).toFixed(0)}% • Elev Factor: {selectedZone.elevation_factor}
-                  </div>
+        {/* Selected Zone Bottom Sheet Details */}
+        {selectedZone && (
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-xl space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center">
+                  <MapPin className="w-4 h-4" />
                 </div>
+                <div>
+                  <h3 className="font-black text-sm text-slate-900 dark:text-white">
+                    {selectedZone.name}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Nagpur Municipal Ward #{selectedZone.id}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-full ${
+                    (selectedZone.risk_category === "Severe" || (selectedZone.latest_risk_score ?? selectedZone.risk_score) >= 75)
+                      ? "bg-red-500/10 text-red-600 border border-red-500/30"
+                      : (selectedZone.risk_category === "High" || (selectedZone.latest_risk_score ?? selectedZone.risk_score) >= 50)
+                      ? "bg-orange-500/10 text-orange-600 border border-orange-500/30"
+                      : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/30"
+                  }`}
+                >
+                  {selectedZone.risk_category || "Low Risk"} ({(selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 10).toFixed(1)})
+                </span>
 
                 <button
                   onClick={() => setSelectedZone(null)}
-                  className="p-1 rounded-full hover:bg-neutral-100 text-[#666666]"
+                  className="p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-white"
                 >
                   <X className="w-4 h-4" />
                 </button>
               </div>
+            </div>
 
-              <div className="grid grid-cols-3 gap-2 bg-[#F7F7F7] p-2.5 rounded-xl text-center">
-                <div>
-                  <div className="text-[10px] text-[#666666] font-medium">Risk Score</div>
-                  <div className="text-sm font-black text-[#111111]">
-                    {(selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 10).toFixed(1)}/100
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[#666666] font-medium">Rainfall</div>
-                  <div className="text-sm font-black text-[#111111]">
-                    {selectedZone.rainfall_mm?.toFixed(1) || weather?.nagpur_city_average_rain_mm?.toFixed(1) || 0} mm/h
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] text-[#666666] font-medium">Dispatch</div>
-                  <div className="text-[11px] font-bold text-[#111111] truncate mt-0.5">
-                    {selectedZone.dispatch_status || "Normal"}
-                  </div>
+            {/* Metrics 4-Grid */}
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Rainfall</div>
+                <div className="font-extrabold text-slate-900 dark:text-white">
+                  {(selectedZone.rainfall_mm ?? 0).toFixed(1)} mm/h
                 </div>
               </div>
 
-              {/* Action Buttons: Single Primary Orange Action */}
-              <div className="flex gap-2">
-                <Link
-                  href={`/route?to=${selectedZone.name}`}
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#111111] text-white text-xs font-bold hover:bg-black transition"
-                >
-                  <Navigation className="w-3.5 h-3.5" />
-                  <span>Route Here</span>
-                </Link>
-
-                <Link
-                  href="/report"
-                  className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#FF8A00] text-white text-xs font-bold hover:bg-[#E67C00] shadow-sm transition"
-                >
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>Report Hazard</span>
-                </Link>
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Drainage Capacity</div>
+                <div className="font-extrabold text-slate-900 dark:text-white">
+                  {Math.round((selectedZone.drainage_capacity || 0.5) * 100)}%
+                </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
 
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Elevation Factor</div>
+                <div className="font-extrabold text-slate-900 dark:text-white">
+                  {selectedZone.elevation_factor || 0.4}
+                </div>
+              </div>
+
+              <div className="p-2 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Dispatch Status</div>
+                <div className="font-extrabold text-teal-600 dark:text-teal-400">
+                  {selectedZone.dispatch_status || "Unassigned"}
+                </div>
+              </div>
+            </div>
+
+            {/* Direct Routing Action */}
+            <Link
+              href={`/route?destination=${encodeURIComponent(selectedZone.name)}`}
+              className="w-full py-2.5 px-4 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-teal-600/20 active:scale-95 transition"
+            >
+              <Navigation className="w-4 h-4" />
+              <span>Calculate Safe Route to {selectedZone.name}</span>
+            </Link>
+          </div>
+        )}
       </div>
     </CitizenLayout>
   );

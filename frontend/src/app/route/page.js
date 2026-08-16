@@ -1,257 +1,246 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import dynamic from "next/dynamic";
-import CitizenLayout from "../../components/layouts/CitizenLayout";
-import { getSafeRoute, getRiskZones } from "../../lib/api";
+import { useState } from "react";
 import {
   Navigation,
-  MapPin,
   ArrowUpDown,
-  ShieldCheck,
-  ShieldAlert,
+  MapPin,
   Clock,
-  Milestone,
-  CheckCircle2,
+  ShieldCheck,
   AlertTriangle,
-  Info,
+  Locate,
+  Sparkles,
+  CheckCircle2,
+  Layers,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import CitizenLayout from "../../components/layouts/CitizenLayout";
+import MapComponent from "../../components/MapComponent";
+import { getSafeRoute } from "../../lib/api";
 
-const MapComponent = dynamic(() => import("../../components/MapComponent"), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full min-h-[300px] bg-neutral-100 flex flex-col items-center justify-center text-neutral-500 text-xs">
-      <div className="w-6 h-6 border-2 border-[#FFC107] border-t-transparent rounded-full animate-spin mb-2"></div>
-      <span>Loading Route Map...</span>
-    </div>
-  ),
-});
-
-const NAGPUR_LANDMARKS = [
-  { name: "Dharampeth (West)", lat: 21.1472, lng: 79.0664 },
-  { name: "Sitabuldi Interchange (Central)", lat: 21.1465, lng: 79.0825 },
-  { name: "Lakadganj (East)", lat: 21.1550, lng: 79.1300 },
-  { name: "Mahal (South-East)", lat: 21.1430, lng: 79.1080 },
-  { name: "Sadar Residency (North)", lat: 21.1605, lng: 79.0830 },
-  { name: "Mankapur Ring Rd (North-West)", lat: 21.1850, lng: 79.0720 },
-  { name: "Nagpur Central Station", lat: 21.1525, lng: 79.0880 },
-  { name: "Nagpur Airport (Sonegaon)", lat: 21.0922, lng: 79.0550 },
+const PRESET_LOCATIONS = [
+  { name: "Zero Mile Marker", lat: 21.1458, lng: 79.0882 },
+  { name: "Sitabuldi Junction", lat: 21.1498, lng: 79.0806 },
+  { name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 },
+  { name: "Sadar Bazaar", lat: 21.1605, lng: 79.0830 },
+  { name: "Mahal Chowk", lat: 21.1430, lng: 79.1120 },
+  { name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 },
+  { name: "Itwari Railway Station", lat: 21.1720, lng: 79.1200 },
+  { name: "Airport Road (Sonegaon)", lat: 21.0920, lng: 79.0680 },
 ];
 
 export default function SafeRoutePage() {
-  const [fromIndex, setFromIndex] = useState(0); // Dharampeth
-  const [toIndex, setToIndex] = useState(2);   // Lakadganj
-  const [zones, setZones] = useState([]);
-  const [routeResult, setRouteResult] = useState(null);
-  const [loadingRoute, setLoadingRoute] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
+  const [fromLocation, setFromLocation] = useState(PRESET_LOCATIONS[2]); // Dharampeth
+  const [toLocation, setToLocation] = useState(PRESET_LOCATIONS[5]);   // Lakadganj
 
-  useEffect(() => {
-    getRiskZones()
-      .then((z) => setZones(Array.isArray(z) ? z : []))
-      .catch(() => {});
-  }, []);
+  const [customFromLat, setCustomFromLat] = useState("21.1472");
+  const [customFromLng, setCustomFromLng] = useState("79.0664");
+  const [customToLat, setCustomToLat] = useState("21.1550");
+  const [customToLng, setCustomToLng] = useState("79.1300");
+
+  const [loading, setLoading] = useState(false);
+  const [routeResult, setRouteResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const handleSwap = () => {
-    const temp = fromIndex;
-    setFromIndex(toIndex);
-    setToIndex(temp);
+    const tempLoc = fromLocation;
+    setFromLocation(toLocation);
+    setToLocation(tempLoc);
+
+    const tLat = customFromLat;
+    const tLng = customFromLng;
+    setCustomFromLat(customToLat);
+    setCustomFromLng(customToLng);
+    setCustomToLat(tLat);
+    setCustomToLng(tLng);
   };
 
-  const handleCalculateRoute = async (e) => {
-    if (e) e.preventDefault();
-    if (fromIndex === toIndex) {
-      setErrorMsg("Origin and destination cannot be identical.");
-      return;
-    }
-    setLoadingRoute(true);
-    setErrorMsg(null);
+  const handleFindRoute = async () => {
+    setErrorMsg("");
+    setLoading(true);
     setRouteResult(null);
 
-    const fromPt = NAGPUR_LANDMARKS[fromIndex];
-    const toPt = NAGPUR_LANDMARKS[toIndex];
+    const fLat = parseFloat(customFromLat);
+    const fLng = parseFloat(customFromLng);
+    const tLat = parseFloat(customToLat);
+    const tLng = parseFloat(customToLng);
+
+    if (isNaN(fLat) || isNaN(fLng) || isNaN(tLat) || isNaN(tLng)) {
+      setErrorMsg("Please enter valid numeric latitude and longitude coordinates.");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const res = await getSafeRoute(fromPt.lat, fromPt.lng, toPt.lat, toPt.lng);
-      setRouteResult(res);
+      const data = await getSafeRoute(fLat, fLng, tLat, tLng);
+      setRouteResult(data);
     } catch (err) {
-      setErrorMsg(err.message || "Failed to calculate safe route across road network.");
+      console.error("Routing error:", err);
+      setErrorMsg(err.message || "Could not calculate safe route across road network.");
     } finally {
-      setLoadingRoute(false);
+      setLoading(false);
     }
   };
 
   return (
     <CitizenLayout>
-      <div className="p-4 space-y-4">
-        
+      <div className="space-y-4">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-black text-[#111111] tracking-tight">
-              Risk-Aware Safe Route
-            </h1>
-            <p className="text-xs text-[#666666] font-medium">
-              OSMnx A* street pathfinding bypassing active waterlogging & crisis wards
-            </p>
-          </div>
-          <div className="w-8 h-8 rounded-xl bg-[#111111] text-[#FFC107] flex items-center justify-center">
-            <Navigation className="w-4 h-4" />
-          </div>
+        <div>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white">
+            Safe Route Navigation
+          </h1>
+          <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            Risk-aware pathfinding bypassing flooded wards and road hazards
+          </p>
         </div>
 
-        {/* Origin & Destination Card */}
-        <form onSubmit={handleCalculateRoute} className="bg-white rounded-2xl p-4 border border-[#E5E5E5] shadow-xs space-y-3">
-          <div className="space-y-2 relative">
-            
-            {/* From Selector */}
-            <div className="flex items-center gap-2 bg-[#F7F7F7] p-2 rounded-xl border border-[#E5E5E5]">
-              <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] font-bold text-[#666666] uppercase block">
-                  Origin (Starting Point)
-                </label>
-                <select
-                  value={fromIndex}
-                  onChange={(e) => setFromIndex(Number(e.target.value))}
-                  className="w-full text-xs font-bold text-[#111111] bg-transparent focus:outline-hidden"
-                >
-                  {NAGPUR_LANDMARKS.map((item, idx) => (
-                    <option key={item.name} value={idx}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+        {/* Origin & Destination Inputs Card */}
+        <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm space-y-3">
+          {/* Origin Picker */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase text-teal-600 dark:text-teal-400 tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+              Origin Point (Start)
+            </label>
+            <select
+              value={fromLocation.name}
+              onChange={(e) => {
+                const found = PRESET_LOCATIONS.find((p) => p.name === e.target.value);
+                if (found) {
+                  setFromLocation(found);
+                  setCustomFromLat(found.lat.toFixed(4));
+                  setCustomFromLng(found.lng.toFixed(4));
+                }
+              }}
+              className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+            >
+              {PRESET_LOCATIONS.map((loc) => (
+                <option key={loc.name} value={loc.name}>
+                  📍 {loc.name} ({loc.lat}, {loc.lng})
+                </option>
+              ))}
+            </select>
+          </div>
 
-            {/* Swap Button */}
+          {/* Swap Button */}
+          <div className="flex justify-center -my-1">
             <button
               type="button"
               onClick={handleSwap}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-7 h-7 rounded-full bg-white border border-[#E5E5E5] shadow-xs flex items-center justify-center text-[#666666] hover:text-[#111111] active:rotate-180 transition"
-              title="Swap Origin & Destination"
+              className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-teal-500 hover:text-white text-slate-600 dark:text-slate-300 transition shadow-sm active:scale-90"
+              title="Swap Origin and Destination"
             >
               <ArrowUpDown className="w-3.5 h-3.5" />
             </button>
-
-            {/* To Selector */}
-            <div className="flex items-center gap-2 bg-[#F7F7F7] p-2 rounded-xl border border-[#E5E5E5]">
-              <div className="w-7 h-7 rounded-lg bg-red-100 text-red-700 flex items-center justify-center shrink-0">
-                <MapPin className="w-4 h-4" />
-              </div>
-              <div className="flex-1">
-                <label className="text-[10px] font-bold text-[#666666] uppercase block">
-                  Destination
-                </label>
-                <select
-                  value={toIndex}
-                  onChange={(e) => setToIndex(Number(e.target.value))}
-                  className="w-full text-xs font-bold text-[#111111] bg-transparent focus:outline-hidden"
-                >
-                  {NAGPUR_LANDMARKS.map((item, idx) => (
-                    <option key={item.name} value={idx}>
-                      {item.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
           </div>
 
-          {errorMsg && (
-            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
-              {errorMsg}
-            </div>
-          )}
+          {/* Destination Picker */}
+          <div className="space-y-1">
+            <label className="text-[10px] font-black uppercase text-red-500 tracking-wider flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-red-500"></span>
+              Destination Point (End)
+            </label>
+            <select
+              value={toLocation.name}
+              onChange={(e) => {
+                const found = PRESET_LOCATIONS.find((p) => p.name === e.target.value);
+                if (found) {
+                  setToLocation(found);
+                  setCustomToLat(found.lat.toFixed(4));
+                  setCustomToLng(found.lng.toFixed(4));
+                }
+              }}
+              className="w-full p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-teal-500"
+            >
+              {PRESET_LOCATIONS.map((loc) => (
+                <option key={loc.name} value={loc.name}>
+                  🏁 {loc.name} ({loc.lat}, {loc.lng})
+                </option>
+              ))}
+            </select>
+          </div>
 
-          {/* THE SINGLE PRIMARY ACTION CTA ON THIS SCREEN */}
+          {/* Calculate Route CTA */}
           <button
-            type="submit"
-            disabled={loadingRoute}
-            className="w-full py-3.5 px-4 rounded-xl bg-[#FF8A00] hover:bg-[#E67C00] text-white font-bold text-sm shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-2 disabled:opacity-50"
+            onClick={handleFindRoute}
+            disabled={loading}
+            className="w-full py-3 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/30 active:scale-95 transition flex items-center justify-center gap-2"
           >
-            {loadingRoute ? (
+            {loading ? (
               <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <Sparkles className="w-4 h-4 animate-spin" />
                 <span>Computing Safest Route...</span>
               </>
             ) : (
               <>
                 <Navigation className="w-4 h-4" />
-                <span>Find Safest Route</span>
+                <span>Calculate Flood-Safe Route</span>
               </>
             )}
           </button>
-        </form>
+        </div>
 
-        {/* Route Details Card */}
-        {routeResult && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="space-y-4"
-          >
-            {/* Route Summary Stats */}
-            <div className="bg-white rounded-2xl p-4 border border-[#E5E5E5] shadow-xs space-y-3">
-              <div className="grid grid-cols-2 gap-2 text-center">
-                <div className="p-3 rounded-xl bg-[#F7F7F7]">
-                  <div className="flex items-center justify-center gap-1 text-[11px] text-[#666666] font-medium">
-                    <Milestone className="w-3.5 h-3.5 text-[#FF8A00]" />
-                    <span>Distance</span>
-                  </div>
-                  <div className="text-xl font-black text-[#111111] mt-0.5">
-                    {routeResult.distance_km} km
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F7F7F7]">
-                  <div className="flex items-center justify-center gap-1 text-[11px] text-[#666666] font-medium">
-                    <Clock className="w-3.5 h-3.5 text-[#22A447]" />
-                    <span>Estimated Time</span>
-                  </div>
-                  <div className="text-xl font-black text-[#111111] mt-0.5">
-                    ~{routeResult.estimated_minutes} mins
-                  </div>
-                </div>
-              </div>
-
-              {/* Avoided Danger Zones Callout */}
-              {routeResult.avoided_high_risk_zones && routeResult.avoided_high_risk_zones.length > 0 && (
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
-                  <div className="flex items-center gap-1.5 font-extrabold text-amber-950">
-                    <ShieldAlert className="w-4 h-4 text-[#FF8A00]" />
-                    <span>Active Hazard Diversion</span>
-                  </div>
-                  <p className="text-[11px]">
-                    Route actively bypasses high-risk waterlogging in:{" "}
-                    <span className="font-bold">{routeResult.avoided_high_risk_zones.join(", ")}</span>.
-                  </p>
-                </div>
-              )}
-
-              <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-900 flex items-start gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#22A447] shrink-0 mt-0.5" />
-                <p className="text-[11px] leading-relaxed">
-                  {routeResult.safety_explanation}
-                </p>
-              </div>
+        {/* Error Banner */}
+        {errorMsg && (
+          <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-xs font-semibold space-y-1 animate-in fade-in duration-200">
+            <div className="flex items-center gap-2 font-black">
+              <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+              <span>Route Calculation Error</span>
             </div>
-
-            {/* Map Preview of the Calculated Route */}
-            <div className="w-full h-72 rounded-2xl overflow-hidden border border-[#E5E5E5] shadow-xs">
-              <MapComponent
-                zones={zones}
-                routeData={routeResult}
-              />
-            </div>
-          </motion.div>
+            <p className="pl-6 text-[11px] leading-relaxed">{errorMsg}</p>
+          </div>
         )}
 
+        {/* Route Result Summary Card */}
+        {routeResult && (
+          <div className="bg-white dark:bg-[#131B2A] border border-teal-500/30 rounded-3xl p-4 shadow-xl space-y-3 animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-emerald-500" />
+                <span className="font-black text-sm text-slate-900 dark:text-white">
+                  Safe Path Found
+                </span>
+              </div>
+              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                Risk-Optimized
+              </span>
+            </div>
+
+            {/* Distance & ETA */}
+            <div className="grid grid-cols-2 gap-2 text-center">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">
+                  Total Distance
+                </div>
+                <div className="text-xl font-black text-slate-900 dark:text-white">
+                  {routeResult.distance_km || routeResult.total_distance_km || 0} <span className="text-xs">km</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800">
+                <div className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">
+                  Estimated Travel
+                </div>
+                <div className="text-xl font-black text-teal-600 dark:text-teal-400">
+                  {routeResult.estimated_time_min || 12} <span className="text-xs">mins</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Avoided Hazard Zones Callout */}
+            <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-xs font-semibold text-emerald-900 dark:text-emerald-300">
+              <p className="leading-relaxed">
+                {routeResult.safety_explanation ||
+                  `Path routed successfully across ${routeResult.node_count || 12} road network segments.`}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Route Preview Leaflet Map */}
+        <div className="h-[360px] w-full rounded-3xl overflow-hidden shadow-lg border border-slate-200 dark:border-slate-800 relative">
+          <MapComponent routeData={routeResult} />
+        </div>
       </div>
     </CitizenLayout>
   );

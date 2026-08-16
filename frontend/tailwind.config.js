@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,15 +9,38 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        brand: "#FFC107",        // Yellow — badges, active nav, highlights ONLY
-        action: "#FF8A00",       // Orange — primary CTAs ONLY, one per screen
-        ink: "#111111",          // Primary text, headings
-        muted: "#666666",        // Secondary text, subheadings
-        surface: "#FFFFFF",      // Card backgrounds, modals
-        surfaceAlt: "#F7F7F7",   // App background, muted tiles
-        border: "#E5E5E5",       // Card and input borders
-        success: "#22A447",      // Low risk, verified status
-        danger: "#E53935",       // Severe/High risk, critical alerts
+        teal: {
+          50: "#f0fdfa",
+          100: "#ccfbf1",
+          200: "#99f6e4",
+          300: "#5eead4",
+          400: "#2dd4bf",
+          500: "#14b8a6",
+          600: "#0d9488",
+          700: "#0f766e",
+          800: "#115e59",
+          900: "#134e4a",
+          950: "#042f2e",
+        },
+        emerald: {
+          50: "#ecfdf5",
+          100: "#d1fae5",
+          200: "#a7f3d0",
+          300: "#6ee7b7",
+          400: "#34d399",
+          500: "#10b981",
+          600: "#059669",
+          700: "#047857",
+          800: "#065f46",
+          900: "#064e3b",
+        },
+        risk: {
+          low: "#16A34A",       // Green
+          medium: "#F59E0B",    // Amber
+          high: "#EF4444",      // Red
+          severe: "#DC2626",    // Strong Red
+          sos: "#B91C1C",       // Emergency SOS
+        },
       },
     },
   },

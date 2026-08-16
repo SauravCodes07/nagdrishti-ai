@@ -16,7 +16,11 @@ class RoutePathfindView(APIView):
 
         if not from_param or not to_param:
             return Response(
-                {"error": "Missing required query parameters: 'from' and 'to' (e.g. ?from=21.1458,79.0882&to=21.1605,79.0830)"},
+                {
+                    "status": "error",
+                    "error": "Missing required query parameters: 'from' and 'to' (e.g. ?from=21.1458,79.0882&to=21.1605,79.0830)",
+                    "message": "Please specify both starting point and destination.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -32,17 +36,27 @@ class RoutePathfindView(APIView):
 
         except Exception as exc:
             return Response(
-                {"error": f"Invalid coordinate format for 'from' or 'to'. Expected lat,lng numbers. Details: {exc}"},
+                {
+                    "status": "error",
+                    "error": f"Invalid coordinate format. Expected lat,lng numbers. Details: {exc}",
+                    "message": "Invalid coordinates provided.",
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
             route_result = calculate_safe_route(from_lat, from_lng, to_lat, to_lng)
+            if route_result.get("status") == "error":
+                return Response(route_result, status=status.HTTP_400_BAD_REQUEST)
             if route_result.get("status") == "routing_unavailable":
                 return Response(route_result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             return Response(route_result, status=status.HTTP_200_OK)
         except Exception as exc:
             return Response(
-                {"status": "routing_unavailable", "error": f"Pathfinding failed: {exc}"},
+                {
+                    "status": "routing_unavailable",
+                    "error": f"Pathfinding failed: {exc}",
+                    "message": "Internal error calculating road route.",
+                },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

@@ -1,136 +1,81 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import {
+  AlertOctagon,
+  CheckCircle2,
+  Truck,
+  RefreshCw,
+  Droplets,
+  Filter,
+  ChevronDown,
+} from "lucide-react";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getPriorityQueue, updateDispatchStatus } from "../../../lib/api";
-import {
-  ListOrdered,
-  Truck,
-  ShieldAlert,
-  ShieldCheck,
-  CheckCircle2,
-  RefreshCw,
-  Clock,
-  Filter,
-  ArrowUpDown,
-  Send,
-  Zap,
-} from "lucide-react";
-import { motion } from "framer-motion";
-
-const DISPATCH_OPTIONS = ["Unassigned", "Assigned", "En Route", "On Site", "Resolved"];
 
 export default function AdminPriorityQueuePage() {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filterCat, setFilterCat] = useState("All");
   const [updatingId, setUpdatingId] = useState(null);
-  const [filterCategory, setFilterCategory] = useState("All");
 
-  const loadQueue = async () => {
+  const fetchQueue = async () => {
     try {
       setLoading(true);
-      const res = await getPriorityQueue();
-      setQueue(res.priority_queue || []);
+      const data = await getPriorityQueue();
+      if (data?.priority_queue) {
+        setQueue(data.priority_queue);
+      }
     } catch (err) {
-      console.error("Priority queue error:", err);
+      console.error("Queue fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadQueue();
-    const interval = setInterval(loadQueue, 20000);
-    return () => clearInterval(interval);
+    fetchQueue();
   }, []);
 
   const handleStatusChange = async (zoneId, newStatus) => {
-    setUpdatingId(zoneId);
     try {
+      setUpdatingId(zoneId);
       await updateDispatchStatus(zoneId, newStatus);
-      // Optimistically update
-      setQueue((prev) =>
-        prev.map((item) => (item.zone_id === zoneId ? { ...item, dispatch_status: newStatus } : item))
-      );
+      await fetchQueue();
     } catch (err) {
-      console.error("Update dispatch status error:", err);
+      alert("Failed to update dispatch status: " + err.message);
     } finally {
       setUpdatingId(null);
     }
   };
 
-  const handleBatchDispatchCritical = async () => {
-    const severeUnassigned = queue.filter(
-      (z) => z.risk_category === "Severe" && z.dispatch_status === "Unassigned"
-    );
-    for (const z of severeUnassigned) {
-      await handleStatusChange(z.zone_id, "Assigned");
-    }
-    loadQueue();
-  };
-
-  const filteredQueue = filterCategory === "All"
-    ? queue
-    : queue.filter((item) => item.risk_category === filterCategory);
-
-  const severeCount = queue.filter((z) => z.risk_category === "Severe").length;
-  const activeUnits = queue.filter((z) => z.dispatch_status && z.dispatch_status !== "Unassigned" && z.dispatch_status !== "Resolved").length;
+  const filteredQueue = queue.filter((q) => {
+    if (filterCat === "All") return true;
+    return q.risk_category === filterCat;
+  });
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-        
-        {/* Header & Batch Action */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-xl md:text-2xl font-black text-[#111111] tracking-tight">
+            <h1 className="text-2xl font-black text-slate-900 dark:text-white">
               Priority Dispatch Queue
             </h1>
-            <p className="text-xs text-[#666666] font-medium mt-0.5">
-              Ranked civic response queue ordered by multi-variable crisis algorithm (Rain + Elevation + Drainage)
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Ranked by Multi-Variable Crisis Formula: 0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={loadQueue}
-              className="px-3 py-2 rounded-xl bg-white border border-[#E5E5E5] text-xs font-bold text-[#111111] hover:bg-neutral-50 shadow-2xs flex items-center gap-1.5 transition"
-            >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-              <span>Refresh</span>
-            </button>
-
-            {/* THE SINGLE PRIMARY ACTION CTA ON THIS SCREEN */}
-            <button
-              onClick={handleBatchDispatchCritical}
-              className="px-4 py-2 rounded-xl bg-[#FF8A00] hover:bg-[#E67C00] text-white text-xs font-extrabold shadow-sm flex items-center gap-1.5 transition active:scale-[0.99]"
-            >
-              <Zap className="w-3.5 h-3.5 fill-current" />
-              <span>Auto-Dispatch Critical Units</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Summary Stats Row */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="bg-white p-3.5 rounded-2xl border border-[#E5E5E5] text-center shadow-xs">
-            <div className="text-[10px] text-[#666666] font-bold uppercase">Total Wards</div>
-            <div className="text-xl font-black text-[#111111] mt-0.5">{queue.length}</div>
-          </div>
-          <div className="bg-white p-3.5 rounded-2xl border border-red-200 text-center shadow-xs bg-red-50/30">
-            <div className="text-[10px] text-red-700 font-bold uppercase">Critical Priority</div>
-            <div className="text-xl font-black text-red-700 mt-0.5">{severeCount}</div>
-          </div>
-          <div className="bg-white p-3.5 rounded-2xl border border-blue-200 text-center shadow-xs bg-blue-50/30">
-            <div className="text-[10px] text-blue-700 font-bold uppercase">Units Deployed</div>
-            <div className="text-xl font-black text-blue-700 mt-0.5">{activeUnits}</div>
-          </div>
-          <div className="bg-white p-3.5 rounded-2xl border border-[#E5E5E5] text-center shadow-xs">
-            <div className="text-[10px] text-[#666666] font-bold uppercase">Resolved Corridors</div>
-            <div className="text-xl font-black text-[#22A447] mt-0.5">
-              {queue.filter((z) => z.dispatch_status === "Resolved").length}
-            </div>
-          </div>
+          <button
+            onClick={fetchQueue}
+            disabled={loading}
+            className="px-3 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs shadow-sm hover:bg-slate-50 active:scale-95 transition flex items-center gap-1.5"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600" : ""}`} />
+            <span>Refresh Queue</span>
+          </button>
         </div>
 
         {/* Filter Bar */}
@@ -138,11 +83,11 @@ export default function AdminPriorityQueuePage() {
           {["All", "Severe", "High", "Medium", "Low"].map((cat) => (
             <button
               key={cat}
-              onClick={() => setFilterCategory(cat)}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition shadow-2xs ${
-                filterCategory === cat
-                  ? "bg-[#111111] text-white"
-                  : "bg-white text-[#666666] border border-[#E5E5E5] hover:bg-neutral-50"
+              onClick={() => setFilterCat(cat)}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                filterCat === cat
+                  ? "bg-teal-600 text-white shadow-sm"
+                  : "bg-white dark:bg-[#131B2A] text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-800 hover:bg-slate-50"
               }`}
             >
               {cat}
@@ -150,108 +95,108 @@ export default function AdminPriorityQueuePage() {
           ))}
         </div>
 
-        {/* Priority Table Card */}
-        <div className="bg-white rounded-3xl border border-[#E5E5E5] shadow-xs overflow-hidden">
+        {/* Priority Table Container */}
+        <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-slate-800 rounded-3xl overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-[#F7F7F7] text-[#666666] uppercase text-[10px] font-bold border-b border-[#E5E5E5]">
-                <tr>
-                  <th className="px-5 py-3.5">Rank & Ward</th>
-                  <th className="px-4 py-3.5">Crisis Risk</th>
-                  <th className="px-4 py-3.5">Rainfall</th>
-                  <th className="px-4 py-3.5">Drainage</th>
-                  <th className="px-4 py-3.5">Elevation</th>
-                  <th className="px-4 py-3.5">Citizen Reports</th>
-                  <th className="px-5 py-3.5 text-right">Dispatch Status</th>
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900/80 border-b border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider text-[10px]">
+                  <th className="p-4">Rank & Ward</th>
+                  <th className="p-4">Severity Score</th>
+                  <th className="p-4">Rainfall (mm/h)</th>
+                  <th className="p-4">Drainage Cap</th>
+                  <th className="p-4">Reports</th>
+                  <th className="p-4">Dispatch Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#E5E5E5]">
-                {filteredQueue.map((item, idx) => (
-                  <tr key={item.zone_id} className="hover:bg-neutral-50/60 transition">
-                    
-                    {/* Rank & Ward Name */}
-                    <td className="px-5 py-3.5 font-bold text-[#111111]">
-                      <div className="flex items-center gap-2.5">
-                        <span className="w-6 h-6 rounded-lg bg-neutral-900 text-white flex items-center justify-center font-mono text-xs font-black shrink-0">
-                          #{item.rank || idx + 1}
-                        </span>
-                        <div>
-                          <div className="font-extrabold text-sm">{item.zone_name}</div>
-                          <div className="text-[10px] text-[#666666] font-medium">Zone ID #{item.zone_id}</div>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                {filteredQueue.map((item, idx) => {
+                  const isSevere = item.risk_category === "Severe";
+                  const isHigh = item.risk_category === "High";
+
+                  return (
+                    <tr
+                      key={item.zone_id}
+                      className="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition"
+                    >
+                      {/* Rank & Ward */}
+                      <td className="p-4">
+                        <div className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-slate-800 flex items-center justify-center font-black text-xs text-slate-600 dark:text-slate-300">
+                            #{idx + 1}
+                          </span>
+                          <div>
+                            <div className="font-black text-sm text-slate-900 dark:text-white">
+                              {item.zone_name}
+                            </div>
+                            <div className="text-[10px] text-slate-400">Ward ID #{item.zone_id}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Risk Badge */}
-                    <td className="px-4 py-3.5">
-                      <div className="flex items-center gap-1.5">
-                        <span
-                          className={`text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full ${
-                            item.risk_category === "Severe"
-                              ? "bg-red-100 text-red-700 border border-red-200"
-                              : item.risk_category === "High"
-                              ? "bg-amber-100 text-amber-700 border border-amber-200"
-                              : "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                          }`}
-                        >
-                          {item.risk_score?.toFixed(1)} • {item.risk_category}
+                      {/* Score Badge */}
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
+                              isSevere
+                                ? "bg-red-500/10 text-red-600 border border-red-500/20"
+                                : isHigh
+                                ? "bg-orange-500/10 text-orange-600 border border-orange-500/20"
+                                : "bg-emerald-500/10 text-emerald-600 border border-emerald-500/20"
+                            }`}
+                          >
+                            {item.risk_category} ({item.risk_score.toFixed(1)})
+                          </span>
+
+                          {item.photo_confirmed && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-500">
+                              📸 Photo Boost
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Rainfall */}
+                      <td className="p-4 font-bold text-slate-900 dark:text-white">
+                        {item.rainfall_mm.toFixed(1)} mm/h
+                      </td>
+
+                      {/* Drainage */}
+                      <td className="p-4 font-bold text-slate-900 dark:text-white">
+                        {Math.round(item.drainage_capacity * 100)}%
+                      </td>
+
+                      {/* Reports */}
+                      <td className="p-4">
+                        <span className="font-bold text-slate-900 dark:text-white">
+                          {item.pending_reports_count} Pending
                         </span>
-                      </div>
-                    </td>
+                        <span className="text-[10px] text-slate-400 block">
+                          {item.verified_reports_count} Verified
+                        </span>
+                      </td>
 
-                    {/* Rainfall */}
-                    <td className="px-4 py-3.5 font-bold text-[#111111]">
-                      {item.rainfall_mm?.toFixed(1)} mm/h
-                    </td>
-
-                    {/* Drainage */}
-                    <td className="px-4 py-3.5 text-[#666666] font-medium">
-                      {(item.drainage_capacity * 100).toFixed(0)}%
-                    </td>
-
-                    {/* Elevation */}
-                    <td className="px-4 py-3.5 text-[#666666] font-medium">
-                      {item.elevation_factor?.toFixed(2)}
-                    </td>
-
-                    {/* Citizen Reports */}
-                    <td className="px-4 py-3.5 font-bold text-[#111111]">
-                      {item.active_reports_count || 0} active
-                    </td>
-
-                    {/* Dispatch Dropdown */}
-                    <td className="px-5 py-3.5 text-right">
-                      <select
-                        value={item.dispatch_status || "Unassigned"}
-                        disabled={updatingId === item.zone_id}
-                        onChange={(e) => handleStatusChange(item.zone_id, e.target.value)}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition focus:outline-hidden ${
-                          item.dispatch_status === "On Site"
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : item.dispatch_status === "En Route"
-                            ? "bg-blue-50 text-blue-800 border-blue-200"
-                            : item.dispatch_status === "Assigned"
-                            ? "bg-amber-50 text-amber-800 border-amber-200"
-                            : item.dispatch_status === "Resolved"
-                            ? "bg-neutral-100 text-neutral-600 border-neutral-200"
-                            : "bg-neutral-900 text-white border-neutral-800"
-                        }`}
-                      >
-                        {DISPATCH_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-
-                  </tr>
-                ))}
+                      {/* Dispatch Action Dropdown */}
+                      <td className="p-4">
+                        <select
+                          value={item.dispatch_status || "Unassigned"}
+                          disabled={updatingId === item.zone_id}
+                          onChange={(e) => handleStatusChange(item.zone_id, e.target.value)}
+                          className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 cursor-pointer"
+                        >
+                          <option value="Unassigned">⚪ Unassigned</option>
+                          <option value="Dispatched">🚒 Dispatched (QRT/Pump)</option>
+                          <option value="Resolved">🟢 Resolved</option>
+                        </select>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </div>
-
       </div>
     </AdminLayout>
   );

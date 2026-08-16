@@ -1,22 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Locate, Layers, Eye, AlertTriangle, Navigation, MapPin, RefreshCw } from "lucide-react";
+import { Locate, MapPin, RefreshCw, Layers } from "lucide-react";
 import { API_BASE } from "../lib/api";
 
-// Color mapping for risk categories
 export function getRiskColor(category, score) {
-  if (category === "Severe" || score > 75) return "#E53935"; // Red
-  if (category === "High" || score > 50) return "#FF8A00";   // Orange
-  if (category === "Medium" || score > 25) return "#FFC107"; // Yellow
-  return "#22A447"; // Green
+  if (category === "Severe" || score >= 75) return "#DC2626"; // Red
+  if (category === "High" || score >= 50) return "#EF4444";   // Orange-Red
+  if (category === "Medium" || score >= 25) return "#F59E0B"; // Amber
+  return "#16A34A"; // Green
 }
 
 export default function MapComponent({
   zones = [],
   reports = [],
   routeData = null,
-  clickMode = null, // "start" | "end" | "hazard" | null
+  clickMode = null,
   onLocationSelected = null,
   selectedZone = null,
   onZoneClick = null,
@@ -28,17 +27,15 @@ export default function MapComponent({
   const reportsLayerGroupRef = useRef(null);
   const routeLayerGroupRef = useRef(null);
 
-  const [userLocation, setUserLocation] = useState(null);
   const [locating, setLocating] = useState(false);
 
-  // Initialize Leaflet Map safely in client environment (100% Free OpenStreetMap)
+  // Initialize Leaflet Map safely in client environment
   useEffect(() => {
     if (typeof window === "undefined" || !mapContainerRef.current || mapInstanceRef.current) return;
 
     const L = require("leaflet");
     leafletRef.current = L;
 
-    // Fix default marker icon paths in Next.js
     delete L.Icon.Default.prototype._getIconUrl;
     L.Icon.Default.mergeOptions({
       iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
@@ -46,14 +43,13 @@ export default function MapComponent({
       shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
     });
 
-    // Center of Nagpur (Zero Mile Marker: 21.1458, 79.0882)
     const map = L.map(mapContainerRef.current, {
       center: [21.1458, 79.0882],
       zoom: 13,
       zoomControl: false,
     });
 
-    // High clarity standard OpenStreetMap tiles (Zero paid API tokens)
+    // Clean OpenStreetMap tiles
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       maxZoom: 19,
@@ -107,7 +103,7 @@ export default function MapComponent({
         weight: isPhotoConfirmed ? 3.5 : 2,
         opacity: 0.9,
         fillColor: color,
-        fillOpacity: isPhotoConfirmed ? 0.40 : 0.22,
+        fillOpacity: isPhotoConfirmed ? 0.38 : 0.20,
         className: isPhotoConfirmed && category === "Severe" ? "severe-zone-pulse" : "",
       });
 
@@ -116,24 +112,24 @@ export default function MapComponent({
 
       const popupHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 200px; padding: 2px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; margin-bottom: 8px;">
-            <strong style="font-size: 14px; color: #111111;">${zone.name}</strong>
-            <span style="background: ${color}; color: ${category === 'Medium' ? '#111' : '#fff'}; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase;">
+          <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 8px;">
+            <strong style="font-size: 13px;">${zone.name}</strong>
+            <span style="background: ${color}; color: #ffffff; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; text-transform: uppercase;">
               ${category} (${riskScore.toFixed(1)})
             </span>
           </div>
 
           ${isPhotoConfirmed && category === "Severe" ? `
-            <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 11px; color: #991B1B; font-weight: bold; display: flex; align-items: center; gap: 4px;">
+            <div style="background: #FEF2F2; border: 1px solid #F87171; border-radius: 6px; padding: 4px 8px; margin-bottom: 8px; font-size: 11px; color: #991B1B; font-weight: bold;">
               📸 PHOTO-CONFIRMED FLOODING
             </div>
           ` : ''}
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; color: #444;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px;">
             <div><strong>Rainfall:</strong> ${rainfallMm.toFixed(1)} mm/h</div>
             <div><strong>Drainage:</strong> ${Math.round((zone.drainage_capacity || 0.5) * 100)}%</div>
             <div><strong>Elevation:</strong> ${zone.elevation_factor || 0.4}</div>
-            <div><strong>Dispatch:</strong> <span style="font-weight: 700; color: #111;">${dispatchStatus}</span></div>
+            <div><strong>Dispatch:</strong> <span style="font-weight: 700;">${dispatchStatus}</span></div>
           </div>
         </div>
       `;
@@ -172,7 +168,7 @@ export default function MapComponent({
       if (lat === undefined || lng === undefined || lat === null || lng === null) return;
 
       const isWaterlogging = rep.is_waterlogged === true || rep.waterlogging_detected === true;
-      const markerColor = isWaterlogging ? "#E53935" : "#FF8A00";
+      const markerColor = isWaterlogging ? "#DC2626" : "#F59E0B";
 
       const iconHtml = `
         <div style="background-color: ${markerColor}; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 3px 8px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: bold;">
@@ -192,9 +188,9 @@ export default function MapComponent({
 
       const popupContent = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 220px; max-width: 280px; padding: 2px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">
-            <strong style="font-size: 13px; color: #111;">Hazard #${rep.id}</strong>
-            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: ${rep.verification_status === 'verified' ? '#DCFCE7' : rep.verification_status === 'rejected' ? '#FEE2E2' : '#FEF3C7'}; color: ${rep.verification_status === 'verified' ? '#166534' : rep.verification_status === 'rejected' ? '#991B1B' : '#92400E'};">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #e2e8f0; padding-bottom: 4px;">
+            <strong style="font-size: 13px;">Hazard #${rep.id}</strong>
+            <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; background: ${rep.verification_status === 'Verified' ? '#DCFCE7' : rep.verification_status === 'Rejected' ? '#FEE2E2' : '#FEF3C7'}; color: ${rep.verification_status === 'Verified' ? '#166534' : rep.verification_status === 'Rejected' ? '#991B1B' : '#92400E'};">
               ${rep.verification_status || 'Pending'}
             </span>
           </div>
@@ -205,14 +201,14 @@ export default function MapComponent({
             </div>
           ` : ''}
 
-          <p style="font-size: 12px; color: #333; margin: 4px 0 8px 0;">${rep.description || 'Citizen hazard report.'}</p>
+          <p style="font-size: 12px; margin: 4px 0 8px 0;">${rep.description || 'Citizen hazard report.'}</p>
 
-          <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 6px; font-size: 11px;">
-            <div style="font-weight: 700; color: #475569; margin-bottom: 2px;">🤖 Hugging Face AI Vision:</div>
+          <div style="background: rgba(13, 148, 136, 0.1); border: 1px solid rgba(13, 148, 136, 0.2); border-radius: 8px; padding: 6px; font-size: 11px;">
+            <div style="font-weight: 700; color: #0d9488; margin-bottom: 2px;">🤖 Hugging Face AI Vision:</div>
             <div style="display: flex; justify-content: space-between;">
               <span>Waterlogging:</span>
               <strong style="color: ${isWaterlogging ? '#DC2626' : '#64748B'}">
-                ${rep.ai_confidence ? `${(rep.ai_confidence * 100).toFixed(0)}% Confirmed` : 'Queued'}
+                ${rep.waterlogging_confidence ? `${(rep.waterlogging_confidence * 100).toFixed(0)}% Confirmed` : 'Queued'}
               </strong>
             </div>
           </div>
@@ -224,7 +220,7 @@ export default function MapComponent({
     });
   }, [reports]);
 
-  // Update Safe Route Polyline Overlay with Progressive Animation
+  // Update Safe Route Polyline Overlay
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !routeLayerGroupRef.current) return;
@@ -234,42 +230,42 @@ export default function MapComponent({
     if (routeData && routeData.coordinates && routeData.coordinates.length > 0) {
       const latlngs = routeData.coordinates;
 
-      // Glow outline
+      // Glow outline (Teal)
       L.polyline(latlngs, {
-        color: "#22A447",
-        weight: 8,
-        opacity: 0.35,
+        color: "#14B8A6",
+        weight: 9,
+        opacity: 0.45,
         lineCap: "round",
       }).addTo(routeLayerGroupRef.current);
 
-      // Primary safe path
+      // Primary safe path (Teal/Emerald)
       const mainLine = L.polyline(latlngs, {
-        color: "#166534",
+        color: "#0D9488",
         weight: 5,
         opacity: 0.95,
         lineCap: "round",
         dashArray: "6, 8",
       }).addTo(routeLayerGroupRef.current);
 
-      // Start Marker
+      // Start Marker (Teal)
       const startPt = latlngs[0];
       const startIcon = L.divIcon({
         className: "route-start-marker",
-        html: `<div style="background-color: #22A447; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">A</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
+        html: `<div style="background-color: #0D9488; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">A</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
       });
       L.marker(startPt, { icon: startIcon })
         .bindPopup("<strong>📍 Route Origin</strong>")
         .addTo(routeLayerGroupRef.current);
 
-      // Destination Marker
+      // Destination Marker (Red)
       const endPt = latlngs[latlngs.length - 1];
       const endIcon = L.divIcon({
         className: "route-end-marker",
-        html: `<div style="background-color: #E53935; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">B</div>`,
-        iconSize: [30, 30],
-        iconAnchor: [15, 15],
+        html: `<div style="background-color: #DC2626; width: 32px; height: 32px; border-radius: 50%; border: 3px solid white; box-shadow: 0 4px 10px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 13px;">B</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
       });
       L.marker(endPt, { icon: endIcon })
         .bindPopup("<strong>🏁 Safe Destination</strong>")
@@ -291,7 +287,6 @@ export default function MapComponent({
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const { latitude, longitude } = pos.coords;
-        setUserLocation({ lat: latitude, lng: longitude });
         setLocating(false);
 
         if (mapInstanceRef.current && L) {
@@ -300,13 +295,13 @@ export default function MapComponent({
           const userIcon = L.divIcon({
             className: "user-gps-marker",
             html: `
-              <div style="position: relative; width: 22px; height: 22px;">
-                <div style="position: absolute; width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; opacity: 0.35; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-                <div style="position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #2563EB; border: 2.5px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>
+              <div style="position: relative; width: 24px; height: 24px;">
+                <div style="position: absolute; width: 24px; height: 24px; border-radius: 50%; background: #0D9488; opacity: 0.4; animation: ping 1.5s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
+                <div style="position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; border-radius: 50%; background: #0D9488; border: 2.5px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>
               </div>
             `,
-            iconSize: [22, 22],
-            iconAnchor: [11, 11],
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
           });
 
           L.marker([latitude, longitude], { icon: userIcon })
@@ -320,7 +315,7 @@ export default function MapComponent({
       },
       (err) => {
         setLocating(false);
-        alert("Could not access your GPS location.");
+        alert("Could not access your GPS position.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -333,7 +328,7 @@ export default function MapComponent({
   };
 
   return (
-    <div className="relative w-full h-full min-h-[480px] rounded-2xl overflow-hidden shadow-inner border border-[#E5E5E5]">
+    <div className="relative w-full h-full min-h-[480px] rounded-3xl overflow-hidden shadow-inner border border-slate-200 dark:border-slate-800">
       <div ref={mapContainerRef} className="w-full h-full" />
 
       {/* Floating Map Controls */}
@@ -341,16 +336,15 @@ export default function MapComponent({
         <button
           onClick={handleLocateMe}
           disabled={locating}
-          className="bg-white hover:bg-neutral-50 text-[#111111] p-2.5 rounded-xl shadow-md border border-[#E5E5E5] transition-transform active:scale-95 flex items-center justify-center"
+          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center backdrop-blur-sm"
           title="Locate my position (GPS)"
-          aria-label="Locate me"
         >
-          <Locate className={`w-4 h-4 text-blue-600 ${locating ? "animate-spin" : ""}`} />
+          <Locate className={`w-4 h-4 text-teal-600 dark:text-teal-400 ${locating ? "animate-spin" : ""}`} />
         </button>
 
         <button
           onClick={handleResetView}
-          className="bg-white hover:bg-neutral-50 text-[#111111] p-2.5 rounded-xl shadow-md border border-[#E5E5E5] transition-transform active:scale-95 flex items-center justify-center text-[10px] font-black"
+          className="bg-white/95 dark:bg-[#131B2A]/95 text-slate-800 dark:text-slate-100 p-2.5 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 transition active:scale-95 flex items-center justify-center text-[10px] font-black backdrop-blur-sm"
           title="Reset to Zero Mile Nagpur"
         >
           0M
@@ -358,25 +352,25 @@ export default function MapComponent({
       </div>
 
       {/* Map Legend */}
-      <div className="absolute bottom-4 left-4 z-20 bg-white/95 backdrop-blur-sm p-3 rounded-2xl shadow-lg border border-[#E5E5E5] text-[11px] font-medium text-[#111111] space-y-1 hidden sm:block">
-        <div className="font-extrabold text-[10px] uppercase text-[#666666] tracking-wider mb-1">
-          Ward Flood Severity
+      <div className="absolute bottom-4 left-4 z-20 bg-white/95 dark:bg-[#131B2A]/95 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-slate-200 dark:border-slate-800 text-[11px] font-medium text-slate-700 dark:text-slate-200 space-y-1 hidden sm:block">
+        <div className="font-extrabold text-[10px] uppercase text-slate-400 dark:text-slate-500 tracking-wider mb-1">
+          Ward Risk Severity
         </div>
         <div className="flex items-center space-x-2">
-          <span className="w-3 h-3 rounded-full bg-[#22A447]"></span>
+          <span className="w-3 h-3 rounded-full bg-[#16A34A]"></span>
           <span>Low (0–25)</span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="w-3 h-3 rounded-full bg-[#FFC107]"></span>
+          <span className="w-3 h-3 rounded-full bg-[#F59E0B]"></span>
           <span>Medium (26–50)</span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="w-3 h-3 rounded-full bg-[#FF8A00]"></span>
+          <span className="w-3 h-3 rounded-full bg-[#EF4444]"></span>
           <span>High (51–75)</span>
         </div>
         <div className="flex items-center space-x-2">
-          <span className="w-3 h-3 rounded-full bg-[#E53935] ring-2 ring-red-300 animate-pulse"></span>
-          <span className="font-bold text-red-600">Severe / Flooded (76–100)</span>
+          <span className="w-3 h-3 rounded-full bg-[#DC2626] ring-2 ring-red-400 animate-pulse"></span>
+          <span className="font-bold text-red-500">Severe / Flooded (&gt;75)</span>
         </div>
       </div>
     </div>
