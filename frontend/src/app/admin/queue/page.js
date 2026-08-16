@@ -60,20 +60,20 @@ export default function AdminPriorityQueuePage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white">
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
               Priority Dispatch Queue
             </h1>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">
-              Ranked by Multi-Variable Crisis Formula: <code className="text-teal-400 font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost</code>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-0.5">
+              Ranked by Multi-Variable Crisis Formula: <code className="text-teal-600 dark:text-teal-400 font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost</code>
             </p>
           </div>
 
           <button
             onClick={fetchQueue}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-[#131B2A] border border-[#1E293B] text-slate-300 hover:text-white font-bold text-xs shadow-sm hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold text-xs shadow-sm hover:bg-slate-100 dark:hover:bg-[#1E293B] active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
             <span>Refresh Queue</span>
           </button>
         </div>
@@ -86,8 +86,8 @@ export default function AdminPriorityQueuePage() {
               onClick={() => setFilterCat(cat)}
               className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
                 filterCat === cat
-                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
-                  : "bg-[#131B2A] text-slate-300 border border-[#1E293B] hover:bg-[#1E293B]"
+                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                  : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
               }`}
             >
               {cat}
@@ -96,11 +96,11 @@ export default function AdminPriorityQueuePage() {
         </div>
 
         {/* Priority Table Container */}
-        <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl overflow-hidden shadow-xl">
+        <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-[#0F172A] border-b border-[#1E293B] text-slate-400 uppercase font-black tracking-wider text-[10px]">
+                <tr className="bg-slate-50 dark:bg-[#0F172A] border-b border-slate-200 dark:border-[#1E293B] text-slate-500 dark:text-slate-400 uppercase font-black tracking-wider text-[10px]">
                   <th className="p-4">Rank & Ward</th>
                   <th className="p-4">Severity Score</th>
                   <th className="p-4">Rainfall (mm/h)</th>
@@ -109,7 +109,7 @@ export default function AdminPriorityQueuePage() {
                   <th className="p-4">Dispatch Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#1E293B] font-medium">
+              <tbody className="divide-y divide-slate-200 dark:divide-[#1E293B] font-medium">
                 {filteredQueue.map((item, idx) => {
                   const isSevere = item.risk_category === "Severe";
                   const isHigh = item.risk_category === "High";
@@ -117,16 +117,16 @@ export default function AdminPriorityQueuePage() {
                   return (
                     <tr
                       key={item.zone_id}
-                      className="hover:bg-[#1E293B]/50 transition"
+                      className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/50 transition"
                     >
                       {/* Rank & Ward */}
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-lg bg-[#0B0F17] flex items-center justify-center font-black text-xs text-teal-400">
+                          <span className="w-6 h-6 rounded-lg bg-slate-100 dark:bg-[#0B0F17] flex items-center justify-center font-black text-xs text-teal-700 dark:text-teal-400">
                             #{idx + 1}
                           </span>
                           <div>
-                            <div className="font-black text-sm text-white">
+                            <div className="font-black text-sm text-slate-900 dark:text-white">
                               {item.zone_name}
                             </div>
                             <div className="text-[10px] text-slate-400">Ward ID #{item.zone_id}</div>
@@ -140,17 +140,17 @@ export default function AdminPriorityQueuePage() {
                           <span
                             className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase ${
                               isSevere
-                                ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                                ? "bg-red-500/10 text-red-600 dark:text-red-300 border border-red-500/30"
                                 : isHigh
-                                ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
-                                : "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                                ? "bg-orange-500/10 text-orange-600 dark:text-orange-300 border border-orange-500/30"
+                                : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/30"
                             }`}
                           >
                             {item.risk_category} ({item.risk_score.toFixed(1)})
                           </span>
 
                           {item.photo_confirmed && (
-                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-500/20 text-red-400 border border-red-500/30">
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">
                               📸 Photo Boost
                             </span>
                           )}
@@ -158,18 +158,18 @@ export default function AdminPriorityQueuePage() {
                       </td>
 
                       {/* Rainfall */}
-                      <td className="p-4 font-bold text-white">
+                      <td className="p-4 font-bold text-slate-900 dark:text-white">
                         {item.rainfall_mm.toFixed(1)} mm/h
                       </td>
 
                       {/* Drainage */}
-                      <td className="p-4 font-bold text-white">
+                      <td className="p-4 font-bold text-slate-900 dark:text-white">
                         {Math.round(item.drainage_capacity * 100)}%
                       </td>
 
                       {/* Reports */}
                       <td className="p-4">
-                        <span className="font-bold text-white">
+                        <span className="font-bold text-slate-900 dark:text-white">
                           {item.pending_reports_count} Pending
                         </span>
                         <span className="text-[10px] text-slate-400 block">
@@ -183,7 +183,7 @@ export default function AdminPriorityQueuePage() {
                           value={item.dispatch_status || "Unassigned"}
                           disabled={updatingId === item.zone_id}
                           onChange={(e) => handleStatusChange(item.zone_id, e.target.value)}
-                          className="px-3 py-1.5 rounded-xl bg-[#0B0F17] border border-[#1E293B] text-xs font-bold text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
+                          className="px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] text-xs font-bold text-slate-800 dark:text-slate-200 focus:outline-none focus:border-teal-500 cursor-pointer"
                         >
                           <option value="Unassigned">⚪ Unassigned</option>
                           <option value="Dispatched">🚒 Dispatched (QRT/Pump)</option>

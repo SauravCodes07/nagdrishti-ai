@@ -1,19 +1,31 @@
 /**
  * NagDrishti AI — Production API Service Layer
- * Connects Next.js frontend to Django REST Framework backend with full Token & Session auth support.
+ * Connects Next.js frontend to Django REST Framework backend on Render with full Token & Session auth support.
  */
 
 export const getApiBase = () => {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
-  }
+  // If running in browser on a production domain (e.g. netlify.app, custom domain, etc.)
   if (
     typeof window !== "undefined" &&
     window.location.hostname !== "localhost" &&
     window.location.hostname !== "127.0.0.1"
   ) {
-    return "https://nagdrishti-ai-backend.onrender.com";
+    if (
+      process.env.NEXT_PUBLIC_API_URL &&
+      !process.env.NEXT_PUBLIC_API_URL.includes("localhost") &&
+      !process.env.NEXT_PUBLIC_API_URL.includes("127.0.0.1")
+    ) {
+      return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+    }
+    return "https://nagdrishti-backend.onrender.com";
   }
+
+  // If environment variable is explicitly provided
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+  }
+
+  // Local development default
   return "http://localhost:8000";
 };
 
@@ -25,8 +37,13 @@ function getCookie(name) {
   return match ? decodeURIComponent(match[3]) : null;
 }
 
-async function request(endpoint, options = {}) {
-  const url = `${API_BASE}${endpoint}`;
+const FALLBACK_URLS = [
+  "https://nagdrishti-backend.onrender.com",
+  "https://nagdrishti-ai-backend.onrender.com",
+];
+
+async function executeFetch(baseUrl, endpoint, options) {
+  const url = `${baseUrl}${endpoint}`;
   const defaultHeaders = {};
 
   if (!(options.body instanceof FormData)) {
@@ -60,39 +77,58 @@ async function request(endpoint, options = {}) {
     cache: "no-store",
   };
 
-  try {
-    const res = await fetch(url, config);
-    const contentType = res.headers.get("content-type");
-    let data = null;
+  const res = await fetch(url, config);
+  const contentType = res.headers.get("content-type");
+  let data = null;
 
-    if (contentType && contentType.includes("application/json")) {
-      data = await res.json();
-    } else {
-      data = await res.text();
+  if (contentType && contentType.includes("application/json")) {
+    data = await res.json();
+  } else {
+    data = await res.text();
+  }
+
+  if (!res.ok) {
+    let errorMsg = `HTTP ${res.status}: ${res.statusText}`;
+    if (data) {
+      if (typeof data === "string") {
+        errorMsg = data;
+      } else if (data.error) {
+        errorMsg = data.error;
+      } else if (data.message) {
+        errorMsg = data.message;
+      } else if (data.detail) {
+        errorMsg = data.detail;
+      } else {
+        errorMsg = JSON.stringify(data);
+      }
     }
+    const err = new Error(errorMsg);
+    err.status = res.status;
+    err.data = data;
+    throw err;
+  }
+  return data;
+}
 
-    if (!res.ok) {
-      let errorMsg = `HTTP ${res.status}: ${res.statusText}`;
-      if (data) {
-        if (typeof data === "string") {
-          errorMsg = data;
-        } else if (data.error) {
-          errorMsg = data.error;
-        } else if (data.message) {
-          errorMsg = data.message;
-        } else if (data.detail) {
-          errorMsg = data.detail;
-        } else {
-          errorMsg = JSON.stringify(data);
+async function request(endpoint, options = {}) {
+  const primaryBase = getApiBase();
+  
+  try {
+    return await executeFetch(primaryBase, endpoint, options);
+  } catch (err) {
+    // If network fetch failed and we might be on a sleeping Render instance or alternative Render domain
+    if (err.name === "TypeError" || err.message?.includes("Failed to fetch") || err.message?.includes("NetworkError")) {
+      for (const fallback of FALLBACK_URLS) {
+        if (fallback !== primaryBase) {
+          try {
+            console.info(`Retrying request on fallback endpoint: ${fallback}${endpoint}`);
+            return await executeFetch(fallback, endpoint, options);
+          } catch (_) {
+            // continue to next fallback
+          }
         }
       }
-      const err = new Error(errorMsg);
-      err.status = res.status;
-      err.data = data;
-      throw err;
     }
-    return data;
-  } catch (err) {
     console.error(`API Error [${endpoint}]:`, err.message);
     throw err;
   }

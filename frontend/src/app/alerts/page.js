@@ -5,22 +5,21 @@ import {
   Bell,
   Radio,
   Share2,
-  Copy,
-  Check,
   AlertTriangle,
-  RefreshCw,
-  ShieldCheck,
+  CheckCircle2,
   PhoneCall,
-  MessageSquare,
-  Sparkles,
+  Clock,
+  MapPin,
+  RefreshCw,
+  Copy,
 } from "lucide-react";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import { getBroadcastAlerts } from "../../lib/api";
 
-export default function CitizenAlertsPage() {
+export default function AlertsPage() {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterSeverity, setFilterSeverity] = useState("All");
+  const [filterSeverity, setFilterSeverity] = useState("all");
   const [copiedId, setCopiedId] = useState(null);
 
   const fetchAlerts = async () => {
@@ -31,7 +30,7 @@ export default function CitizenAlertsPage() {
         setAlerts(data);
       }
     } catch (err) {
-      console.error("Alerts fetch error:", err);
+      console.error("Alerts load error:", err);
     } finally {
       setLoading(false);
     }
@@ -42,21 +41,20 @@ export default function CitizenAlertsPage() {
   }, []);
 
   const filteredAlerts = alerts.filter((a) => {
-    if (filterSeverity === "All") return true;
+    if (filterSeverity === "all") return true;
     return (a.severity || "Severe").toLowerCase() === filterSeverity.toLowerCase();
   });
 
-  const handleCopyAlert = (id, text) => {
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    }
+  const handleCopyAlert = (alert) => {
+    const text = `🚨 *NagDrishti Alert — ${alert.zone_name || "Nagpur"}*\n${alert.message}\nSeverity: ${alert.severity || "Severe"}\nSource: Nagpur Municipal Corporation (NMC)`;
+    navigator.clipboard.writeText(text);
+    setCopiedId(alert.id);
+    setTimeout(() => setCopiedId(null), 2500);
   };
 
-  const handleShareWhatsApp = (msg) => {
-    const text = encodeURIComponent(`🚨 *NagDrishti AI Crisis Alert*\n${msg}\n\nStay safe & check live flood routes.`);
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+  const handleWhatsAppShare = (alert) => {
+    const text = `🚨 *NagDrishti Alert — ${alert.zone_name || "Nagpur"}*\n${alert.message}\nSeverity: ${alert.severity || "Severe"}\nOfficial NMC Civic Intelligence`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
   return (
@@ -65,140 +63,114 @@ export default function CitizenAlertsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 text-xs font-black uppercase text-teal-400 tracking-wider">
-              <Radio className="w-3.5 h-3.5" />
-              <span>Official Municipal Broadcast Feed</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white mt-0.5">
-              Live Civic Emergency Alerts
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+              Civic Emergency Alerts
             </h1>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
+              Official Nagpur Municipal Corporation flood advisories, waterlogging warnings, and evacuation notices
+            </p>
           </div>
 
           <button
             onClick={fetchAlerts}
             disabled={loading}
-            className="px-3.5 py-2 rounded-xl bg-[#131B2A] border border-[#1E293B] text-slate-300 hover:text-white font-bold text-xs shadow-sm active:scale-95 transition flex items-center gap-1.5 self-start sm:self-auto"
-            title="Refresh alerts"
+            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition self-start sm:self-auto"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-400" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-teal-600 dark:text-teal-400" : ""}`} />
             <span>Sync Alerts</span>
           </button>
         </div>
 
-        {/* Severity Filter Tabs */}
+        {/* Severity Filter Chips */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {["All", "Severe", "High", "Medium"].map((sev) => {
-            const isSelected = filterSeverity === sev;
-            return (
-              <button
-                key={sev}
-                onClick={() => setFilterSeverity(sev)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
-                  isSelected
-                    ? "bg-teal-600 text-white shadow-md shadow-teal-600/30"
-                    : "bg-[#131B2A] text-slate-300 border border-[#1E293B] hover:bg-[#1E293B]"
-                }`}
-              >
-                {sev}
-              </button>
-            );
-          })}
+          {[
+            { id: "all", label: `All Advisories (${alerts.length})` },
+            { id: "severe", label: "Severe" },
+            { id: "high", label: "High" },
+            { id: "medium", label: "Medium" },
+          ].map((f) => (
+            <button
+              key={f.id}
+              onClick={() => setFilterSeverity(f.id)}
+              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${
+                filterSeverity === f.id
+                  ? "bg-teal-600 text-white shadow-md shadow-teal-600/20"
+                  : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+              }`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
 
         {/* Alerts Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredAlerts.map((alert) => {
-            const isSevere = alert.severity === "Severe" || (alert.severity || "").toLowerCase() === "severe";
-            const isHigh = alert.severity === "High" || (alert.severity || "").toLowerCase() === "high";
+            const isSevere = alert.severity === "Severe";
+            const isHigh = alert.severity === "High";
 
             return (
               <div
                 key={alert.id}
-                className={`bg-[#131B2A] border rounded-3xl p-5 shadow-sm space-y-4 transition flex flex-col justify-between ${
-                  isSevere
-                    ? "border-red-500/40 shadow-red-950/20"
-                    : isHigh
-                    ? "border-orange-500/40 shadow-orange-950/20"
-                    : "border-[#1E293B]"
-                }`}
+                className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 shadow-xl space-y-4 flex flex-col justify-between hover:border-teal-500/40 transition"
               >
                 <div className="space-y-3">
-                  {/* Card Header */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div
-                        className={`p-2.5 rounded-xl ${
-                          isSevere
-                            ? "bg-red-500/10 text-red-400"
-                            : isHigh
-                            ? "bg-orange-500/10 text-orange-400"
-                            : "bg-teal-500/10 text-teal-400"
-                        }`}
-                      >
-                        <Radio className="w-4 h-4 animate-pulse" />
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                        <MapPin className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                        <span>{alert.zone_name || "Nagpur Citywide"}</span>
                       </div>
-                      <div>
-                        <h3 className="font-black text-sm text-white truncate max-w-[170px]">
-                          {alert.zone_name || `Ward Alert #${alert.id}`}
-                        </h3>
-                        <p className="text-[10px] text-slate-400">
-                          {alert.created_at ? new Date(alert.created_at).toLocaleString() : "Just Now"}
-                        </p>
-                      </div>
+                      <h3 className="text-base font-black text-slate-900 dark:text-white">
+                        {alert.zone_name ? `Advisory: ${alert.zone_name}` : "Monsoon Crisis Warning"}
+                      </h3>
                     </div>
 
                     <span
-                      className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-full ${
+                      className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full shrink-0 ${
                         isSevere
-                          ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                          ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
                           : isHigh
-                          ? "bg-orange-500/20 text-orange-300 border border-orange-500/30"
-                          : "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          ? "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/30"
+                          : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30"
                       }`}
                     >
                       {alert.severity || "Severe"}
                     </span>
                   </div>
 
-                  {/* Message Body */}
-                  <p className="text-xs text-slate-200 leading-relaxed font-medium">
+                  <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
                     {alert.message}
                   </p>
                 </div>
 
-                {/* Channels & Share Actions */}
-                <div className="flex items-center justify-between border-t border-[#1E293B] pt-3">
-                  <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-400">
-                    <MessageSquare className="w-3.5 h-3.5 text-teal-400" />
-                    <span>{alert.channel || "SMS & WhatsApp"}</span>
-                  </div>
+                <div className="pt-3 border-t border-slate-100 dark:border-[#1E293B] flex items-center justify-between gap-2">
+                  <span className="text-[10px] text-slate-400 font-semibold flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    <span>
+                      {alert.sent_at || alert.created_at
+                        ? new Date(alert.sent_at || alert.created_at).toLocaleTimeString()
+                        : "Active Broadcast"}
+                    </span>
+                  </span>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <button
-                      onClick={() => handleCopyAlert(alert.id, alert.message)}
-                      className="px-3 py-1.5 rounded-xl bg-[#0B0F17] hover:bg-[#1E293B] text-slate-300 font-bold text-[11px] flex items-center gap-1.5 border border-[#1E293B] transition"
-                      title="Copy alert text"
+                      onClick={() => handleCopyAlert(alert)}
+                      className="p-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-300 transition text-xs flex items-center gap-1"
+                      title="Copy Advisory Text"
                     >
-                      {copiedId === alert.id ? (
-                        <>
-                          <Check className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3.5 h-3.5" />
-                          <span>Copy</span>
-                        </>
-                      )}
+                      <Copy className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold">{copiedId === alert.id ? "Copied!" : "Copy"}</span>
                     </button>
 
                     <button
-                      onClick={() => handleShareWhatsApp(alert.message)}
-                      className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1.5 transition active:scale-95 shadow-sm"
+                      onClick={() => handleWhatsAppShare(alert)}
+                      className="px-2.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white transition text-xs font-bold flex items-center gap-1"
                       title="Share to WhatsApp"
                     >
                       <Share2 className="w-3.5 h-3.5" />
-                      <span>Share</span>
+                      <span className="text-[10px]">WhatsApp</span>
                     </button>
                   </div>
                 </div>
@@ -207,16 +179,10 @@ export default function CitizenAlertsPage() {
           })}
 
           {filteredAlerts.length === 0 && (
-            <div className="col-span-full p-12 rounded-3xl bg-[#131B2A] border border-[#1E293B] text-center space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center mx-auto">
-                <ShieldCheck className="w-7 h-7" />
-              </div>
-              <h3 className="text-base font-black text-white">
-                No Active Emergency Alerts
-              </h3>
-              <p className="text-xs text-slate-400 max-w-sm mx-auto">
-                All wards across Nagpur are currently operating with clear drainage channels and normal traffic flow.
-              </p>
+            <div className="col-span-full p-12 text-center text-slate-500 text-xs bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl space-y-2">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
+              <p className="font-bold text-slate-800 dark:text-slate-200">No active alerts matching this filter.</p>
+              <p className="text-[11px] text-slate-400">Normal drainage conditions reported across Nagpur wards.</p>
             </div>
           )}
         </div>

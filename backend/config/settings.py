@@ -24,10 +24,13 @@ DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "t")
 
 raw_allowed_hosts = os.environ.get(
     "DJANGO_ALLOWED_HOSTS",
-    "localhost,127.0.0.1,testserver,.onrender.com,nagdrishti-ai-backend.onrender.com,nagdrishti-backend.onrender.com"
+    "*"
 )
-ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed_hosts.split(",") if h.strip()]
-for host in [".onrender.com", "nagdrishti-ai-backend.onrender.com", "nagdrishti-backend.onrender.com", "localhost", "127.0.0.1", "testserver"]:
+if raw_allowed_hosts == "*":
+    ALLOWED_HOSTS = ["*"]
+else:
+    ALLOWED_HOSTS = [h.strip().strip('"').strip("'") for h in raw_allowed_hosts.split(",") if h.strip()]
+for host in [".onrender.com", "nagdrishti-ai-backend.onrender.com", "nagdrishti-backend.onrender.com", "localhost", "127.0.0.1", "testserver", "*"]:
     if host not in ALLOWED_HOSTS:
         ALLOWED_HOSTS.append(host)
 
@@ -193,6 +196,9 @@ else:
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https://.*\.netlify\.app$",
     r"^https://.*\.onrender\.com$",
+    r"^https://.*\.vercel\.app$",
+    r"^http://localhost:\d+$",
+    r"^http://127\.0\.0\.1:\d+$",
 ]
 
 CORS_ALLOW_HEADERS = [
@@ -210,3 +216,4 @@ CORS_ALLOW_HEADERS = [
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = 'Lax'
 SESSION_COOKIE_SAMESITE = 'Lax'
+

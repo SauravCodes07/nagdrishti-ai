@@ -4,54 +4,42 @@ import { useState } from "react";
 import Image from "next/image";
 import {
   Camera,
-  MapPin,
   Upload,
+  MapPin,
   AlertTriangle,
   CheckCircle2,
-  X,
-  Sparkles,
   Bot,
-  Locate,
-  Shield,
-  EyeOff,
-  ChevronRight,
-  Info,
+  Sparkles,
+  RefreshCw,
+  LocateFixed,
+  X,
+  FileCheck2,
 } from "lucide-react";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import { submitReport } from "../../lib/api";
 
 const HAZARD_CATEGORIES = [
-  { id: "waterlogging", label: "Waterlogging", icon: "🌊", desc: "Submerged roadway or pooling" },
-  { id: "pothole", label: "Pothole / Road Damage", icon: "🕳️", desc: "Damaged asphalt or cave-in" },
-  { id: "underpass", label: "Flooded Underpass", icon: "🚗", desc: "Deep water under bridge/culvert" },
-  { id: "drain", label: "Blocked Storm Drain", icon: "🚧", desc: "Clogged municipal inlet/gutter" },
-  { id: "fallen_tree", label: "Fallen Tree / Wire", icon: "⚡", desc: "Live wire or road blockage" },
+  { id: "waterlogging", label: "Deep Waterlogging", icon: "🌊" },
+  { id: "pothole", label: "Severe Pothole / Crater", icon: "🕳️" },
+  { id: "overflow", label: "Drain / Nullah Overflow", icon: "⚠️" },
+  { id: "blockage", label: "Fallen Tree / Roadblock", icon: "🚧" },
 ];
 
-const SEVERITY_LEVELS = [
-  { id: "Low", label: "Low", color: "border-emerald-500 text-emerald-400 bg-emerald-500/10" },
-  { id: "Medium", label: "Medium", color: "border-amber-500 text-amber-400 bg-amber-500/10" },
-  { id: "High", label: "High", color: "border-orange-500 text-orange-400 bg-orange-500/10" },
-  { id: "Severe", label: "Severe", color: "border-red-500 text-red-400 bg-red-500/10" },
-];
-
-export default function CitizenReportPage() {
-  const [selectedCategory, setSelectedCategory] = useState("waterlogging");
-  const [severity, setSeverity] = useState("High");
+export default function ReportHazardPage() {
+  const [lat, setLat] = useState(21.1472);
+  const [lng, setLng] = useState(79.0664);
   const [description, setDescription] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [lat, setLat] = useState("21.1458");
-  const [lng, setLng] = useState("79.0882");
-  const [locating, setLocating] = useState(false);
-
+  const [category, setCategory] = useState("waterlogging");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
-  const [submittedReport, setSubmittedReport] = useState(null);
-  const [errorMsg, setErrorMsg] = useState("");
+  const [locating, setLocating] = useState(false);
+  const [error, setError] = useState(null);
+  const [detectionResult, setDetectionResult] = useState(null);
 
-  const handlePhotoSelect = (e) => {
+  const handlePhotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
       setPhotoFile(file);
@@ -67,36 +55,41 @@ export default function CitizenReportPage() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLat(pos.coords.latitude.toFixed(5));
-        setLng(pos.coords.longitude.toFixed(5));
+        setLat(parseFloat(pos.coords.latitude.toFixed(5)));
+        setLng(parseFloat(pos.coords.longitude.toFixed(5)));
         setLocating(false);
       },
       (err) => {
+        alert("Could not detect location: " + err.message);
         setLocating(false);
-        alert("Could not fetch GPS coordinates: " + err.message);
       },
-      { timeout: 8000 }
+      { enableHighAccuracy: true, timeout: 10000 }
     );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErrorMsg("");
+    if (!description && !photoFile) {
+      setError("Please provide a photo or description of the hazard.");
+      return;
+    }
+
     setSubmitting(true);
+    setError(null);
+    setDetectionResult(null);
 
     try {
-      const payload = {
-        lat: parseFloat(lat),
-        lng: parseFloat(lng),
-        description: `[${selectedCategory.toUpperCase()}] Severity: ${severity}. ${description}`,
-        photoFile: photoFile,
+      const fullDesc = `[${category.toUpperCase()}] ${description}`;
+      const data = await submitReport({
+        lat,
+        lng,
+        description: fullDesc,
+        photoFile,
         is_anonymous: isAnonymous,
-      };
-
-      const result = await submitReport(payload);
-      setSubmittedReport(result);
+      });
+      setDetectionResult(data);
     } catch (err) {
-      setErrorMsg(err.message || "Failed to submit hazard report. Please check your connection.");
+      setError(err.message || "Failed to submit hazard report.");
     } finally {
       setSubmitting(false);
     }
@@ -104,314 +97,262 @@ export default function CitizenReportPage() {
 
   return (
     <CitizenLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2 text-xs font-black uppercase text-teal-400 tracking-wider">
-              <Camera className="w-3.5 h-3.5" />
-              <span>Crowdsourced Incident Dispatch</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-white mt-0.5">
-              Report Flood, Waterlogging or Road Hazard
-            </h1>
-          </div>
-          <p className="text-xs text-slate-400 max-w-md">
-            Your evidence photo triggers Hugging Face Vision AI to verify waterpooling and prioritize municipal QRT deployment.
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+            Report Road Hazard or Waterlogging
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
+            Submit photo evidence of road hazards. Hugging Face AI Vision automatically verifies depth and dispatches municipal units.
           </p>
         </div>
 
-        {submittedReport ? (
-          /* Submission Success & Hugging Face Vision AI Feedback Card */
-          <div className="bg-[#131B2A] border border-teal-500/40 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-6 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-2xl bg-teal-500/20 text-teal-400 flex items-center justify-center mx-auto shadow-md border border-teal-500/30">
-              <CheckCircle2 className="w-9 h-9" />
-            </div>
-
-            <div className="text-center space-y-1.5 max-w-lg mx-auto">
-              <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-teal-500/20 text-teal-300 border border-teal-500/30">
-                Hazard Report #{submittedReport.id} Registered
-              </span>
-              <h2 className="text-2xl font-black text-white">
-                Incident Successfully Logged!
-              </h2>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Your report has been auto-assigned to the Nagpur Municipal Disaster Desk and injected into the live city crisis model.
-              </p>
-            </div>
-
-            {/* Hugging Face AI Analysis Card */}
-            <div className="bg-[#0B0F17] border border-[#1E293B] rounded-3xl p-5 space-y-3 max-w-lg mx-auto">
-              <div className="flex items-center justify-between border-b border-[#1E293B] pb-2.5">
-                <div className="flex items-center gap-2 text-xs font-black text-teal-400">
-                  <Bot className="w-4 h-4" />
-                  <span>Hugging Face AI Vision Analysis</span>
-                </div>
-                <span className="text-[9px] font-bold text-slate-400">
-                  ResNet / Vision Transformer
-                </span>
-              </div>
-
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Waterlogging Detected:</span>
-                  <strong className={submittedReport.waterlogging_detected ? "text-red-400" : "text-slate-200"}>
-                    {submittedReport.waterlogging_detected ? "Confirmed (True)" : "Not Detected"}
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">AI Model Confidence:</span>
-                  <strong className="text-teal-400">
-                    {submittedReport.waterlogging_confidence
-                      ? `${(submittedReport.waterlogging_confidence * 100).toFixed(1)}%`
-                      : "Queued for Batch Inference"}
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Assigned Municipal Ward:</span>
-                  <strong className="text-white">
-                    {submittedReport.zone_name || (submittedReport.zone ? `Ward #${submittedReport.zone}` : "Nagpur Central")}
-                  </strong>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-400">Moderation Status:</span>
-                  <strong className="text-amber-400">
-                    {submittedReport.verification_status || "Pending Officer Review"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            <div className="max-w-xs mx-auto">
-              <button
-                onClick={() => {
-                  setSubmittedReport(null);
-                  setPhotoFile(null);
-                  setPhotoPreview(null);
-                  setDescription("");
-                }}
-                className="w-full py-3.5 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-xs shadow-lg shadow-teal-600/30 active:scale-95 transition"
-              >
-                Submit Another Hazard Report
-              </button>
-            </div>
-          </div>
-        ) : (
-          /* Structured 2-Column Responsive Form */
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Left Form Column */}
-            <div className="lg:col-span-7 space-y-5">
-              {errorMsg && (
-                <div className="p-4 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs font-semibold flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 shrink-0 text-red-400" />
-                  <span>{errorMsg}</span>
-                </div>
-              )}
-
-              {/* 1. Category Selector */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                  <span>1. Select Hazard Category</span>
+        {!detectionResult ? (
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {/* Left Column: Category & Photo Upload */}
+            <div className="md:col-span-6 space-y-4">
+              {/* Category Picker */}
+              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Select Incident Category
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {HAZARD_CATEGORIES.map((cat) => {
-                    const isSelected = selectedCategory === cat.id;
-                    return (
-                      <button
-                        key={cat.id}
-                        type="button"
-                        onClick={() => setSelectedCategory(cat.id)}
-                        className={`p-3.5 rounded-2xl text-xs font-bold text-left flex items-start gap-3 transition border ${
-                          isSelected
-                            ? "bg-teal-500/10 border-teal-500 text-teal-300 shadow-md ring-1 ring-teal-500/30"
-                            : "bg-[#0B0F17] border-[#1E293B] text-slate-300 hover:bg-[#1E293B]"
-                        }`}
-                      >
-                        <span className="text-xl mt-0.5">{cat.icon}</span>
-                        <div>
-                          <div className="font-black text-white">{cat.label}</div>
-                          <div className="text-[10px] text-slate-400 font-normal">{cat.desc}</div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 2. Photo Capture / Upload */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                  <span>2. Attach Evidence Photo (Triggers AI Vision)</span>
-                </label>
-                {photoPreview ? (
-                  <div className="relative rounded-2xl overflow-hidden border border-[#1E293B] bg-black max-h-56 flex items-center justify-center">
-                    <img
-                      src={photoPreview}
-                      alt="Hazard Preview"
-                      className="w-full h-52 object-cover"
-                    />
+                <div className="grid grid-cols-2 gap-2">
+                  {HAZARD_CATEGORIES.map((c) => (
                     <button
+                      key={c.id}
                       type="button"
-                      onClick={() => {
-                        setPhotoFile(null);
-                        setPhotoPreview(null);
-                      }}
-                      className="absolute top-3 right-3 p-2 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition"
+                      onClick={() => setCategory(c.id)}
+                      className={`p-3 rounded-2xl border text-left text-xs font-bold transition flex items-center gap-2 ${
+                        category === c.id
+                          ? "bg-teal-50 dark:bg-teal-500/10 border-teal-500 text-teal-700 dark:text-teal-300 shadow-sm"
+                          : "bg-slate-50 dark:bg-[#0B0F17] border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                      }`}
                     >
-                      <X className="w-4 h-4" />
+                      <span>{c.icon}</span>
+                      <span className="leading-tight">{c.label}</span>
                     </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center p-6 rounded-2xl border-2 border-dashed border-[#334155] bg-[#0B0F17] hover:border-teal-500 transition cursor-pointer text-center space-y-2 group">
-                    <div className="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center group-hover:scale-110 transition-transform">
-                      <Camera className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-black text-white">
-                        Take Photo or Browse Device
-                      </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
-                        JPG, PNG up to 10MB • Used for automated waterlogging depth detection
-                      </div>
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoSelect}
-                      className="hidden"
-                    />
-                  </label>
-                )}
+                  ))}
+                </div>
               </div>
 
-              {/* 3. Severity Level */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                  <span>3. Observed Hazard Severity</span>
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {SEVERITY_LEVELS.map((lvl) => {
-                    const isSelected = severity === lvl.id;
-                    return (
+              {/* Photo Evidence Dropzone */}
+              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Photo Evidence (AI Vision Input)
+                  </label>
+                  <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">Hugging Face ViT</span>
+                </div>
+
+                <div className="relative border-2 border-dashed border-slate-300 dark:border-[#334155] rounded-2xl p-4 text-center hover:border-teal-500 transition-colors bg-slate-50 dark:bg-[#0B0F17]">
+                  {photoPreview ? (
+                    <div className="relative rounded-xl overflow-hidden max-h-56 flex items-center justify-center bg-black">
+                      <img src={photoPreview} alt="Evidence Preview" className="max-h-56 w-auto object-contain" />
                       <button
-                        key={lvl.id}
                         type="button"
-                        onClick={() => setSeverity(lvl.id)}
-                        className={`py-2.5 px-3 rounded-2xl text-xs font-black border transition ${
-                          isSelected
-                            ? `${lvl.color} shadow-sm ring-1 ring-teal-500/30`
-                            : "bg-[#0B0F17] border-[#1E293B] text-slate-400 hover:bg-[#1E293B]"
-                        }`}
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(null);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition"
                       >
-                        {lvl.label}
+                        <X className="w-4 h-4" />
                       </button>
-                    );
-                  })}
+                    </div>
+                  ) : (
+                    <label className="cursor-pointer block py-6">
+                      <div className="mx-auto w-12 h-12 rounded-2xl bg-teal-500/10 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-2">
+                        <Camera className="w-6 h-6" />
+                      </div>
+                      <span className="text-xs font-black text-slate-900 dark:text-white block">
+                        Take Photo or Browse Image
+                      </span>
+                      <span className="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                        Supports JPEG, PNG or WebP
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handlePhotoChange}
+                        className="hidden"
+                      />
+                    </label>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Right Form Column */}
-            <div className="lg:col-span-5 space-y-5">
-              {/* 4. GPS Coordinates */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
+            {/* Right Column: Location & Details Form */}
+            <div className="md:col-span-6 space-y-4">
+              {/* Location Coordinates */}
+              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                    <span>4. GPS Coordinates</span>
+                  <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Incident Coordinates (GPS)
                   </label>
                   <button
                     type="button"
                     onClick={handleLocateMe}
                     disabled={locating}
-                    className="text-[11px] font-bold text-teal-400 flex items-center gap-1 hover:underline"
+                    className="text-[11px] font-bold text-teal-600 dark:text-teal-400 hover:underline flex items-center gap-1"
                   >
-                    <Locate className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
-                    <span>Auto-Detect GPS</span>
+                    <LocateFixed className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
+                    <span>{locating ? "Locating..." : "Auto-Detect GPS"}</span>
                   </button>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Latitude</span>
+                    <label className="text-[10px] text-slate-400 font-bold uppercase">Latitude</label>
                     <input
-                      type="text"
+                      type="number"
+                      step="0.0001"
                       value={lat}
-                      onChange={(e) => setLat(e.target.value)}
-                      placeholder="21.1458"
-                      className="w-full p-3 rounded-2xl bg-[#0B0F17] border border-[#1E293B] text-xs font-semibold text-white focus:outline-none focus:border-teal-500 font-mono"
+                      onChange={(e) => setLat(parseFloat(e.target.value))}
+                      className="w-full mt-1 bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
                       required
                     />
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase block mb-1">Longitude</span>
+                    <label className="text-[10px] text-slate-400 font-bold uppercase">Longitude</label>
                     <input
-                      type="text"
+                      type="number"
+                      step="0.0001"
                       value={lng}
-                      onChange={(e) => setLng(e.target.value)}
-                      placeholder="79.0882"
-                      className="w-full p-3 rounded-2xl bg-[#0B0F17] border border-[#1E293B] text-xs font-semibold text-white focus:outline-none focus:border-teal-500 font-mono"
+                      onChange={(e) => setLng(parseFloat(e.target.value))}
+                      className="w-full mt-1 bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-xl px-3 py-2.5 text-slate-900 dark:text-white text-xs font-mono font-semibold focus:outline-none focus:border-teal-500"
                       required
                     />
                   </div>
                 </div>
               </div>
 
-              {/* 5. Description Textarea */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
-                <label className="text-[11px] font-black uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-teal-400"></span>
-                  <span>5. Incident Description</span>
+              {/* Description */}
+              <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3">
+                <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Incident Description
                 </label>
                 <textarea
-                  rows={4}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Describe landmark, water depth estimate, blocked traffic, or nearby electric hazards..."
-                  className="w-full p-3 rounded-2xl bg-[#0B0F17] border border-[#1E293B] text-xs font-medium text-white focus:outline-none focus:border-teal-500 resize-none placeholder:text-slate-500 leading-relaxed"
-                  required
+                  placeholder="e.g. Deep waterlogging near Sitabuldi station underpass, traffic stalled..."
+                  rows={4}
+                  className="w-full text-xs bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3.5 text-slate-900 dark:text-white focus:outline-none focus:border-teal-500 placeholder:text-slate-400 leading-relaxed resize-none font-medium"
                 />
+
+                <label className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer pt-1">
+                  <input
+                    type="checkbox"
+                    checked={isAnonymous}
+                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                    className="rounded accent-teal-600"
+                  />
+                  <span>Submit report anonymously</span>
+                </label>
               </div>
 
-              {/* Anonymous Toggle */}
-              <div className="bg-[#131B2A] border border-[#1E293B] rounded-3xl p-4 shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <EyeOff className="w-4 h-4 text-slate-400" />
-                  <span className="text-xs font-bold text-slate-200">
-                    Submit As Anonymous Citizen
-                  </span>
+              {/* Error Message */}
+              {error && (
+                <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-red-700 dark:text-red-300 flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
+                  <span>{error}</span>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={isAnonymous}
-                  onChange={(e) => setIsAnonymous(e.target.checked)}
-                  className="w-4 h-4 accent-teal-500 rounded cursor-pointer"
-                />
-              </div>
+              )}
 
-              {/* Submit CTA Button */}
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-sm shadow-xl shadow-teal-600/30 active:scale-[0.98] transition flex items-center justify-center gap-2"
+                className="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-sm shadow-xl shadow-teal-600/30 transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
               >
                 {submitting ? (
                   <>
-                    <Sparkles className="w-5 h-5 animate-spin" />
-                    <span>Processing Vision AI Inference...</span>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Running Vision AI Inference & Submitting...</span>
                   </>
                 ) : (
                   <>
-                    <Camera className="w-5 h-5" />
-                    <span>Submit Hazard for Verification</span>
+                    <Upload className="w-4 h-4" />
+                    <span>Submit Incident to Municipal Desk</span>
                   </>
                 )}
               </button>
             </div>
           </form>
+        ) : (
+          /* Submission Results & AI Inference Card */
+          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 animate-in fade-in">
+            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 flex items-start gap-3">
+              <CheckCircle2 className="w-6 h-6 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-base font-black text-slate-900 dark:text-white">
+                  Report Registered & Queued!
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">
+                  Incident #{detectionResult.id} has been logged and assigned to{" "}
+                  <strong className="text-teal-600 dark:text-teal-400 font-bold">
+                    {detectionResult.zone_name || "Nagpur Urban Zone"}
+                  </strong>.
+                </p>
+              </div>
+            </div>
+
+            {/* Hugging Face AI Vision Results */}
+            <div className="p-5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-3">
+              <div className="flex items-center gap-2 text-teal-700 dark:text-teal-400">
+                <Bot className="w-5 h-5" />
+                <span className="text-xs font-black uppercase tracking-wider">
+                  Hugging Face Vision AI Analysis
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                <div className="p-3 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">Waterlogging Flood:</span>
+                  <span
+                    className={`font-black px-2 py-0.5 rounded text-[11px] ${
+                      detectionResult.waterlogging_detected
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    {detectionResult.waterlogging_detected
+                      ? `DETECTED (${Math.round((detectionResult.waterlogging_confidence || 0.85) * 100)}%)`
+                      : "NOT DETECTED"}
+                  </span>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+                  <span className="text-slate-600 dark:text-slate-300 font-medium">Pothole Severity:</span>
+                  <span
+                    className={`font-black px-2 py-0.5 rounded text-[11px] ${
+                      detectionResult.pothole_detected
+                        ? "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30"
+                        : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    {detectionResult.pothole_detected
+                      ? `DETECTED (${Math.round((detectionResult.pothole_confidence || 0.8) * 100)}%)`
+                      : "NOT DETECTED"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setDetectionResult(null);
+                setPhotoFile(null);
+                setPhotoPreview(null);
+                setDescription("");
+              }}
+              className="w-full py-4 rounded-2xl bg-teal-600 hover:bg-teal-500 text-white font-black text-sm shadow-lg shadow-teal-600/30 transition active:scale-95"
+            >
+              Submit Another Hazard Report
+            </button>
+          </div>
         )}
       </div>
     </CitizenLayout>
