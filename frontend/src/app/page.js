@@ -20,7 +20,9 @@ import {
   Moon,
   LayoutDashboard,
   AlertTriangle,
-  Layers,
+  Globe,
+  Map as MapIcon,
+  Shield,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "../components/ThemeProvider";
@@ -28,8 +30,8 @@ import { useTheme } from "../components/ThemeProvider";
 const MapComponent = dynamic(() => import("../components/MapComponent"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[440px] rounded-2xl bg-[#F1F5F9] dark:bg-[#162235] flex items-center justify-center text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
-      Loading GIS Map Layer...
+    <div className="w-full h-full min-h-[500px] bg-[#0F172A] flex items-center justify-center text-xs font-semibold text-[#94A3B8]">
+      Initializing Nagpur GIS Map Layer...
     </div>
   ),
 });
@@ -69,6 +71,7 @@ export default function PublicLandingPage() {
   const [alerts, setAlerts] = useState([]);
   const [weather, setWeather] = useState({ condition: "Showers", rainfall_intensity_mm: 18.5, temperature: 28 });
   const [selectedZone, setSelectedZone] = useState(null);
+  const [heroMapLayer, setHeroMapLayer] = useState("satellite");
   const [loading, setLoading] = useState(true);
   const [sosModalOpen, setSosModalOpen] = useState(false);
 
@@ -117,7 +120,7 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* TOP PUBLIC NAVBAR */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-[#FFFFFF] dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <header className="sticky top-0 z-50 bg-[#FFFFFF]/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center gap-3">
@@ -203,7 +206,7 @@ export default function PublicLandingPage() {
             {/* Emergency SOS Button */}
             <button
               onClick={() => setSosModalOpen(true)}
-              className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer"
+              className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer shadow-sm"
             >
               <PhoneCall className="w-3.5 h-3.5" />
               <span>SOS Help</span>
@@ -213,35 +216,71 @@ export default function PublicLandingPage() {
       </header>
 
       {/* ========================================================================= */}
-      {/* SECTION 1: HERO SECTION */}
+      {/* SECTION 1: RESPONSIVE MOTION-DESIGNED MAP BACKGROUND HERO */}
       {/* ========================================================================= */}
-      <section className="pt-12 pb-16 sm:pt-16 sm:pb-24 border-b border-[#E2E8F0] dark:border-[#243244]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+      <section className="relative min-h-[620px] lg:min-h-[680px] flex items-center overflow-hidden border-b border-[#E2E8F0] dark:border-[#243244]">
+        {/* Responsive Live Map Background Layer */}
+        <div className="absolute inset-0 z-0">
+          <MapComponent
+            zones={zones}
+            reports={reports}
+            isHeroBackground={true}
+            initialLayer={heroMapLayer}
+          />
+        </div>
+
+        {/* Ambient Dark Gradient Overlays for High Text Contrast */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#0B1220]/95 via-[#0B1220]/80 to-[#0B1220]/45 dark:from-[#0B1220]/95 dark:via-[#0B1220]/85 dark:to-[#0B1220]/50" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#0B1220] via-transparent to-[#0B1220]/40" />
+
+        {/* Interactive Content Container */}
+        <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Hero Content */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              {/* Civic Status Pill */}
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-[#CCFBF1] dark:bg-teal-500/15 border border-[#0F766E]/20 text-xs font-medium text-[#0F766E] dark:text-[#5EEAD4]">
-                <Activity className="w-3.5 h-3.5" />
-                <span>Nagpur Urban Safety & Real-Time Crisis Intelligence</span>
+            <div className="lg:col-span-7 space-y-6 text-left">
+              {/* Status Pill & Layer Switcher */}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0F766E]/20 backdrop-blur-md border border-[#14B8A6]/30 text-xs font-semibold text-[#5EEAD4]">
+                  <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse"></span>
+                  <span>Live Geospatial Intelligence • Nagpur Wards</span>
+                </div>
+
+                {/* Satellite / Street toggle directly in Hero */}
+                <button
+                  onClick={() => setHeroMapLayer(heroMapLayer === "satellite" ? "street" : "satellite")}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-xs font-medium text-white transition cursor-pointer"
+                  title="Toggle background map imagery"
+                >
+                  {heroMapLayer === "satellite" ? (
+                    <>
+                      <Globe className="w-3.5 h-3.5 text-[#5EEAD4]" />
+                      <span>Satellite Backdrop</span>
+                    </>
+                  ) : (
+                    <>
+                      <MapIcon className="w-3.5 h-3.5 text-[#5EEAD4]" />
+                      <span>Street Backdrop</span>
+                    </>
+                  )}
+                </button>
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight leading-[1.08]">
+              <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-bold text-white tracking-tight leading-[1.08]">
                 Smarter Nagpur. <br />
-                <span className="text-[#0F766E] dark:text-[#14B8A6]">Safer Tomorrow.</span>
+                <span className="text-[#2DD4BF]">Safer Tomorrow.</span>
               </h1>
 
               {/* Subtitle */}
-              <p className="text-sm sm:text-base text-[#475569] dark:text-[#CBD5E1] max-w-2xl mx-auto lg:mx-0 leading-relaxed font-normal">
-                NagDrishti AI combines live IMD radar rainfall feeds, elevation topology, drainage capacity models, and citizen photo verification to predict street-level waterlogging and steer citizens through flood-safe corridors.
+              <p className="text-sm sm:text-base text-slate-200 max-w-xl leading-relaxed font-normal">
+                NagDrishti AI combines live IMD Doppler radar rainfall feeds, elevation hydrology, and citizen photo verification to predict street-level inundation and steer citizens through flood-safe corridors.
               </p>
 
               {/* Primary Action Buttons */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/map"
-                  className="h-11 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm flex items-center gap-2 transition"
+                  className="h-11 px-5 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-semibold text-sm flex items-center gap-2 transition shadow-lg shadow-teal-950/40"
                 >
                   <MapPin className="w-4 h-4" />
                   <span>Explore Live Risk Map</span>
@@ -249,96 +288,106 @@ export default function PublicLandingPage() {
 
                 <Link
                   href="/report"
-                  className="h-11 px-5 rounded-xl bg-[#FFFFFF] dark:bg-[#162235] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#E2E8F0] font-semibold text-sm hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] flex items-center gap-2 transition"
+                  className="h-11 px-5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition"
                 >
-                  <Camera className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                  <Camera className="w-4 h-4 text-[#2DD4BF]" />
                   <span>Report a Hazard</span>
                 </Link>
 
                 <Link
                   href="/dashboard"
-                  className="h-11 px-5 rounded-xl bg-[#F1F5F9] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm hover:bg-[#E2E8F0] dark:hover:bg-[#162235] flex items-center gap-2 transition"
+                  className="h-11 px-5 rounded-xl bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition"
                 >
                   <LayoutDashboard className="w-4 h-4" />
                   <span>Citizen Dashboard</span>
                 </Link>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244] flex flex-wrap items-center justify-center lg:justify-start gap-6 text-xs text-[#64748B] dark:text-[#94A3B8] font-medium">
+              {/* Trust Badges */}
+              <div className="pt-3 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>10 NMC Wards Monitored</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>Risk-Penalized Safe Routing</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>Vision AI Hazard Verification</span>
                 </div>
               </div>
             </div>
 
-            {/* Right Hero Live Telemetry Preview Card */}
+            {/* Right Hero Telemetry Glass HUD Card */}
             <div className="lg:col-span-5">
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-4">
-                <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
+              <div className="bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4 text-white">
+                <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
-                    <span className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC] uppercase tracking-wider">
-                      Live City Telemetry
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-ping"></span>
+                    <span className="font-semibold text-xs text-white uppercase tracking-wider">
+                      Live Telemetry HUD
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8]">
-                    Nagpur Basin Feeds
+                  <span className="text-[11px] font-medium text-slate-400">
+                    PostGIS Real-Time Stream
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[11px] uppercase font-medium text-[#64748B] dark:text-[#94A3B8] block">IMD Rainfall</span>
-                    <span className="text-2xl font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 block">
-                      {weather.rainfall_intensity_mm ?? 18.5} <span className="text-xs font-normal text-[#64748B]">mm/h</span>
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-[11px] uppercase font-medium text-slate-400 block">IMD Doppler Radar</span>
+                    <span className="text-2xl font-bold text-white mt-0.5 block">
+                      {weather.rainfall_intensity_mm ?? 18.5} <span className="text-xs font-normal text-slate-400">mm/h</span>
                     </span>
-                    <span className="text-[11px] text-[#0F766E] dark:text-[#14B8A6] font-medium">{weather.condition || "Moderate Rain"}</span>
+                    <span className="text-[11px] text-[#2DD4BF] font-medium">{weather.condition || "Moderate Rain"}</span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[11px] uppercase font-medium text-[#64748B] dark:text-[#94A3B8] block">Severe Wards</span>
-                    <span className="text-2xl font-bold text-[#DC2626] dark:text-[#F87171] mt-0.5 block">
+                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                    <span className="text-[11px] uppercase font-medium text-slate-400 block">Severe Wards</span>
+                    <span className="text-2xl font-bold text-[#F87171] mt-0.5 block">
                       {severeZones.length} Wards
                     </span>
-                    <span className="text-[11px] text-[#DC2626] dark:text-[#F87171] font-medium">Critical Inundation</span>
+                    <span className="text-[11px] text-[#F87171] font-medium">Critical Inundation</span>
                   </div>
                 </div>
 
                 {/* Highest Risk Ward Breakdown */}
-                <div className="p-3.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                    <span className="font-semibold text-white">
                       Highest Threat Basin
                     </span>
-                    <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
+                    <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/20 text-[#F87171] border border-red-500/30">
                       {selectedZone?.risk_category || "Severe"}
                     </span>
                   </div>
-                  <div className="font-semibold text-sm text-[#0F172A] dark:text-[#F8FAFC]">
+                  <div className="font-semibold text-sm text-[#2DD4BF]">
                     {selectedZone?.zone_name || "Sitabuldi & Narendra Nagar Basin"}
                   </div>
-                  <p className="text-xs text-[#475569] dark:text-[#CBD5E1]">
-                    Drainage capacity strained. Exercise caution near railway underpasses.
+                  <p className="text-xs text-slate-300">
+                    Drainage capacity strained. Underpass bypass routes recommended.
                   </p>
                 </div>
 
-                <Link
-                  href="/map"
-                  className="w-full h-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span>Inspect Ward Details on Live Map</span>
-                </Link>
+                <div className="flex items-center gap-2 pt-1">
+                  <Link
+                    href="/route"
+                    className="flex-1 h-10 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow"
+                  >
+                    <Navigation className="w-3.5 h-3.5" />
+                    <span>Plan Safe Route</span>
+                  </Link>
+
+                  <Link
+                    href="/map"
+                    className="flex-1 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition"
+                  >
+                    <MapPin className="w-3.5 h-3.5 text-[#2DD4BF]" />
+                    <span>Full Map View</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -346,12 +395,12 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 2: LIVE SAFETY PREVIEW STATS */}
+      {/* SECTION 2: LIVE SAFETY STATS */}
       {/* ========================================================================= */}
       <section className="py-12 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5">
+            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">IMD Rainfall Feed</span>
                 <CloudRain className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -362,7 +411,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#0F766E] dark:text-[#14B8A6] font-medium">{weather.condition || "Live Doppler Radar"}</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5">
+            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Flooded Wards</span>
                 <Droplets className="w-4 h-4 text-[#DC2626]" />
@@ -373,7 +422,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">Critical attention needed</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5">
+            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Safe Road Network</span>
                 <Car className="w-4 h-4 text-[#16A34A]" />
@@ -384,7 +433,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#16A34A] dark:text-[#4ADE80] font-medium">Accessible bypass corridors</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5">
+            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Citizen Reports</span>
                 <Activity className="w-4 h-4 text-[#F59E0B]" />
@@ -417,7 +466,7 @@ export default function PublicLandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Feature 1 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <CloudRain className="w-5 h-5" />
               </div>
@@ -432,7 +481,7 @@ export default function PublicLandingPage() {
             </div>
 
             {/* Feature 2 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <Navigation className="w-5 h-5" />
               </div>
@@ -447,7 +496,7 @@ export default function PublicLandingPage() {
             </div>
 
             {/* Feature 3 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <Camera className="w-5 h-5" />
               </div>
@@ -465,40 +514,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 4: INTERACTIVE MAP PREVIEW */}
-      {/* ========================================================================= */}
-      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-1.5">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
-                Live Catchment GIS
-              </span>
-              <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
-                See Nagpur's Risk in Real Time
-              </h2>
-              <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] max-w-2xl">
-                Explore real ward polygons color-coded by waterlogging severity. Click any zone to view rainfall telemetry.
-              </p>
-            </div>
-
-            <Link
-              href="/map"
-              className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-2 self-start md:self-auto transition"
-            >
-              <MapPin className="w-3.5 h-3.5" />
-              <span>Full Screen GIS View</span>
-            </Link>
-          </div>
-
-          <div className="h-[440px] sm:h-[500px] w-full rounded-2xl overflow-hidden border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.08)] relative">
-            <MapComponent zones={zones} reports={reports} />
-          </div>
-        </div>
-      </section>
-
-      {/* ========================================================================= */}
-      {/* SECTION 5: HOW IT WORKS */}
+      {/* SECTION 4: CITIZEN WORKFLOW */}
       {/* ========================================================================= */}
       <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -541,7 +557,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 6: 24/7 HELPLINES */}
+      {/* SECTION 5: 24/7 HELPLINES */}
       {/* ========================================================================= */}
       <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A]" id="about">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
@@ -561,7 +577,7 @@ export default function PublicLandingPage() {
             {NAGPUR_HELPLINES.map((h) => (
               <div
                 key={h.service}
-                className="p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3"
+                className="p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
@@ -587,7 +603,7 @@ export default function PublicLandingPage() {
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 7: FINAL CTA */}
+      {/* SECTION 6: FINAL CTA */}
       {/* ========================================================================= */}
       <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F1F5F9] dark:bg-[#0B1220]">
         <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
@@ -609,7 +625,8 @@ export default function PublicLandingPage() {
               href="/map"
               className="h-11 px-6 rounded-xl bg-[#FFFFFF] dark:bg-[#162235] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition"
             >
-              <span>Explore Live Flood Map</span>
+              <MapPin className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+              <span>Open Live Flood Map</span>
             </Link>
           </div>
         </div>
@@ -724,7 +741,7 @@ export default function PublicLandingPage() {
 
             <button
               onClick={() => setSosModalOpen(false)}
-              className="w-full h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] text-[#334155] dark:text-[#CBD5E1] font-medium text-xs hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition"
+              className="w-full h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] text-[#334155] dark:text-[#CBD5E1] font-medium text-xs hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition cursor-pointer"
             >
               Close
             </button>
