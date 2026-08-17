@@ -2,12 +2,8 @@
 
 import { useEffect, useState } from "react";
 import {
-  Bell,
-  Radio,
   Share2,
-  AlertTriangle,
   CheckCircle2,
-  PhoneCall,
   Clock,
   MapPin,
   RefreshCw,
@@ -53,7 +49,7 @@ export default function AlertsPage() {
   };
 
   const handleWhatsAppShare = (alert) => {
-    const text = `🚨 *NagDrishti Alert — ${alert.zone_name || "Nagpur"}*\n${alert.message}\nSeverity: ${alert.severity || "Severe"}\nOfficial NMC Civic Intelligence`;
+    const text = `🚨 *NagDrishti Alert — ${alert.zone_name || "Nagpur"}*\n${alert.message}\nSeverity: ${alert.severity || "Severe"}\nOfficial NMC Civic Advisory`;
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
   };
 
@@ -63,10 +59,10 @@ export default function AlertsPage() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-              Civic Emergency Alerts
+            <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
+              Recent Alerts
             </h1>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
+            <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Official Nagpur Municipal Corporation flood advisories, waterlogging warnings, and evacuation notices
             </p>
           </div>
@@ -74,9 +70,9 @@ export default function AlertsPage() {
           <button
             onClick={fetchAlerts}
             disabled={loading}
-            className="px-4 py-2 rounded-xl bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-1.5 shadow-sm active:scale-95 transition self-start sm:self-auto cursor-pointer"
+            className="h-10 px-3.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium text-xs shadow-sm transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#0F766E] dark:text-[#14B8A6]" : ""}`} />
             <span>Sync Alerts</span>
           </button>
         </div>
@@ -92,10 +88,10 @@ export default function AlertsPage() {
             <button
               key={f.id}
               onClick={() => setFilterSeverity(f.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition cursor-pointer ${
+              className={`h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
                 filterSeverity === f.id
-                  ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/20"
-                  : "bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                  ? "bg-[#0F766E] text-white dark:bg-[#14B8A6] dark:text-[#042F2E]"
+                  : "bg-[#FFFFFF] dark:bg-[#111C2E] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
               }`}
             >
               {f.label}
@@ -105,19 +101,19 @@ export default function AlertsPage() {
 
         {/* Alerts Grid */}
         {loading ? (
-          <div className="text-center py-16 space-y-3">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto text-[#EA580C] dark:text-[#FF8A00]" />
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-wider">
+          <div className="text-center py-16 space-y-2">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto text-[#0F766E] dark:text-[#14B8A6]" />
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] font-medium">
               Retrieving Official Broadcast Dispatches...
             </p>
           </div>
         ) : filteredAlerts.length === 0 ? (
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-12 text-center space-y-3">
-            <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-            <h3 className="text-base font-black text-slate-900 dark:text-white">
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-12 text-center space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <CheckCircle2 className="w-10 h-10 text-[#16A34A] mx-auto" />
+            <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
               No Active Flood Alerts in Filter
             </h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] max-w-sm mx-auto">
               All monitored drainage basins and major transport routes are currently within acceptable flow parameters.
             </p>
           </div>
@@ -128,45 +124,45 @@ export default function AlertsPage() {
               return (
                 <div
                   key={alert.id}
-                  className={`bg-white dark:bg-[#131B2A] border rounded-3xl p-6 shadow-sm flex flex-col justify-between space-y-4 transition hover:shadow-md ${
+                  className={`bg-[#FFFFFF] dark:bg-[#111C2E] border rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col justify-between space-y-4 transition ${
                     isSevere
-                      ? "border-red-200 dark:border-red-900/50 hover:border-red-500/50"
-                      : "border-slate-200 dark:border-[#1E293B] hover:border-[#FF8A00]/40"
+                      ? "border-red-200 dark:border-red-900/50"
+                      : "border-[#E2E8F0] dark:border-[#243244]"
                   }`}
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span
-                        className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-full ${
+                        className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded ${
                           isSevere
-                            ? "bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/30"
-                            : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/30"
+                            ? "bg-[#FEE2E2] text-[#991B1B]"
+                            : "bg-[#FEF9C3] text-[#854D0E]"
                         }`}
                       >
                         {alert.severity || "Advisory"}
                       </span>
 
-                      <div className="flex items-center gap-1 text-[11px] text-slate-400">
+                      <div className="flex items-center gap-1 text-[11px] text-[#64748B] dark:text-[#94A3B8]">
                         <Clock className="w-3.5 h-3.5" />
                         <span>{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : "Live"}</span>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00] shrink-0" />
+                      <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6] shrink-0" />
                         <span>{alert.zone_name || "Nagpur Citywide"}</span>
                       </h3>
-                      <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed font-medium">
+                      <p className="text-xs text-[#475569] dark:text-[#CBD5E1] mt-1.5 leading-relaxed font-normal">
                         {alert.message}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-3 border-t border-slate-100 dark:border-[#1E293B] flex items-center justify-between gap-2">
+                  <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between gap-2">
                     <button
                       onClick={() => handleCopyAlert(alert)}
-                      className="flex-1 py-2 rounded-xl bg-slate-100 dark:bg-[#0B0F17] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
+                      className="flex-1 h-9 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#CBD5E1] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                     >
                       <Copy className="w-3.5 h-3.5" />
                       <span>{copiedId === alert.id ? "Copied!" : "Copy"}</span>
@@ -174,7 +170,7 @@ export default function AlertsPage() {
 
                     <button
                       onClick={() => handleWhatsAppShare(alert)}
-                      className="flex-1 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
+                      className="flex-1 h-9 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
                     >
                       <Share2 className="w-3.5 h-3.5" />
                       <span>WhatsApp</span>

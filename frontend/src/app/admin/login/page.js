@@ -10,7 +10,6 @@ import {
   AlertTriangle,
   ArrowRight,
   Home,
-  Shield,
   RefreshCw,
   Sun,
   Moon,
@@ -38,7 +37,7 @@ export default function AdminLoginPage() {
       console.error("Login failed:", err);
       setErrorMsg(
         err.message?.includes("Failed to fetch")
-          ? "Unable to reach the municipal authentication service. Please check your network or try again in a moment."
+          ? "Unable to reach the municipal authentication service. Please check your network or try again."
           : err.message || "Invalid credentials or unauthorized access."
       );
     } finally {
@@ -47,39 +46,39 @@ export default function AdminLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F17] flex flex-col items-center justify-center p-4 text-slate-900 dark:text-slate-100 antialiased selection:bg-[#FF8A00] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center p-4 text-[#0F172A] dark:text-[#F8FAFC] antialiased">
       {/* Top Bar for Theme Toggle */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
         <button
           onClick={toggleTheme}
-          className="p-2.5 rounded-2xl bg-white dark:bg-[#131B2A] hover:bg-slate-100 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B] transition-colors shadow-sm cursor-pointer"
-          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          className="p-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition-colors shadow-sm cursor-pointer"
+          title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
         >
-          {theme === "dark" ? <Sun className="w-4 h-4 text-[#FFB000]" /> : <Moon className="w-4 h-4 text-[#EA580C]" />}
+          {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
         </button>
       </div>
 
-      <div className="w-full max-w-md bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-8 shadow-2xl space-y-6">
+      <div className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-7 shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-5">
         {/* Brand Logo & Header */}
-        <div className="text-center space-y-3">
-          <div className="relative w-14 h-14 rounded-2xl overflow-hidden bg-slate-950 p-1 flex items-center justify-center mx-auto shadow-md border border-[#FF8A00]/40">
+        <div className="text-center space-y-2.5">
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center mx-auto border border-[#E2E8F0] dark:border-[#334155]">
             <Image
               src="/brand/nagdrishti-logo.png"
               alt="NagDrishti AI"
-              width={48}
-              height={48}
+              width={40}
+              height={40}
               className="object-contain"
               priority
             />
           </div>
           <div>
-            <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30">
+            <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A] border border-[#F59E0B]/20">
               Command Portal
             </span>
-            <h1 className="text-2xl font-black tracking-tight text-slate-900 dark:text-white mt-1.5">
+            <h1 className="text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight mt-1.5">
               Municipal Officer Login
             </h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">
               Nagpur Urban Crisis Response & Dispatch Desk
             </p>
           </div>
@@ -87,44 +86,44 @@ export default function AdminLoginPage() {
 
         {/* Error Alert */}
         {errorMsg && (
-          <div className="p-3.5 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-300 text-xs font-semibold flex items-start gap-2 animate-in fade-in">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-red-500 mt-0.5" />
+          <div className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-[#991B1B] dark:text-[#F87171] text-xs font-medium flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#DC2626] mt-0.5" />
             <span>{errorMsg}</span>
           </div>
         )}
 
         {/* Login Form */}
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+        <form onSubmit={handleLogin} className="space-y-3.5">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">
               Officer ID / Username
             </label>
             <div className="relative">
-              <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <User className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter officer username"
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#FF8A00] transition"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-normal focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">
               Password
             </label>
             <div className="relative">
-              <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
+              <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-3" />
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#FF8A00] transition"
+                className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-normal focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
               />
             </div>
           </div>
@@ -132,7 +131,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 px-4 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-[#FF8A00]/25 transition flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 cursor-pointer"
+            className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer pt-1"
           >
             {loading ? (
               <RefreshCw className="w-4 h-4 animate-spin" />
@@ -146,10 +145,10 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Back Link */}
-        <div className="pt-2 border-t border-slate-100 dark:border-[#1E293B] text-center">
+        <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#243244] text-center">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-semibold transition"
+            className="inline-flex items-center gap-1.5 text-xs text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium transition"
           >
             <Home className="w-3.5 h-3.5" />
             <span>Return to Public Website</span>

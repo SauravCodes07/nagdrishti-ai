@@ -3,13 +3,7 @@
 import {
   PhoneCall,
   Shield,
-  HelpCircle,
-  AlertTriangle,
-  HeartHandshake,
-  CheckCircle2,
   ExternalLink,
-  Info,
-  MapPin,
   Lock,
 } from "lucide-react";
 import Link from "next/link";
@@ -67,10 +61,10 @@ export default function HelpSafetyPage() {
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
-            Civic Helplines & Monsoon Safety
+          <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
+            Civic Helplines & Safety
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium mt-1">
+          <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
             24/7 verified emergency numbers, monsoon advisory guidelines, and municipal disaster coordination for Nagpur
           </p>
         </div>
@@ -78,9 +72,9 @@ export default function HelpSafetyPage() {
         {/* Emergency Contacts Directory */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <PhoneCall className="w-5 h-5 text-red-500" />
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-              Official Nagpur Emergency Helplines
+            <PhoneCall className="w-5 h-5 text-[#DC2626]" />
+            <h2 className="text-lg sm:text-xl font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+              Emergency Helplines
             </h2>
           </div>
 
@@ -88,22 +82,22 @@ export default function HelpSafetyPage() {
             {EMERGENCY_SERVICES.map((serv) => (
               <div
                 key={serv.title}
-                className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-3 flex flex-col justify-between hover:border-red-500/40 transition"
+                className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3 flex flex-col justify-between"
               >
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20">
+                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
                       {serv.badge}
                     </span>
-                    <PhoneCall className="w-4 h-4 text-red-500" />
+                    <PhoneCall className="w-4 h-4 text-[#DC2626]" />
                   </div>
-                  <h3 className="text-sm font-black text-slate-900 dark:text-white">{serv.title}</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{serv.desc}</p>
+                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{serv.title}</h3>
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">{serv.desc}</p>
                 </div>
 
                 <a
                   href={`tel:${serv.phone.replace(/[^0-9]/g, "")}`}
-                  className="w-full py-3 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs flex items-center justify-center gap-2 shadow-md shadow-red-600/30 transition active:scale-95"
+                  className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-2 transition"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>Call {serv.phone}</span>
@@ -116,8 +110,8 @@ export default function HelpSafetyPage() {
         {/* Monsoon Survival Guidelines */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <Shield className="w-5 h-5 text-[#EA580C] dark:text-[#FF8A00]" />
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
+            <Shield className="w-5 h-5 text-[#0F766E] dark:text-[#14B8A6]" />
+            <h2 className="text-lg sm:text-xl font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
               Urban Flash Flood Safety Guidelines
             </h2>
           </div>
@@ -126,15 +120,15 @@ export default function HelpSafetyPage() {
             {SAFETY_TIPS.map((tip, idx) => (
               <div
                 key={tip.title}
-                className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl p-5 shadow-sm space-y-2"
+                className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2"
               >
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-xl bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] text-xs font-black flex items-center justify-center">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-6 h-6 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] text-xs font-bold flex items-center justify-center">
                     0{idx + 1}
                   </span>
-                  <h3 className="text-xs font-black text-slate-900 dark:text-white">{tip.title}</h3>
+                  <h3 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{tip.title}</h3>
                 </div>
-                <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed pl-8 font-medium">
+                <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed pl-8.5 font-normal">
                   {tip.desc}
                 </p>
               </div>
@@ -143,22 +137,22 @@ export default function HelpSafetyPage() {
         </div>
 
         {/* Officer Command Portal Link */}
-        <div className="bg-gradient-to-r from-[#FFF7ED] to-slate-50 dark:from-[#FF8A00]/10 dark:to-[#131B2A] border border-[#FF8A00]/30 rounded-3xl p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+        <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
-              <h3 className="text-sm font-black text-slate-900 dark:text-white">
+              <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+              <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
                 Municipal Officer Command Portal
               </h3>
             </div>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Access the priority dispatch queue, moderate citizen photo reports, and trigger Twilio SMS/WhatsApp dispatches.
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+              Access priority dispatch queues, moderate citizen photo reports, and manage SMS & WhatsApp alert dispatches.
             </p>
           </div>
 
           <Link
             href="/admin/login"
-            className="px-5 py-3 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shrink-0 flex items-center justify-center gap-2 shadow-md shadow-[#FF8A00]/25 transition active:scale-95"
+            className="h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition"
           >
             <span>Officer Login</span>
             <ExternalLink className="w-3.5 h-3.5" />

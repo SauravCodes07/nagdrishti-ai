@@ -11,7 +11,6 @@ import {
   Camera,
   Bell,
   HelpCircle,
-  ShieldAlert,
   ChevronLeft,
   ChevronRight,
   Sun,
@@ -23,11 +22,9 @@ import {
   PhoneCall,
   Lock,
   Download,
-  CheckCircle2,
-  Info,
   Smartphone,
+  AlertTriangle,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../ThemeProvider";
 import { getWeather, getRiskZones } from "../../lib/api";
 
@@ -73,7 +70,7 @@ export default function CitizenLayout({ children }) {
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
 
-    if (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) {
+    if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) {
       setIsInstalled(true);
     }
 
@@ -105,13 +102,13 @@ export default function CitizenLayout({ children }) {
     { href: "/profile", label: "Help & Safety", icon: HelpCircle },
   ];
 
-  // Mobile Bottom Bar Items (5 essential quick actions)
+  // Mobile Bottom Bar Items
   const mobileBottomItems = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
     { href: "/map", label: "Live Map", icon: MapPin },
-    { href: "/route", label: "Safe Routes", icon: Navigation },
+    { href: "/report", label: "Report", icon: Camera, isPrimary: true },
+    { href: "/route", label: "Routes", icon: Navigation },
     { href: "/alerts", label: "Alerts", icon: Bell },
-    { href: "/profile", label: "Safety", icon: HelpCircle },
   ];
 
   const getPageTitle = () => {
@@ -125,26 +122,26 @@ export default function CitizenLayout({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row antialiased selection:bg-[#FF8A00] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col md:flex-row antialiased">
       {/* ========================================================================= */}
       {/* DESKTOP FIXED LEFT SIDEBAR */}
       {/* ========================================================================= */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#0F172A] sticky top-0 h-screen transition-all duration-300 z-40 ${
+        className={`hidden md:flex flex-col shrink-0 border-r border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A] sticky top-0 h-screen transition-all duration-200 z-40 ${
           sidebarCollapsed ? "w-20" : "w-64"
         }`}
       >
         <div className="flex flex-col h-full justify-between">
           {/* Brand Header */}
           <div>
-            <div className="h-16 lg:h-20 px-4 border-b border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+            <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
               <Link href="/" className="flex items-center gap-3 overflow-hidden">
-                <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-950 p-1 flex items-center justify-center border border-[#FF8A00]/40 shadow-sm shrink-0">
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shrink-0">
                   <Image
                     src="/brand/nagdrishti-logo.png"
                     alt="NagDrishti AI"
-                    width={36}
-                    height={36}
+                    width={32}
+                    height={32}
                     className="object-contain"
                     priority
                   />
@@ -152,15 +149,15 @@ export default function CitizenLayout({ children }) {
                 {!sidebarCollapsed && (
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-black text-base text-slate-900 dark:text-white tracking-tight">
+                      <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
                         NagDrishti
                       </span>
-                      <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#FF8A00]/10 dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30">
+                      <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] border border-[#0F766E]/20">
                         AI
                       </span>
                     </div>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
-                      Nagpur Safety Shield
+                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] font-normal truncate">
+                      Nagpur Civic Safety
                     </p>
                   </div>
                 )}
@@ -168,7 +165,7 @@ export default function CitizenLayout({ children }) {
 
               <button
                 onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition hidden lg:block cursor-pointer"
+                className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition hidden lg:block cursor-pointer"
                 title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
               >
                 {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -176,10 +173,10 @@ export default function CitizenLayout({ children }) {
             </div>
 
             {/* Navigation Links */}
-            <nav className="p-3 space-y-1.5">
+            <nav className="p-3 space-y-1">
               {!sidebarCollapsed && (
-                <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 px-3 py-1.5 tracking-wider">
-                  Application
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1.5 tracking-wider">
+                  Platform
                 </div>
               )}
 
@@ -192,38 +189,33 @@ export default function CitizenLayout({ children }) {
                     key={item.href}
                     href={item.href}
                     title={sidebarCollapsed ? item.label : undefined}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all relative ${
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors relative ${
                       isActive
-                        ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 shadow-sm"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                        : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
                     }`}
                   >
-                    <Icon
-                      className={`w-4 h-4 shrink-0 transition-transform ${
-                        isActive ? "text-[#EA580C] dark:text-[#FF8A00] scale-110" : ""
-                      }`}
-                    />
+                    <Icon className="w-4 h-4 shrink-0" />
                     {!sidebarCollapsed && <span>{item.label}</span>}
                     {isActive && !sidebarCollapsed && (
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A00] ml-auto"></span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] dark:bg-[#14B8A6] ml-auto"></span>
                     )}
                   </Link>
                 );
               })}
 
               {!sidebarCollapsed && (
-                <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 px-3 pt-3 pb-1 tracking-wider">
-                  Tools & Access
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-3 pb-1 tracking-wider">
+                  Tools & Resources
                 </div>
               )}
 
-              {/* Dedicated Install App Action in Sidebar */}
               <button
                 onClick={handleInstallApp}
                 title={sidebarCollapsed ? "Install NagDrishti App" : undefined}
-                className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs text-slate-600 dark:text-slate-400 hover:bg-[#FFF7ED] dark:hover:bg-[#FF8A00]/10 hover:text-[#EA580C] dark:hover:text-[#FF8A00] transition cursor-pointer border border-transparent hover:border-[#FF8A00]/20"
+                className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium transition cursor-pointer text-left"
               >
-                <Download className="w-4 h-4 shrink-0 text-[#EA580C] dark:text-[#FF8A00]" />
+                <Download className="w-4 h-4 shrink-0 text-[#0F766E] dark:text-[#14B8A6]" />
                 {!sidebarCollapsed && <span>{isInstalled ? "App Installed ✓" : "Install App"}</span>}
               </button>
 
@@ -236,17 +228,13 @@ export default function CitizenLayout({ children }) {
                     key={item.href}
                     href={item.href}
                     title={sidebarCollapsed ? item.label : undefined}
-                    className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all relative ${
+                    className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors relative ${
                       isActive
-                        ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 shadow-sm"
-                        : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-900 dark:hover:text-white"
+                        ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                        : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
                     }`}
                   >
-                    <Icon
-                      className={`w-4 h-4 shrink-0 ${
-                        isActive ? "text-[#EA580C] dark:text-[#FF8A00]" : ""
-                      }`}
-                    />
+                    <Icon className="w-4 h-4 shrink-0" />
                     {!sidebarCollapsed && <span>{item.label}</span>}
                   </Link>
                 );
@@ -254,199 +242,173 @@ export default function CitizenLayout({ children }) {
             </nav>
           </div>
 
-          {/* Sidebar Footer Links */}
-          <div className="p-3 border-t border-slate-200 dark:border-[#1E293B] space-y-2">
+          {/* Sidebar Footer */}
+          <div className="p-3 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2">
             {!sidebarCollapsed ? (
-              <>
-                <Link
-                  href="/"
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <ExternalLink className="w-3.5 h-3.5 text-[#FF8A00]" />
-                    <span>Public Landing Page</span>
+              <div className="p-3 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Officer Access</span>
+                  <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A]">
+                    Desk
                   </span>
-                </Link>
-
-                <Link
-                  href="/admin/login"
-                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-[#EA580C] dark:hover:text-[#FF8A00] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition"
-                >
-                  <span className="flex items-center gap-2">
-                    <Lock className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
-                    <span>Officer Portal</span>
-                  </span>
-                </Link>
-
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-[11px] space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-500 dark:text-slate-400">GIS Feed</span>
-                    <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
-                      Live Radar
-                    </span>
-                  </div>
-                  <div className="text-[10px] text-slate-400">Nagpur 10-Ward Basin Mesh</div>
                 </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center gap-2">
-                <Link
-                  href="/"
-                  className="p-2 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  title="Public Landing"
-                >
-                  <ExternalLink className="w-4 h-4 text-[#FF8A00]" />
-                </Link>
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                  Municipal command & dispatch console
+                </p>
                 <Link
                   href="/admin/login"
-                  className="p-2 rounded-xl text-slate-400 hover:text-[#FF8A00]"
-                  title="Officer Portal"
+                  className="w-full py-2 px-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#E2E8F0] font-medium text-xs flex items-center justify-center gap-1.5 transition"
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
+                  <span>Officer Login</span>
                 </Link>
               </div>
+            ) : (
+              <Link
+                href="/admin/login"
+                className="w-full p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] flex justify-center hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B]"
+                title="Officer Login"
+              >
+                <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+              </Link>
             )}
+
+            <div className="flex items-center justify-between pt-1">
+              <button
+                onClick={toggleTheme}
+                className="w-full py-2 px-3 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#E2E8F0] dark:border-[#243244] text-[#475569] dark:text-[#CBD5E1] font-medium text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    {!sidebarCollapsed && <span>Light Theme</span>}
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-3.5 h-3.5 text-[#0F766E]" />
+                    {!sidebarCollapsed && <span>Dark Theme</span>}
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </aside>
 
       {/* ========================================================================= */}
-      {/* MAIN VIEWPORT CONTAINER */}
+      {/* MAIN CONTENT AREA */}
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Application Bar */}
-        <header className="sticky top-0 z-30 h-16 lg:h-20 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#1E293B] px-4 sm:px-6 lg:px-8 flex items-center justify-between shadow-sm">
-          {/* Left: Mobile Menu Trigger + Page Title / Breadcrumb */}
+        {/* Top Header Bar */}
+        <header className="sticky top-0 z-30 h-16 bg-[#FFFFFF] dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#243244] px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B] md:hidden cursor-pointer"
-              aria-label="Toggle navigation drawer"
+              className="p-2 rounded-lg text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] md:hidden cursor-pointer"
+              aria-label="Open mobile menu"
             >
-              {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              <Menu className="w-5 h-5" />
             </button>
 
-            <div>
-              <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                <Link href="/" className="hover:text-[#EA580C] dark:hover:text-[#FF8A00] transition">
-                  NagDrishti
-                </Link>
-                <span>/</span>
-                <span className="text-[#EA580C] dark:text-[#FF8A00] font-bold">{getPageTitle()}</span>
-              </div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="font-semibold text-base sm:text-lg text-[#0F172A] dark:text-[#F8FAFC] tracking-tight truncate">
                 {getPageTitle()}
               </h1>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244]">
+                Nagpur City
+              </span>
             </div>
           </div>
 
-          {/* Right Top Bar Actions (Weather, Status, Saffron Theme Toggle, SOS) */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Live Weather Ticker */}
-            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-xs font-semibold text-slate-700 dark:text-slate-300">
-              <CloudRain className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00] animate-pulse" />
-              <span>{weather.rainfall_intensity_mm ?? 0} mm/h</span>
-              <span className="text-slate-400">|</span>
-              <span className="text-[#EA580C] dark:text-[#FF8A00] font-bold">{weather.condition || "Live Radar"}</span>
+            {/* Live IMD Weather Ticker */}
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">
+              <CloudRain className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+              <span>
+                Rainfall: <strong className="text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{weather.rainfall_intensity_mm ?? 0} mm/h</strong>
+              </span>
             </div>
 
-            {/* Citywide Risk Status Pill */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-xs font-semibold">
-              <span className="relative flex h-2 w-2">
-                <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${
-                    severeZoneCount > 0 ? "bg-red-400" : "bg-emerald-400"
-                  }`}
-                ></span>
-                <span
-                  className={`relative inline-flex rounded-full h-2 w-2 ${
-                    severeZoneCount > 0 ? "bg-red-500" : "bg-emerald-500"
-                  }`}
-                ></span>
-              </span>
-              <span className="text-slate-500 dark:text-slate-400 font-medium">Nagpur:</span>
-              <span
-                className={
-                  severeZoneCount > 0
-                    ? "text-red-600 dark:text-red-400 font-bold"
-                    : "text-emerald-600 dark:text-emerald-400 font-bold"
-                }
+            {/* Severe Zones Count Indicator */}
+            {severeZoneCount > 0 && (
+              <Link
+                href="/alerts"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-[#991B1B] dark:text-[#F87171] hover:bg-red-100 dark:hover:bg-red-500/25 transition"
               >
-                {severeZoneCount > 0 ? `${severeZoneCount} Severe` : "Normal Flow"}
-              </span>
-            </div>
+                <span className="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+                <span>{severeZoneCount} Severe {severeZoneCount === 1 ? "Ward" : "Wards"}</span>
+              </Link>
+            )}
 
-            {/* THEME TOGGLE BUTTON (Prominent in upper navbar) */}
+            {/* Theme Toggle (Mobile/Tablet view) */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-2xl bg-slate-100 dark:bg-[#131B2A] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B] transition-colors shadow-sm cursor-pointer"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
-              aria-label={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer md:hidden"
+              title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-[#FFB000]" />
-              ) : (
-                <Moon className="w-4 h-4 text-[#EA580C]" />
-              )}
+              {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
             </button>
 
             {/* Emergency SOS Button */}
             <button
               onClick={() => setSosModalOpen(true)}
-              className="px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-black text-xs shadow-md shadow-red-600/30 flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+              className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-[#FFFFFF] font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer"
             >
-              <PhoneCall className="w-3.5 h-3.5 animate-bounce" />
+              <PhoneCall className="w-3.5 h-3.5" />
               <span>SOS</span>
             </button>
           </div>
         </header>
 
-        {/* Main Body Content with bottom padding for mobile quick nav */}
+        {/* Main Body Content */}
         <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-24 md:pb-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+          <div key={pathname}>
+            {children}
+          </div>
         </main>
       </div>
 
       {/* ========================================================================= */}
-      {/* MOBILE BOTTOM QUICK-ACCESS NAVIGATION (Fixed & Safe-Area Aware) */}
+      {/* MOBILE BOTTOM QUICK-ACCESS NAVIGATION */}
       {/* ========================================================================= */}
       <nav
         aria-label="Mobile quick navigation"
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-lg border-t border-slate-200 dark:border-[#1E293B] px-2 py-1.5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
+        className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#FFFFFF] dark:bg-[#0F172A] border-t border-[#E2E8F0] dark:border-[#243244] px-2 py-1 shadow-[0_-2px_8px_rgba(15,23,42,0.06)]"
       >
         <div className="flex items-center justify-around max-w-lg mx-auto">
           {mobileBottomItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
 
+            if (item.isPrimary) {
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center -mt-4"
+                >
+                  <div className="w-12 h-12 rounded-xl bg-[#0F766E] hover:bg-[#115E59] text-white flex items-center justify-center shadow-md border-2 border-[#FFFFFF] dark:border-[#0F172A]">
+                    <Icon className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[10px] font-semibold text-[#0F766E] dark:text-[#14B8A6] mt-0.5">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            }
+
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-1 px-3 rounded-2xl transition-all ${
+                className={`flex flex-col items-center justify-center py-1 px-3 rounded-lg transition-colors ${
                   isActive
-                    ? "text-[#EA580C] dark:text-[#FF8A00] font-black"
-                    : "text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium"
+                    ? "text-[#0F766E] dark:text-[#14B8A6] font-semibold"
+                    : "text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
                 }`}
               >
-                <div
-                  className={`p-1.5 rounded-xl transition-colors ${
-                    isActive ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/20" : ""
-                  }`}
-                >
-                  <Icon className={`w-5 h-5 ${isActive ? "text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
-                </div>
+                <Icon className="w-5 h-5" />
                 <span className="text-[10px] tracking-tight mt-0.5">{item.label}</span>
               </Link>
             );
@@ -459,17 +421,17 @@ export default function CitizenLayout({ children }) {
       {/* ========================================================================= */}
       {mobileDrawerOpen && (
         <div
-          className="md:hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex"
+          className="md:hidden fixed inset-0 z-50 bg-slate-950/60 flex"
           onClick={() => setMobileDrawerOpen(false)}
         >
           <div
-            className="w-72 bg-white dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-slate-200 dark:border-[#1E293B] shadow-2xl animate-in slide-in-from-left duration-200"
+            className="w-72 bg-[#FFFFFF] dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#243244] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#1E293B]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243244]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-950 p-1 flex items-center justify-center border border-[#FF8A00]/40">
+                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155]">
                     <Image
                       src="/brand/nagdrishti-logo.png"
                       alt="NagDrishti AI"
@@ -478,19 +440,19 @@ export default function CitizenLayout({ children }) {
                       className="object-contain"
                     />
                   </div>
-                  <span className="font-black text-base text-slate-900 dark:text-white">NagDrishti AI</span>
+                  <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC]">NagDrishti AI</span>
                 </div>
 
                 <button
                   onClick={() => setMobileDrawerOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-1">
-                <div className="text-[10px] font-black uppercase text-slate-400 px-3 py-1 tracking-wider">
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1 tracking-wider">
                   Menu
                 </div>
 
@@ -502,20 +464,20 @@ export default function CitizenLayout({ children }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileDrawerOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
                         isActive
-                          ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                          ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                          : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium"
                       }`}
                     >
-                      <Icon className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
+                      <Icon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                       <span>{item.label}</span>
                     </Link>
                   );
                 })}
 
-                <div className="text-[10px] font-black uppercase text-slate-400 px-3 pt-3 pb-1 tracking-wider">
-                  Tools & Emergency
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-3 pb-1 tracking-wider">
+                  Tools & Helplines
                 </div>
 
                 <button
@@ -523,9 +485,9 @@ export default function CitizenLayout({ children }) {
                     setMobileDrawerOpen(false);
                     handleInstallApp();
                   }}
-                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold text-slate-700 dark:text-slate-300 hover:bg-[#FFF7ED] dark:hover:bg-[#FF8A00]/10 hover:text-[#EA580C] dark:hover:text-[#FF8A00] transition text-left"
+                  className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium transition text-left"
                 >
-                  <Download className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
+                  <Download className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                   <span>{isInstalled ? "App Installed ✓" : "Install App"}</span>
                 </button>
 
@@ -537,13 +499,13 @@ export default function CitizenLayout({ children }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileDrawerOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
                         isActive
-                          ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                          ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                          : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium"
                       }`}
                     >
-                      <Icon className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
+                      <Icon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -551,21 +513,21 @@ export default function CitizenLayout({ children }) {
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-200 dark:border-[#1E293B] space-y-2">
+            <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2">
               <Link
                 href="/"
                 onClick={() => setMobileDrawerOpen(false)}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
               >
-                <ExternalLink className="w-3.5 h-3.5 text-[#FF8A00]" />
+                <ExternalLink className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                 <span>Public Landing</span>
               </Link>
               <Link
                 href="/admin/login"
                 onClick={() => setMobileDrawerOpen(false)}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-[#EA580C] dark:hover:text-[#FF8A00]"
+                className="w-full flex items-center gap-2 py-2 px-3 rounded-lg text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F766E] dark:hover:text-[#14B8A6]"
               >
-                <Lock className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
+                <Lock className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
                 <span>Officer Desk</span>
               </Link>
             </div>
@@ -575,32 +537,32 @@ export default function CitizenLayout({ children }) {
 
       {/* PWA Install Guidance Modal */}
       {installModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-[#1E293B] pb-3">
-              <div className="w-12 h-12 rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] flex items-center justify-center border border-[#FF8A00]/30">
-                <Smartphone className="w-6 h-6" />
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
+                <Smartphone className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Install NagDrishti AI</h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Offline-capable civic safety PWA</p>
+                <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Install NagDrishti AI</h3>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">Offline-capable civic safety application</p>
               </div>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-700 dark:text-slate-300">
-              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] space-y-2">
-                <p className="font-bold text-slate-900 dark:text-white">To install on Mobile or Desktop:</p>
-                <ul className="space-y-1.5 text-[11px] list-disc list-inside text-slate-600 dark:text-slate-400">
-                  <li><strong>Chrome / Android:</strong> Tap the three dots (⋮) in your browser and select <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong>.</li>
-                  <li><strong>Safari / iOS:</strong> Tap the <strong>Share</strong> button and choose <strong>"Add to Home Screen"</strong>.</li>
-                  <li><strong>Desktop:</strong> Click the install icon in your browser's address bar.</li>
+            <div className="space-y-3 text-xs text-[#334155] dark:text-[#CBD5E1]">
+              <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
+                <p className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Installation Instructions:</p>
+                <ul className="space-y-1.5 text-xs list-disc list-inside text-[#475569] dark:text-[#CBD5E1]">
+                  <li><strong>Chrome / Android:</strong> Tap menu (⋮) and select <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong>.</li>
+                  <li><strong>Safari / iOS:</strong> Tap <strong>Share</strong> and choose <strong>"Add to Home Screen"</strong>.</li>
+                  <li><strong>Desktop:</strong> Click the install icon in your browser address bar.</li>
                 </ul>
               </div>
             </div>
 
             <button
               onClick={() => setInstallModalOpen(false)}
-              className="w-full py-3 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs shadow-md transition"
+              className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm transition"
             >
               Got It
             </button>
@@ -610,56 +572,56 @@ export default function CitizenLayout({ children }) {
 
       {/* Emergency SOS Modal */}
       {sosModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#131B2A] border border-red-200 dark:border-red-900/60 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center gap-3 border-b border-slate-100 dark:border-[#1E293B] pb-3">
-              <div className="w-12 h-12 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center border border-red-200 dark:border-red-800/40">
-                <PhoneCall className="w-6 h-6 animate-pulse" />
+        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/60 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3 border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FEE2E2] dark:bg-red-500/15 text-[#DC2626] dark:text-[#F87171] flex items-center justify-center border border-red-200 dark:border-red-800/40">
+                <AlertTriangle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-black text-slate-900 dark:text-white">Emergency Assistance (Nagpur)</h3>
-                <p className="text-xs text-red-600 dark:text-red-400 font-semibold">Immediate 24/7 Municipal & Police Dispatch</p>
+                <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Emergency Helplines (Nagpur)</h3>
+                <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">24/7 Municipal & Rescue Dispatch</p>
               </div>
             </div>
 
             <div className="space-y-2.5">
               <a
                 href="tel:07122567035"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 hover:bg-red-100 dark:hover:bg-red-900/40 transition"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 hover:bg-red-100 dark:hover:bg-red-900/40 transition"
               >
                 <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">NMC 24/7 Flood Control</div>
-                  <div className="text-[11px] text-red-600 dark:text-red-400 font-bold">0712-2567035</div>
+                  <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">NMC 24/7 Flood Control Room</div>
+                  <div className="text-xs text-[#DC2626] dark:text-[#F87171] font-bold">0712-2567035</div>
                 </div>
-                <span className="px-3 py-1.5 rounded-xl bg-red-600 text-white font-black text-xs">Call Now</span>
+                <span className="h-8 px-3 rounded-lg bg-[#DC2626] text-white font-semibold text-xs flex items-center">Call Now</span>
               </a>
 
               <a
                 href="tel:112"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition"
               >
                 <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">Police Quick Response</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">112 (National Toll-Free)</div>
+                  <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Police Quick Response</div>
+                  <div className="text-xs text-[#64748B] dark:text-[#94A3B8]">112 (National Emergency)</div>
                 </div>
-                <span className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-[#1E293B] text-slate-900 dark:text-white font-bold text-xs">Dial 112</span>
+                <span className="h-8 px-3 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center border border-[#CBD5E1] dark:border-[#334155]">Dial 112</span>
               </a>
 
               <a
                 href="tel:101"
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] hover:bg-slate-100 dark:hover:bg-[#1E293B] transition"
+                className="flex items-center justify-between p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition"
               >
                 <div>
-                  <div className="font-bold text-xs text-slate-900 dark:text-white">Fire & Deep Water Rescue</div>
-                  <div className="text-[11px] text-slate-500 dark:text-slate-400">101</div>
+                  <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Fire & Deep Water Rescue</div>
+                  <div className="text-xs text-[#64748B] dark:text-[#94A3B8]">101</div>
                 </div>
-                <span className="px-3 py-1.5 rounded-xl bg-slate-200 dark:bg-[#1E293B] text-slate-900 dark:text-white font-bold text-xs">Dial 101</span>
+                <span className="h-8 px-3 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center border border-[#CBD5E1] dark:border-[#334155]">Dial 101</span>
               </a>
             </div>
 
             <button
               onClick={() => setSosModalOpen(false)}
-              className="w-full py-3 rounded-2xl bg-slate-100 dark:bg-[#0B0F17] text-slate-700 dark:text-slate-300 font-bold text-xs hover:bg-slate-200 dark:hover:bg-[#1E293B] transition"
+              className="w-full h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] text-[#334155] dark:text-[#CBD5E1] font-medium text-xs hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition"
             >
               Close
             </button>

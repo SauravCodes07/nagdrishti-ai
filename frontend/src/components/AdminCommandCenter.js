@@ -11,19 +11,16 @@ import {
   Play,
   RefreshCw,
   Clock,
-  Send,
   Truck,
   Activity,
-  Layers,
   FileText,
   Radio,
   Sliders,
-  ChevronRight,
   Eye,
   Camera,
   Bot,
   User,
-  Sparkles,
+  X,
 } from "lucide-react";
 import {
   getPriorityQueue,
@@ -99,17 +96,24 @@ export default function AdminCommandCenter({
     let mounted = true;
     const initAuth = async () => {
       try {
-        const data = await getCurrentUser();
-        if (mounted && data && data.authenticated) {
-          setCurrentUser(data.user);
-          loadAdminData();
+        const userRes = await getCurrentUser();
+        if (mounted) {
+          if (userRes && userRes.authenticated) {
+            setCurrentUser(userRes.user);
+            loadAdminData();
+          } else {
+            setCurrentUser(null);
+          }
+          setAuthChecked(true);
         }
       } catch (err) {
-        console.warn(err);
-      } finally {
-        if (mounted) setAuthChecked(true);
+        if (mounted) {
+          setCurrentUser(null);
+          setAuthChecked(true);
+        }
       }
     };
+
     initAuth();
     return () => {
       mounted = false;
@@ -122,11 +126,11 @@ export default function AdminCommandCenter({
     setLoginError(null);
 
     try {
-      const res = await loginAdmin(loginUsername, loginPassword);
-      setCurrentUser(res.user);
+      const data = await loginAdmin(loginUsername, loginPassword);
+      setCurrentUser(data.user);
       loadAdminData();
     } catch (err) {
-      setLoginError(err.message || "Invalid credentials.");
+      setLoginError(err.message || "Invalid administrative credentials.");
     } finally {
       setLoginLoading(false);
     }
@@ -135,168 +139,151 @@ export default function AdminCommandCenter({
   const handleLogout = async () => {
     try {
       await logoutAdmin();
+      setCurrentUser(null);
     } catch (err) {
-      console.warn(err);
+      console.warn("Logout error:", err);
+      setCurrentUser(null);
     }
-    setCurrentUser(null);
   };
 
-  const handleUpdateDispatch = async (zoneId, newStatus) => {
+  const handleUpdateStatus = async (zoneId, status) => {
     try {
-      await updateDispatchStatus(zoneId, newStatus);
-      setPriorityQueue((prev) =>
-        prev.map((z) => (z.zone_id === zoneId ? { ...z, dispatch_status: newStatus } : z))
-      );
+      await updateDispatchStatus(zoneId, status);
+      await loadAdminData();
       if (onDataRefreshed) onDataRefreshed();
     } catch (err) {
-      alert(`Failed to update dispatch status: ${err.message}`);
+      alert("Failed to update status: " + err.message);
     }
   };
 
   const handleVerifyReport = async (reportId, status) => {
     try {
       await verifyReport(reportId, status);
-      setReportsList((prev) =>
-        prev.map((r) => (r.id === reportId ? { ...r, verification_status: status } : r))
-      );
+      await loadAdminData();
       if (onDataRefreshed) onDataRefreshed();
     } catch (err) {
-      alert(`Failed to verify report: ${err.message}`);
+      alert("Moderation error: " + err.message);
     }
   };
 
-  const handleRunSimulationStage = async (stageKey) => {
+  const handleRunSimulation = async (stageKey) => {
     setSimLoading(true);
     setSimStage(stageKey);
-
     try {
       const res = await simulateRainfall({ stage: stageKey });
       setSimLog(res);
       await loadAdminData();
       if (onDataRefreshed) onDataRefreshed();
     } catch (err) {
-      alert(`Simulation error: ${err.message}`);
+      alert("Simulation error: " + err.message);
     } finally {
       setSimLoading(false);
     }
   };
 
-  // Login Gate View
-  if (authChecked && !currentUser) {
+  if (!authChecked) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white dark:bg-[#131B2A] rounded-3xl p-8 border border-slate-200 dark:border-[#1E293B] shadow-2xl font-sans text-slate-900 dark:text-slate-100">
-        <div className="text-center mb-6">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 flex items-center justify-center mb-3">
-            <Lock className="w-7 h-7" />
+      <div className="p-8 text-center text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
+        Checking administrative authorization...
+      </div>
+    );
+  }
+
+  // LOGIN SCREEN
+  if (!currentUser) {
+    return (
+      <div className="bg-[#FFFFFF] dark:bg-[#111C2E] rounded-2xl p-6 sm:p-8 border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.08)] max-w-md mx-auto my-8">
+        <div className="text-center space-y-2 mb-6">
+          <div className="w-12 h-12 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center mx-auto border border-[#0F766E]/20">
+            <Lock className="w-6 h-6" />
           </div>
-          <h2 className="text-xl font-black text-slate-900 dark:text-white">Admin Command Center</h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Municipal crisis management & resource dispatch authorization
+          <h2 className="text-lg font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+            Officer Command Portal
+          </h2>
+          <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+            Nagpur Municipal Corporation crisis dispatch desk
           </p>
         </div>
 
+        {loginError && (
+          <div className="mb-4 p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-[#991B1B] dark:text-[#F87171] flex items-center space-x-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 text-[#DC2626]" />
+            <span>{loginError}</span>
+          </div>
+        )}
+
         <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1">
-              Admin Username
-            </label>
-            <input
-              type="text"
-              value={loginUsername}
-              onChange={(e) => setLoginUsername(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00]"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide mb-1">
-              Admin Password
-            </label>
-            <input
-              type="password"
-              value={loginPassword}
-              onChange={(e) => setLoginPassword(e.target.value)}
-              className="w-full text-xs font-semibold bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] rounded-2xl p-3 text-slate-900 dark:text-white focus:outline-none focus:border-[#FF8A00]"
-              required
-            />
-          </div>
-
-          {loginError && (
-            <div className="p-3 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-red-700 dark:text-red-300 flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-red-500 shrink-0" />
-              <span>{loginError}</span>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">Officer ID</label>
+            <div className="relative">
+              <User className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
+              <input
+                type="text"
+                value={loginUsername}
+                onChange={(e) => setLoginUsername(e.target.value)}
+                required
+                className="w-full text-xs font-normal pl-9 pr-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
+              />
             </div>
-          )}
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">Password</label>
+            <div className="relative">
+              <Lock className="w-4 h-4 text-[#94A3B8] absolute left-3 top-3" />
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                required
+                className="w-full text-xs font-normal pl-9 pr-3 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
+              />
+            </div>
+          </div>
 
           <button
             type="submit"
             disabled={loginLoading}
-            className="w-full py-3.5 rounded-2xl bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-[#FF8A00]/25 transition-all active:scale-98 disabled:opacity-60 flex items-center justify-center space-x-2 cursor-pointer"
+            className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition disabled:opacity-50 cursor-pointer"
           >
-            <Shield className="w-4 h-4" />
-            <span>{loginLoading ? "Verifying Credentials..." : "Access Command Center"}</span>
+            {loginLoading ? "Authorizing..." : "Enter Command Center"}
           </button>
         </form>
       </div>
     );
   }
 
-  const severeWards = priorityQueue.filter((z) => (z.risk_category === "Severe" || z.risk_score >= 75)).length;
-  const highWards = priorityQueue.filter((z) => (z.risk_category === "High" || (z.risk_score >= 50 && z.risk_score < 75))).length;
-  const dispatchedUnits = priorityQueue.filter((z) => z.dispatch_status === "Dispatched").length;
-  const pendingReports = reportsList.filter((r) => r.verification_status === "Pending").length;
-
-  const filteredReports = reportsList.filter((r) => {
-    if (reportFilter === "All") return true;
-    return (r.verification_status || "Pending").toLowerCase() === reportFilter.toLowerCase();
-  });
-
-  const SIMULATION_STAGES = [
-    { key: "baseline", title: "1. Baseline", desc: "0mm rain, Low risk, normal traffic" },
-    { key: "onset", title: "2. Rainfall Onset", desc: "15mm rain across Nagpur" },
-    { key: "downpour", title: "3. Downpour (75mm)", desc: "Heavy rain in low-lying basins" },
-    { key: "waterlogging", title: "4. Waterlogging Emergence", desc: "Citizen photo confirms flood" },
-    { key: "alert", title: "5. Emergency Alert", desc: "Twilio SMS/WhatsApp triggered" },
-    { key: "dispatch", title: "6. Civic Dispatch", desc: "Dewatering pumps deployed" },
-    { key: "resolve", title: "7. Resolution", desc: "Water recedes, marked Resolved" },
-  ];
-
+  // LOGGED IN DASHBOARD
   return (
-    <div className="space-y-6 font-sans text-slate-900 dark:text-slate-100">
+    <div className="bg-[#FFFFFF] dark:bg-[#111C2E] rounded-2xl border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.08)] overflow-hidden space-y-4">
       {/* Top Header Bar */}
-      <div className="bg-white dark:bg-[#131B2A] text-slate-900 dark:text-white rounded-3xl p-5 border border-slate-200 dark:border-[#1E293B] shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="p-4 sm:p-5 border-b border-[#E2E8F0] dark:border-[#243244] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] rounded-2xl border border-[#FF8A00]/30">
-            <Shield className="w-6 h-6" />
+          <div className="w-9 h-9 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
+            <Shield className="w-5 h-5" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h1 className="text-lg font-black text-slate-900 dark:text-white">Nagpur Crisis Command Center</h1>
-              <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                Duty Active
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Logged in as <strong className="text-slate-900 dark:text-white">{currentUser?.username}</strong>
+            <h2 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+              Municipal Command & Dispatch Center
+            </h2>
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+              Active Officer: <strong className="text-[#0F172A] dark:text-[#F8FAFC]">{currentUser.username}</strong>
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
           <button
             onClick={loadAdminData}
-            className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-[#0B0F17] hover:bg-slate-100 dark:hover:bg-[#1E293B] border border-slate-200 dark:border-[#1E293B] text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center space-x-1.5 transition cursor-pointer"
-            title="Refresh All Records"
+            className="px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-medium text-[#475569] dark:text-[#CBD5E1] flex items-center space-x-1.5 transition cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${queueLoading ? "animate-spin text-[#EA580C] dark:text-[#FF8A00]" : ""}`} />
-            <span>Sync Feeds</span>
+            <RefreshCw className={`w-3.5 h-3.5 ${queueLoading ? "animate-spin text-[#0F766E] dark:text-[#14B8A6]" : ""}`} />
+            <span>Sync</span>
           </button>
 
           <button
             onClick={handleLogout}
-            className="px-3 py-2 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/20 font-bold text-xs flex items-center space-x-1 transition cursor-pointer"
-            title="Sign Out"
+            className="px-3 py-1.5 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 hover:bg-red-200 dark:hover:bg-red-500/25 text-xs font-medium text-[#991B1B] dark:text-[#F87171] flex items-center space-x-1 transition cursor-pointer"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -304,48 +291,13 @@ export default function AdminCommandCenter({
         </div>
       </div>
 
-      {/* KPI Metric Summary Banner */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-[#131B2A] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B]">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block">Critical Wards</span>
-          <div className="text-2xl font-black text-red-600 dark:text-red-400 mt-0.5">
-            {severeWards + highWards}
-          </div>
-          <span className="text-[10px] text-slate-500">{severeWards} Severe, {highWards} High</span>
-        </div>
-
-        <div className="bg-white dark:bg-[#131B2A] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B]">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block">Pending Reports</span>
-          <div className="text-2xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
-            {pendingReports}
-          </div>
-          <span className="text-[10px] text-slate-500">Awaiting officer moderation</span>
-        </div>
-
-        <div className="bg-white dark:bg-[#131B2A] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B]">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block">Active Dispatches</span>
-          <div className="text-2xl font-black text-[#EA580C] dark:text-[#FF8A00] mt-0.5">
-            {dispatchedUnits}
-          </div>
-          <span className="text-[10px] text-slate-500">Pumps & QRT deployed</span>
-        </div>
-
-        <div className="bg-white dark:bg-[#131B2A] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B]">
-          <span className="text-[10px] uppercase font-bold text-slate-400 block">Total Alerts Logged</span>
-          <div className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-            {alertLogs.length}
-          </div>
-          <span className="text-[10px] text-slate-500">Twilio SMS & WhatsApp</span>
-        </div>
-      </div>
-
-      {/* Tab Navigation Controls */}
-      <div className="flex space-x-1 bg-slate-100 dark:bg-[#0B0F17] p-1.5 rounded-2xl border border-slate-200 dark:border-[#1E293B] overflow-x-auto no-scrollbar">
+      {/* Navigation Tabs */}
+      <div className="px-4 sm:px-5 flex space-x-2 border-b border-[#E2E8F0] dark:border-[#243244] overflow-x-auto pb-1 no-scrollbar">
         {[
-          { id: "priority", label: "Priority Queue", count: priorityQueue.length, icon: Activity },
-          { id: "reports", label: "Hazard Moderation", count: pendingReports, icon: FileText },
-          { id: "alerts", label: "Alert Logs", count: alertLogs.length, icon: Radio },
-          { id: "simulation", label: "Simulation Runner", icon: Sliders },
+          { id: "priority", label: `Priority Queue (${priorityQueue.length})`, icon: Truck },
+          { id: "reports", label: `Photo Moderation (${reportsList.length})`, icon: Camera },
+          { id: "alerts", label: `Alert Logs (${alertLogs.length})`, icon: Radio },
+          { id: "simulation", label: "Crisis Simulator", icon: Sliders },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = adminTab === tab.id;
@@ -353,116 +305,93 @@ export default function AdminCommandCenter({
             <button
               key={tab.id}
               onClick={() => setAdminTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+              className={`flex items-center space-x-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
                 isActive
-                  ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950 shadow-md shadow-[#FF8A00]/25"
-                  : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white dark:hover:bg-[#131B2A]"
+                  ? "bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                  : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
               }`}
             >
               <Icon className="w-4 h-4" />
               <span>{tab.label}</span>
-              {tab.count !== undefined && (
-                <span
-                  className={`text-[10px] font-black px-1.5 py-0.2 rounded-full ${
-                    isActive ? "bg-white/20 text-white dark:text-slate-950" : "bg-slate-200 dark:bg-[#1E293B] text-slate-700 dark:text-slate-300"
-                  }`}
-                >
-                  {tab.count}
-                </span>
-              )}
             </button>
           );
         })}
       </div>
 
-      {/* TAB 1: Priority Queue */}
+      {/* TAB 1: PRIORITY DISPATCH QUEUE */}
       {adminTab === "priority" && (
-        <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-5 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E293B]">
-            <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                Multi-Variable Priority Dispatch Queue
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Formula: 0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost
-              </p>
-            </div>
-            <span className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00]">
-              {priorityQueue.length} Wards Ranked
-            </span>
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+            Multi-variable formula rank: <code className="text-[#0F766E] dark:text-[#14B8A6] font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Boost</code>
           </div>
 
-          <div className="overflow-x-auto">
+          <div className="border border-[#E2E8F0] dark:border-[#243244] rounded-xl overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
               <thead>
-                <tr className="bg-slate-50 dark:bg-[#0B0F17] border-b border-slate-200 dark:border-[#1E293B] text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px]">
+                <tr className="bg-[#F8FAFC] dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#243244] text-[#64748B] dark:text-[#94A3B8] font-semibold uppercase text-[11px] tracking-wider">
                   <th className="p-3">Rank & Ward</th>
                   <th className="p-3">Risk Score</th>
                   <th className="p-3">Rainfall</th>
                   <th className="p-3">Drainage</th>
-                  <th className="p-3">Citizen Reports</th>
                   <th className="p-3">Dispatch Status</th>
                   <th className="p-3 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-[#1E293B]">
+              <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
                 {priorityQueue.map((item, idx) => (
-                  <tr key={item.zone_id} className="hover:bg-slate-50 dark:hover:bg-[#1E293B]/40 transition">
-                    <td className="p-3 font-bold text-slate-900 dark:text-white flex items-center space-x-2">
-                      <span className="w-5 h-5 rounded bg-slate-100 dark:bg-[#0B0F17] text-[#EA580C] dark:text-[#FF8A00] text-[10px] font-black flex items-center justify-center">
-                        #{idx + 1}
+                  <tr key={item.zone_id || idx} className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition">
+                    <td className="p-3 font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center space-x-2">
+                      <span className="w-5 h-5 rounded-md bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#0F766E] dark:text-[#14B8A6] text-xs font-bold flex items-center justify-center">
+                        {idx + 1}
                       </span>
                       <span>{item.zone_name}</span>
                     </td>
-
                     <td className="p-3">
                       <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        className={`text-xs font-semibold px-2 py-0.5 rounded-md ${
                           item.risk_category === "Severe"
-                            ? "bg-red-500/10 text-red-600 dark:text-red-300"
+                            ? "bg-[#FEE2E2] text-[#991B1B]"
                             : item.risk_category === "High"
-                            ? "bg-orange-500/10 text-orange-600 dark:text-orange-300"
-                            : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-300"
+                            ? "bg-[#FFEDD5] text-[#9A3412]"
+                            : "bg-[#DCFCE7] text-[#166534]"
                         }`}
                       >
                         {item.risk_score?.toFixed(1)} ({item.risk_category})
                       </span>
                     </td>
-
-                    <td className="p-3 font-bold text-slate-900 dark:text-white">{item.rainfall_mm?.toFixed(1)} mm/h</td>
-                    <td className="p-3 text-slate-600 dark:text-slate-300">{Math.round((item.drainage_capacity || 0.5) * 100)}%</td>
-                    <td className="p-3 text-slate-600 dark:text-slate-300">
-                      {item.pending_reports_count || 0} Pending
+                    <td className="p-3 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                      {item.rainfall_mm?.toFixed(1)} mm/h
                     </td>
-
+                    <td className="p-3 text-[#475569] dark:text-[#CBD5E1]">
+                      {Math.round((item.drainage_capacity || 0.5) * 100)}%
+                    </td>
                     <td className="p-3">
                       <span
-                        className={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                        className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded ${
                           item.dispatch_status === "Dispatched"
-                            ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
+                            ? "bg-[#FEF3C7] text-[#854D0E]"
                             : item.dispatch_status === "Resolved"
-                            ? "bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-300"
-                            : "bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                            ? "bg-[#DCFCE7] text-[#166534]"
+                            : "bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#64748B] dark:text-[#94A3B8]"
                         }`}
                       >
                         {item.dispatch_status || "Unassigned"}
                       </span>
                     </td>
-
                     <td className="p-3 text-right">
                       <div className="flex items-center justify-end space-x-1.5">
                         {item.dispatch_status !== "Dispatched" && (
                           <button
-                            onClick={() => handleUpdateDispatch(item.zone_id, "Dispatched")}
-                            className="px-2.5 py-1 rounded-lg bg-[#EA580C] dark:bg-[#FF8A00] hover:bg-[#C2410C] dark:hover:bg-[#FFA726] text-white dark:text-slate-950 font-bold text-[10px] shadow-sm transition cursor-pointer"
+                            onClick={() => handleUpdateStatus(item.zone_id, "Dispatched")}
+                            className="px-2.5 py-1 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-[11px] transition cursor-pointer"
                           >
-                            Dispatch
+                            Dispatch QRT
                           </button>
                         )}
                         {item.dispatch_status !== "Resolved" && (
                           <button
-                            onClick={() => handleUpdateDispatch(item.zone_id, "Resolved")}
-                            className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[10px] shadow-sm transition cursor-pointer"
+                            onClick={() => handleUpdateStatus(item.zone_id, "Resolved")}
+                            className="px-2.5 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-[11px] transition cursor-pointer"
                           >
                             Resolve
                           </button>
@@ -477,191 +406,185 @@ export default function AdminCommandCenter({
         </div>
       )}
 
-      {/* TAB 2: Hazard Moderation */}
+      {/* TAB 2: HAZARD REPORTS MODERATION */}
       {adminTab === "reports" && (
-        <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-5 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E293B]">
-            <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                Citizen Hazard Moderation
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Inspect evidence photos, verify Vision AI inferences, and advance municipal status
-              </p>
-            </div>
-
-            <div className="flex space-x-1">
-              {["All", "Pending", "Verified", "Rejected"].map((st) => (
-                <button
-                  key={st}
-                  onClick={() => setReportFilter(st)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition cursor-pointer ${
-                    reportFilter === st
-                      ? "bg-[#EA580C] dark:bg-[#FF8A00] text-white dark:text-slate-950"
-                      : "bg-slate-100 dark:bg-[#0B0F17] text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
-                  }`}
-                >
-                  {st}
-                </button>
-              ))}
-            </div>
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="flex items-center space-x-2">
+            {["All", "Pending", "Verified", "Rejected"].map((st) => (
+              <button
+                key={st}
+                onClick={() => setReportFilter(st)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  reportFilter === st
+                    ? "bg-[#0F766E] text-white dark:bg-[#14B8A6] dark:text-[#042F2E]"
+                    : "bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#475569] dark:text-[#CBD5E1]"
+                }`}
+              >
+                {st}
+              </button>
+            ))}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredReports.map((rep) => {
-              const photoUrl = rep.photo
-                ? rep.photo.startsWith("http")
-                  ? rep.photo
-                  : `${API_BASE}${rep.photo}`
-                : null;
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {reportsList
+              .filter((r) => reportFilter === "All" || (r.verification_status || "Pending").toLowerCase() === reportFilter.toLowerCase())
+              .map((rep) => {
+                const photoUrl = rep.photo
+                  ? rep.photo.startsWith("http")
+                    ? rep.photo
+                    : `${API_BASE}${rep.photo}`
+                  : null;
 
-              return (
-                <div
-                  key={rep.id}
-                  className="bg-slate-50 dark:bg-[#0B0F17] rounded-2xl p-4 border border-slate-200 dark:border-[#1E293B] space-y-3 flex flex-col justify-between"
-                >
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-bold text-[#EA580C] dark:text-[#FF8A00]">Report #{rep.id}</span>
-                      <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-white dark:bg-[#131B2A] text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800">
+                return (
+                  <div key={rep.id} className="p-4 rounded-xl border border-[#E2E8F0] dark:border-[#243244] bg-[#F8FAFC] dark:bg-[#0B0F17] space-y-3">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-semibold text-[#0F766E] dark:text-[#14B8A6]">Incident #{rep.id}</span>
+                      <span
+                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
+                          rep.verification_status === "Verified"
+                            ? "bg-[#DCFCE7] text-[#166534]"
+                            : rep.verification_status === "Rejected"
+                            ? "bg-[#FEE2E2] text-[#991B1B]"
+                            : "bg-[#FEF9C3] text-[#854D0E]"
+                        }`}
+                      >
                         {rep.verification_status || "Pending"}
                       </span>
                     </div>
 
-                    {photoUrl && (
+                    {photoUrl ? (
                       <div
                         onClick={() => setActivePhoto(photoUrl)}
-                        className="h-36 rounded-xl overflow-hidden cursor-pointer relative group bg-black"
+                        className="h-32 rounded-lg overflow-hidden cursor-pointer relative bg-black"
                       >
-                        <img src={photoUrl} alt="Hazard" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center text-xs font-bold text-white transition">
-                          Inspect Photo
-                        </div>
+                        <img src={photoUrl} alt="Evidence" className="w-full h-full object-cover" />
+                      </div>
+                    ) : (
+                      <div className="h-20 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] flex items-center justify-center text-xs text-[#94A3B8] border border-dashed border-[#CBD5E1] dark:border-[#334155]">
+                        No Photo Attached
                       </div>
                     )}
 
-                    <p className="text-xs text-slate-700 dark:text-slate-300 line-clamp-2 font-medium">
-                      {rep.description || "Waterlogging report"}
-                    </p>
-                  </div>
+                    <p className="text-xs text-[#334155] dark:text-[#CBD5E1] line-clamp-2">{rep.description}</p>
 
-                  <div className="flex items-center space-x-2 pt-2 border-t border-slate-200 dark:border-[#1E293B]">
-                    <button
-                      onClick={() => handleVerifyReport(rep.id, "Verified")}
-                      className="flex-1 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition cursor-pointer"
-                    >
-                      Verify
-                    </button>
-                    <button
-                      onClick={() => handleVerifyReport(rep.id, "Rejected")}
-                      className="flex-1 py-1.5 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition cursor-pointer"
-                    >
-                      Reject
-                    </button>
+                    <div className="flex space-x-2 pt-1 border-t border-[#E2E8F0] dark:border-[#243244]">
+                      <button
+                        onClick={() => handleVerifyReport(rep.id, "Verified")}
+                        className="flex-1 py-1.5 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-xs transition cursor-pointer"
+                      >
+                        Verify
+                      </button>
+                      <button
+                        onClick={() => handleVerifyReport(rep.id, "Rejected")}
+                        className="flex-1 py-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition cursor-pointer"
+                      >
+                        Reject
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       )}
 
-      {/* TAB 3: Alert Logs */}
+      {/* TAB 3: ALERT LOGS */}
       {adminTab === "alerts" && (
-        <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-5 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-[#1E293B]">
-            <div>
-              <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-                Twilio SMS & WhatsApp Broadcast Logs
-              </h2>
-              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                Audit trail of all automated civic emergency dispatches
-              </p>
-            </div>
-            <span className="text-xs font-bold text-[#EA580C] dark:text-[#FF8A00]">{alertLogs.length} Dispatches</span>
-          </div>
-
-          <div className="space-y-2">
-            {alertLogs.map((log) => (
-              <div
-                key={log.id}
-                className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] flex items-start justify-between gap-4 text-xs"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-bold text-slate-900 dark:text-white">{log.zone_name || "Nagpur Ward"}</span>
-                    <span className="text-[10px] text-[#EA580C] dark:text-[#FF8A00] font-mono">[{log.channel || "SMS"}]</span>
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 text-xs font-medium">{log.message}</p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-300">
-                    {log.status || "Delivered"}
-                  </span>
-                  <div className="text-[10px] text-slate-400 mt-1">
-                    {log.created_at ? new Date(log.created_at).toLocaleTimeString() : "Live"}
-                  </div>
-                </div>
-              </div>
-            ))}
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="border border-[#E2E8F0] dark:border-[#243244] rounded-xl overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr className="bg-[#F8FAFC] dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#243244] text-[#64748B] dark:text-[#94A3B8] font-semibold uppercase text-[11px] tracking-wider">
+                  <th className="p-3">Time</th>
+                  <th className="p-3">Ward</th>
+                  <th className="p-3">Channel</th>
+                  <th className="p-3">Message</th>
+                  <th className="p-3">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
+                {alertLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40">
+                    <td className="p-3 font-mono text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                      {log.created_at ? new Date(log.created_at).toLocaleTimeString() : "Live"}
+                    </td>
+                    <td className="p-3 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                      {log.zone_name || "Nagpur City"}
+                    </td>
+                    <td className="p-3">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4]">
+                        {log.channel || "SMS"}
+                      </span>
+                    </td>
+                    <td className="p-3 text-[#334155] dark:text-[#CBD5E1] max-w-xs truncate">{log.message}</td>
+                    <td className="p-3">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534]">
+                        {log.status || "Delivered"}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* TAB 4: Simulation Runner */}
+      {/* TAB 4: CRISIS SIMULATOR */}
       {adminTab === "simulation" && (
-        <div className="bg-white dark:bg-[#131B2A] rounded-3xl p-6 border border-slate-200 dark:border-[#1E293B] shadow-xl space-y-5">
-          <div>
-            <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
-              7-Stage Monsoon Crisis Demonstration Cycle
-            </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Click any stage to simulate rainfall escalation, hazard emergence, and alert triggering
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {SIMULATION_STAGES.map((st) => (
+        <div className="p-4 sm:p-5 space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+            {[
+              { id: "baseline", label: "1. Baseline (0mm)" },
+              { id: "onset", label: "2. Rain Onset (15mm)" },
+              { id: "downpour", label: "3. Downpour (75mm)" },
+              { id: "escalation", label: "4. Crisis Escalation" },
+              { id: "waterlogging", label: "5. Photo Confirmed" },
+              { id: "alert", label: "6. Broadcast Alert" },
+              { id: "dispatch", label: "7. Civic Action" },
+              { id: "resolve", label: "8. Resolution" },
+            ].map((st) => (
               <button
-                key={st.key}
-                onClick={() => handleRunSimulationStage(st.key)}
+                key={st.id}
+                onClick={() => handleRunSimulation(st.id)}
                 disabled={simLoading}
-                className="p-4 rounded-2xl bg-slate-50 dark:bg-[#0B0F17] border border-slate-200 dark:border-[#1E293B] hover:border-[#FF8A00]/50 text-left transition flex flex-col justify-between space-y-2 active:scale-95 cursor-pointer"
+                className={`p-3 rounded-xl border text-left text-xs font-semibold transition cursor-pointer ${
+                  simStage === st.id
+                    ? "bg-[#CCFBF1] dark:bg-teal-500/20 border-[#0F766E] text-[#0F766E] dark:text-[#5EEAD4]"
+                    : "bg-[#F8FAFC] dark:bg-[#0B0F17] border-[#E2E8F0] dark:border-[#243244] text-[#475569] dark:text-[#CBD5E1] hover:border-[#0F766E]"
+                }`}
               >
                 <div className="flex items-center justify-between">
-                  <span className="font-black text-xs text-slate-900 dark:text-white">{st.title}</span>
-                  <Play className="w-3.5 h-3.5 text-[#EA580C] dark:text-[#FF8A00]" />
+                  <span>{st.label}</span>
+                  <Play className="w-3 h-3" />
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{st.desc}</p>
               </button>
             ))}
           </div>
 
           {simLog && (
-            <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs font-semibold text-emerald-700 dark:text-emerald-300 space-y-1 animate-in fade-in">
-              <div className="flex items-center gap-1.5 font-bold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                <span>{simLog.description || simLog.message || "Simulation Completed"}</span>
-              </div>
+            <div className="p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 text-xs text-[#166534] dark:text-[#86EFAC] flex items-center space-x-2">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{simLog.description || simLog.message}</span>
             </div>
           )}
         </div>
       )}
 
-      {/* Photo Lightbox */}
+      {/* Photo Modal */}
       {activePhoto && (
         <div
           onClick={() => setActivePhoto(null)}
-          className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-slate-950/70 flex items-center justify-center p-4"
         >
-          <div className="relative max-w-2xl w-full bg-white dark:bg-[#131B2A] rounded-3xl overflow-hidden border border-slate-200 dark:border-[#1E293B] shadow-2xl">
+          <div className="relative max-w-2xl w-full bg-[#FFFFFF] dark:bg-[#111C2E] rounded-2xl overflow-hidden p-2">
             <button
               onClick={() => setActivePhoto(null)}
-              className="absolute top-4 right-4 p-2 rounded-full bg-slate-900/90 text-white hover:bg-red-600 transition z-10 cursor-pointer"
+              className="absolute top-4 right-4 p-2 rounded-full bg-black/70 text-white hover:bg-[#DC2626] transition z-10 cursor-pointer"
             >
-              <XCircle className="w-5 h-5" />
+              <X className="w-4 h-4" />
             </button>
-            <img src={activePhoto} alt="Evidence" className="w-full max-h-[80vh] object-contain" />
+            <img src={activePhoto} alt="Evidence" className="w-full max-h-[75vh] object-contain rounded-xl" />
           </div>
         </div>
       )}

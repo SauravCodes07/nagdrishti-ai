@@ -5,11 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  ShieldAlert,
-  AlertTriangle,
   FileCheck2,
   Truck,
-  CloudRain,
   Radio,
   Sliders,
   LogOut,
@@ -17,16 +14,12 @@ import {
   ChevronRight,
   RefreshCw,
   Home,
-  CheckCircle2,
   Activity,
-  Layers,
   Menu,
   X,
   Sun,
   Moon,
-  Sparkles,
 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { getCurrentUser, logoutAdmin, checkBackendHealth } from "../../lib/api";
 import { useTheme } from "../ThemeProvider";
 
@@ -94,34 +87,36 @@ export default function AdminLayout({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F17] flex items-center justify-center text-slate-800 dark:text-slate-200">
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex items-center justify-center text-[#0F172A] dark:text-[#F8FAFC]">
         <div className="flex flex-col items-center gap-3">
-          <RefreshCw className="w-8 h-8 animate-spin text-[#EA580C] dark:text-[#FF8A00]" />
-          <span className="text-xs font-bold uppercase tracking-wider">Verifying Officer Authorization...</span>
+          <RefreshCw className="w-8 h-8 animate-spin text-[#0F766E] dark:text-[#14B8A6]" />
+          <span className="text-xs font-semibold uppercase tracking-wider text-[#475569] dark:text-[#CBD5E1]">
+            Verifying Officer Authorization...
+          </span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 flex flex-col md:flex-row antialiased selection:bg-[#FF8A00] selection:text-white transition-colors duration-200">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col md:flex-row antialiased">
       {/* ========================================================================= */}
       {/* DESKTOP FIXED OFFICER LEFT SIDEBAR */}
       {/* ========================================================================= */}
       <aside
-        className={`hidden md:flex flex-col shrink-0 border-r border-slate-200 dark:border-[#1E293B] bg-white dark:bg-[#0F172A] sticky top-0 h-screen transition-all duration-300 z-40 ${
+        className={`hidden md:flex flex-col shrink-0 border-r border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A] sticky top-0 h-screen transition-all duration-200 z-40 ${
           sidebarCollapsed ? "w-20" : "w-64"
         }`}
       >
         {/* Brand Header */}
-        <div className="h-16 lg:h-20 px-4 border-b border-slate-200 dark:border-[#1E293B] flex items-center justify-between">
+        <div className="h-16 px-4 border-b border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
           <Link href="/admin" className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-slate-950 p-1 flex items-center justify-center border border-[#FF8A00]/40 shadow-sm shrink-0">
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shrink-0">
               <Image
                 src="/brand/nagdrishti-logo.png"
                 alt="NagDrishti AI"
-                width={36}
-                height={36}
+                width={32}
+                height={32}
                 className="object-contain"
                 priority
               />
@@ -129,14 +124,14 @@ export default function AdminLayout({ children }) {
             {!sidebarCollapsed && (
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-black text-base text-slate-900 dark:text-white tracking-tight">
+                  <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
                     NagDrishti
                   </span>
-                  <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-[#FF8A00]/10 dark:bg-[#FF8A00]/20 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30">
+                  <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A] border border-[#F59E0B]/20">
                     HQ
                   </span>
                 </div>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">
+                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8] font-normal truncate">
                   Municipal Command Desk
                 </p>
               </div>
@@ -145,7 +140,7 @@ export default function AdminLayout({ children }) {
 
           <button
             onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition hidden lg:block cursor-pointer"
+            className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition hidden lg:block cursor-pointer"
             title={sidebarCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -153,10 +148,10 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Navigation Links */}
-        <nav className="p-3 space-y-1.5 flex-1">
+        <nav className="p-3 space-y-1 flex-1">
           {!sidebarCollapsed && (
-            <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 px-3 py-1.5 tracking-wider">
-              Officer Operations
+            <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1.5 tracking-wider">
+              Command Operations
             </div>
           )}
 
@@ -169,27 +164,23 @@ export default function AdminLayout({ children }) {
                 key={item.href}
                 href={item.href}
                 title={sidebarCollapsed ? item.label : undefined}
-                className={`flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-xs transition-all relative ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors relative ${
                   isActive
-                    ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30 shadow-sm"
-                    : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B] hover:text-slate-900 dark:hover:text-white"
+                    ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                    : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
                 }`}
               >
-                <Icon
-                  className={`w-4 h-4 shrink-0 transition-transform ${
-                    isActive ? "text-[#EA580C] dark:text-[#FF8A00] scale-110" : ""
-                  }`}
-                />
+                <Icon className="w-4 h-4 shrink-0" />
                 {!sidebarCollapsed && <span>{item.label}</span>}
                 {isActive && !sidebarCollapsed && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF8A00] ml-auto"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] dark:bg-[#14B8A6] ml-auto"></span>
                 )}
               </Link>
             );
           })}
 
           {!sidebarCollapsed && (
-            <div className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 px-3 pt-4 pb-1 tracking-wider">
+            <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-4 pb-1 tracking-wider">
               Citizen Portal
             </div>
           )}
@@ -197,28 +188,28 @@ export default function AdminLayout({ children }) {
           <Link
             href="/dashboard"
             title={sidebarCollapsed ? "Citizen Dashboard" : undefined}
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#1E293B] transition"
+            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition"
           >
-            <Home className="w-4 h-4 text-[#FF8A00] shrink-0" />
+            <Home className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6] shrink-0" />
             {!sidebarCollapsed && <span>Citizen App</span>}
           </Link>
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-3 border-t border-slate-200 dark:border-[#1E293B] space-y-2">
+        <div className="p-3 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2">
           {!sidebarCollapsed ? (
-            <div className="p-3 rounded-2xl bg-slate-100 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] space-y-2">
+            <div className="p-3 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate">
+                <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
                   {currentUser?.username || "Officer"}
                 </span>
-                <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                <span className="text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]">
                   Duty Active
                 </span>
               </div>
               <button
                 onClick={handleLogout}
-                className="w-full py-1.5 rounded-xl bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 font-bold text-[11px] flex items-center justify-center gap-1.5 transition cursor-pointer"
+                className="w-full py-1.5 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 hover:bg-red-200 dark:hover:bg-red-500/25 text-[#991B1B] dark:text-[#F87171] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
@@ -227,7 +218,7 @@ export default function AdminLayout({ children }) {
           ) : (
             <button
               onClick={handleLogout}
-              className="w-full p-2.5 rounded-xl bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 flex justify-center hover:bg-red-100 cursor-pointer"
+              className="w-full p-2.5 rounded-xl bg-[#FEE2E2] dark:bg-red-500/15 text-[#991B1B] dark:text-[#F87171] flex justify-center hover:bg-red-200 dark:hover:bg-red-500/25 cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="w-4 h-4" />
@@ -241,72 +232,69 @@ export default function AdminLayout({ children }) {
       {/* ========================================================================= */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Admin Top Bar */}
-        <header className="sticky top-0 z-30 h-16 lg:h-20 bg-white/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-b border-slate-200 dark:border-[#1E293B] px-4 sm:px-6 lg:px-8 flex items-center justify-between shadow-sm">
+        <header className="sticky top-0 z-30 h-16 bg-[#FFFFFF] dark:bg-[#0F172A] border-b border-[#E2E8F0] dark:border-[#243244] px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setMobileDrawerOpen(!mobileDrawerOpen)}
-              className="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B] md:hidden cursor-pointer"
+              className="p-2 rounded-lg text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] md:hidden cursor-pointer"
             >
               {mobileDrawerOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
 
-            <div>
-              <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 dark:text-slate-500">
-                <Link href="/admin" className="hover:text-[#EA580C] dark:hover:text-[#FF8A00] transition">
-                  Command HQ
-                </Link>
-                <span>/</span>
-                <span className="text-[#EA580C] dark:text-[#FF8A00] font-bold">{getPageTitle()}</span>
-              </div>
-              <h1 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-tight">
+            <div className="flex items-center gap-2">
+              <h1 className="font-semibold text-base sm:text-lg text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
                 {getPageTitle()}
               </h1>
+              <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244]">
+                Municipal Ops Desk
+              </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2.5 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* System Status Pill */}
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-100 dark:bg-[#131B2A] border border-slate-200 dark:border-[#1E293B] text-xs font-semibold">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-slate-500 dark:text-slate-400">PostGIS Engine:</span>
-              <span className="font-bold text-emerald-600 dark:text-emerald-400">{systemHealth}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] text-xs">
+              <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+              <span className="font-medium text-[#475569] dark:text-[#CBD5E1]">
+                System: <strong className="text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{systemHealth}</strong>
+              </span>
             </div>
 
-            {/* THEME TOGGLE (Upper Navbar) */}
+            {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2.5 rounded-2xl bg-slate-100 dark:bg-[#131B2A] hover:bg-slate-200 dark:hover:bg-[#1E293B] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-[#1E293B] transition-colors shadow-sm cursor-pointer"
-              title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer"
+              title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-[#FFB000]" /> : <Moon className="w-4 h-4 text-[#EA580C]" />}
+              {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
             </button>
           </div>
         </header>
 
-        {/* Admin Main Body */}
-        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto pb-24 md:pb-8">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={pathname}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.15 }}
-            >
-              {children}
-            </motion.div>
-          </AnimatePresence>
+        {/* Main Body */}
+        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
+          <div key={pathname}>
+            {children}
+          </div>
         </main>
       </div>
 
-      {/* Admin Mobile Responsive Drawer */}
+      {/* ========================================================================= */}
+      {/* MOBILE ADMIN DRAWER */}
+      {/* ========================================================================= */}
       {mobileDrawerOpen && (
-        <div className="md:hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex" onClick={() => setMobileDrawerOpen(false)}>
-          <div className="w-72 bg-white dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-slate-200 dark:border-[#1E293B] shadow-2xl animate-in slide-in-from-left duration-200" onClick={(e) => e.stopPropagation()}>
+        <div
+          className="md:hidden fixed inset-0 z-50 bg-slate-950/60 flex"
+          onClick={() => setMobileDrawerOpen(false)}
+        >
+          <div
+            className="w-72 bg-[#FFFFFF] dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#243244] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-[#1E293B]">
+              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243244]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-slate-950 p-1 flex items-center justify-center border border-[#FF8A00]/40">
+                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155]">
                     <Image
                       src="/brand/nagdrishti-logo.png"
                       alt="NagDrishti AI"
@@ -315,17 +303,22 @@ export default function AdminLayout({ children }) {
                       className="object-contain"
                     />
                   </div>
-                  <span className="font-black text-base text-slate-900 dark:text-white">Command HQ</span>
+                  <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC]">NagDrishti HQ</span>
                 </div>
+
                 <button
                   onClick={() => setMobileDrawerOpen(false)}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               <div className="space-y-1">
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1 tracking-wider">
+                  Command Ops
+                </div>
+
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = pathname === item.href;
@@ -334,35 +327,43 @@ export default function AdminLayout({ children }) {
                       key={item.href}
                       href={item.href}
                       onClick={() => setMobileDrawerOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-xs font-bold transition ${
+                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
                         isActive
-                          ? "bg-[#FFF7ED] dark:bg-[#FF8A00]/15 text-[#EA580C] dark:text-[#FF8A00] border border-[#FF8A00]/30"
-                          : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
+                          ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                          : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium"
                       }`}
                     >
-                      <Icon className="w-4 h-4 text-[#EA580C] dark:text-[#FF8A00]" />
+                      <Icon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                       <span>{item.label}</span>
                     </Link>
                   );
                 })}
+
+                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-4 pb-1 tracking-wider">
+                  Citizen App
+                </div>
+
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                >
+                  <Home className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                  <span>Citizen Dashboard</span>
+                </Link>
               </div>
             </div>
 
-            <div className="pt-4 border-t border-slate-200 dark:border-[#1E293B] space-y-2">
-              <Link
-                href="/dashboard"
-                onClick={() => setMobileDrawerOpen(false)}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-[#1E293B]"
-              >
-                <Home className="w-3.5 h-3.5 text-[#FF8A00]" />
-                <span>Return to Citizen App</span>
-              </Link>
+            <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244]">
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 py-2 px-3 rounded-xl text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                onClick={() => {
+                  setMobileDrawerOpen(false);
+                  handleLogout();
+                }}
+                className="w-full py-2.5 px-3 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 hover:bg-red-200 dark:hover:bg-red-500/25 text-[#991B1B] dark:text-[#F87171] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
               >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out ({currentUser?.username || "Officer"})</span>
               </button>
             </div>
           </div>
