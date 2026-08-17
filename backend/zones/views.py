@@ -2,10 +2,27 @@ from rest_framework import permissions, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from datetime import timedelta
 from .models import Zone, WeatherReading
 from .serializers import ZoneRiskSerializer
 from risk.models import RiskScore
 from risk.scoring import compute_zone_risk
+from .services.weather import ingest_weather_for_all_zones
+
+
+def ensure_fresh_weather_and_risks():
+    """Ensures weather readings and risk scores exist and are updated within the last 30 minutes."""
+    now = timezone.now()
+    cutoff = now - timedelta(minutes=30)
+    latest_reading = WeatherReading.objects.filter(recorded_at__gte=cutoff).first()
+    if not latest_reading:
+        try:
+            ingest_weather_for_all_zones()
+            for zone in Zone.objects.all():
+                compute_zone_risk(zone)
+        except Exception:
+            pass
 
 
 class ZoneRiskListView(APIView):
@@ -13,6 +30,7 @@ class ZoneRiskListView(APIView):
 
     def get(self, request):
         """GET /api/zones/risk/ (public)"""
+        ensure_fresh_weather_and_risks()
         zones = Zone.objects.all()
         # Compute risk score for any zone that doesn't have one yet
         for zone in zones:
@@ -56,6 +74,7 @@ class CityWeatherView(APIView):
         GET /api/zones/weather/ (public)
         Returns current citywide weather aggregates from latest readings.
         """
+        ensure_fresh_weather_and_risks()
         latest_readings = WeatherReading.objects.all().order_by("-recorded_at")[:10]
         if latest_readings:
             avg_rain = sum(r.rainfall_intensity_mm for r in latest_readings) / len(latest_readings)
@@ -89,3 +108,4 @@ class CityWeatherView(APIView):
             "source": "open_meteo",
             "recorded_at": None,
         }, status=status.HTTP_200_OK)
+

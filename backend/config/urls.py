@@ -12,6 +12,7 @@ from routing.views import RoutePathfindView
 from risk.views import PriorityQueueView, SimulateRainfallView
 from alerts.views import AlertLogListView, BroadcastAlertListView
 from config.auth_views import LoginView, LogoutView, CurrentUserView, SignupView, CSRFTokenView, GoogleAuthView
+from config.admin_views import AdminOverviewView, AdminUsersView, AdminAnalyticsView
 
 
 def health(request):
@@ -76,6 +77,12 @@ urlpatterns = [
     path('api/auth/csrf/', CSRFTokenView.as_view(), name='auth-csrf'),
     path('api/auth/google/', GoogleAuthView.as_view(), name='auth-google'),
 
+    # Admin Command Center Aggregated Endpoints (admin only)
+    path('api/admin/overview/', AdminOverviewView.as_view(), name='admin-overview'),
+    path('api/admin/users/', AdminUsersView.as_view(), name='admin-users'),
+    path('api/admin/analytics/', AdminAnalyticsView.as_view(), name='admin-analytics'),
+
     # Media files serving for citizen hazard photos
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
+

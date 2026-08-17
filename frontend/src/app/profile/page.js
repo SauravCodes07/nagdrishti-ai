@@ -1,13 +1,29 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
-  PhoneCall,
+  User,
   Shield,
+  PhoneCall,
   ExternalLink,
   Lock,
+  LogOut,
+  Sun,
+  Moon,
+  Compass,
+  CheckCircle2,
+  AlertCircle,
+  KeyRound,
+  FileText,
+  Mail,
+  Camera,
+  Navigation,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
+import { getCurrentUser, logoutUser, getReports } from "../../lib/api";
+import { useTheme } from "../../components/ThemeProvider";
 
 const EMERGENCY_SERVICES = [
   {
@@ -55,18 +71,120 @@ const SAFETY_TIPS = [
   },
 ];
 
-export default function HelpSafetyPage() {
+export default function CitizenProfilePage() {
+  const router = useRouter();
+  const { theme, toggleTheme } = useTheme();
+  const [user, setUser] = useState(null);
+  const [userReports, setUserReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    Promise.allSettled([getCurrentUser(), getReports()])
+      .then(([userRes, reportsRes]) => {
+        if (userRes.status === "fulfilled" && userRes.value?.user) {
+          setUser(userRes.value.user);
+        }
+        if (reportsRes.status === "fulfilled" && Array.isArray(reportsRes.value)) {
+          setUserReports(reportsRes.value.slice(0, 5));
+        }
+      })
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      router.push("/login");
+    } catch (err) {
+      console.warn("Logout error:", err);
+      router.push("/login");
+    }
+  };
+
+  const handleRestartTour = () => {
+    try {
+      localStorage.removeItem("onboarding_seen");
+      window.location.href = "/";
+    } catch (_) {}
+  };
+
   return (
     <CitizenLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <div>
           <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
-            Civic Helplines & Safety
+            Citizen Profile & Safety Desk
           </h1>
           <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
-            24/7 verified emergency numbers, monsoon advisory guidelines, and municipal disaster coordination for Nagpur
+            Manage your account credentials, preferences, and verified emergency municipal contacts
           </p>
+        </div>
+
+        {/* User Identity Card */}
+        <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 sm:p-7 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0] dark:border-[#243244]">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] font-bold text-xl flex items-center justify-center border border-[#0F766E]/20 shrink-0">
+                {user?.name ? user.name.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : "C"}
+              </div>
+
+              <div className="space-y-0.5 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                    {user?.name || user?.username || "Verified Citizen"}
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] dark:bg-green-500/20 dark:text-[#4ADE80] text-[10px] font-bold border border-green-500/30">
+                    Active Citizen Session
+                  </span>
+                </div>
+                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                  @{user?.username || "citizen"} • {user?.email || "Nagpur Civic Portal"}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={toggleTheme}
+                className="px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                title="Toggle Theme"
+              >
+                {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-[#F59E0B]" /> : <Moon className="w-3.5 h-3.5 text-[#0F766E]" />}
+                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+              </button>
+
+              <button
+                onClick={handleLogout}
+                className="px-3 py-2 rounded-xl bg-[#FEF2F2] dark:bg-red-500/15 hover:bg-[#FEE2E2] dark:hover:bg-red-500/25 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-[#991B1B] dark:text-[#F87171] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Stats / Info Badges */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Role</span>
+              <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC] capitalize">{user?.role || "Citizen"}</p>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Auth Provider</span>
+              <p className="font-bold text-[#0F766E] dark:text-[#14B8A6]">
+                {user?.email && user?.picture ? "Google Account" : "Standard Auth"}
+              </p>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Coverage Area</span>
+              <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">Nagpur Metro</p>
+            </div>
+            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Session Security</span>
+              <p className="font-bold text-green-600 dark:text-green-400">CSRF Protected</p>
+            </div>
+          </div>
         </div>
 
         {/* Emergency Contacts Directory */}
@@ -74,7 +192,7 @@ export default function HelpSafetyPage() {
           <div className="flex items-center gap-2">
             <PhoneCall className="w-5 h-5 text-[#DC2626]" />
             <h2 className="text-lg sm:text-xl font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-              Emergency Helplines
+              24/7 Emergency Helplines
             </h2>
           </div>
 
@@ -136,32 +254,27 @@ export default function HelpSafetyPage() {
           </div>
         </div>
 
-        {/* Onboarding Walkthrough & Officer Command Portal */}
+        {/* Onboarding Tour & Officer Desk Links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                <Compass className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                 <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                  App Walkthrough & Onboarding
+                  App Walkthrough Tour
                 </h3>
               </div>
               <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                Review the 4-slide feature guide covering GIS risk maps, flood-safe A* routing, AI vision, and SOS helplines.
+                Replay the 4-slide interactive feature guide covering GIS risk maps, flood-safe A* routing, and AI vision.
               </p>
             </div>
 
             <button
               type="button"
-              onClick={() => {
-                try {
-                  localStorage.removeItem("onboarding_seen");
-                  window.location.href = "/";
-                } catch (_) {}
-              }}
+              onClick={handleRestartTour}
               className="h-10 px-5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center justify-center gap-2 transition border border-[#CBD5E1] dark:border-[#334155] cursor-pointer"
             >
-              <span>View Onboarding Tour</span>
+              <span>Replay Onboarding Tour</span>
             </button>
           </div>
 
@@ -170,11 +283,11 @@ export default function HelpSafetyPage() {
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                 <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                  Municipal Officer Portal
+                  Municipal Officer Desk
                 </h3>
               </div>
               <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                Access priority dispatch queues, moderate citizen photo reports, and manage SMS & WhatsApp alert dispatches.
+                Disaster response officers can sign into the Command Desk to moderate photo reports and dispatch pumps.
               </p>
             </div>
 
@@ -182,7 +295,7 @@ export default function HelpSafetyPage() {
               href="/admin/login"
               className="h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition"
             >
-              <span>Officer Login</span>
+              <span>Officer Portal</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </Link>
           </div>

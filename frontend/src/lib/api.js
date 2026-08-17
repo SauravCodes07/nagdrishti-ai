@@ -328,3 +328,17 @@ export async function getCurrentUser() {
 export async function checkBackendHealth() {
   return request("/api/health/");
 }
+
+// 9. Admin Command Desk Aggregated Services
+export async function getAdminOverview() {
+  return request("/api/admin/overview/");
+}
+
+export async function getAdminUsers() {
+  return request("/api/admin/users/");
+}
+
+export async function getAdminAnalytics() {
+  return request("/api/admin/analytics/");
+}
+

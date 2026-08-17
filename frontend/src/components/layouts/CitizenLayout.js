@@ -150,7 +150,7 @@ export default function CitizenLayout({ children }) {
   ];
 
   const toolItems = [
-    { href: "/profile", label: "Help & Safety", icon: HelpCircle },
+    { href: "/profile", label: "Profile & Safety", icon: User },
   ];
 
   // Mobile Bottom Bar Items
@@ -168,7 +168,7 @@ export default function CitizenLayout({ children }) {
     if (pathname === "/route") return "Flood-Safe Route Planner";
     if (pathname === "/report") return "Report Road Hazard";
     if (pathname === "/alerts") return "Civic Emergency Alerts";
-    if (pathname === "/profile") return "Civic Helplines & Safety";
+    if (pathname === "/profile") return "Citizen Profile & Safety Desk";
     return "NagDrishti AI";
   };
 

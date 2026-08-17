@@ -177,3 +177,36 @@ class AuthAndGatingTests(TestCase):
             )
             self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
 
+    def test_09_admin_overview_endpoint(self):
+        # Unauthenticated / citizen denied
+        res_unauth = self.client.get("/api/admin/overview/")
+        self.assertIn(res_unauth.status_code, [status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN])
+
+        # Officer authenticated
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get("/api/admin/overview/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("total_zones", res.data)
+        self.assertIn("total_pending_reports", res.data)
+        self.assertIn("total_alerts", res.data)
+        self.assertIn("total_users", res.data)
+
+    def test_10_admin_users_endpoint(self):
+        # Officer authenticated
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get("/api/admin/users/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("users", res.data)
+        self.assertGreaterEqual(res.data["total_count"], 1)
+
+    def test_11_admin_analytics_endpoint(self):
+        # Officer authenticated
+        self.client.force_authenticate(user=self.admin_user)
+        res = self.client.get("/api/admin/analytics/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertIn("risk_trends", res.data)
+        self.assertIn("report_volume", res.data)
+        self.assertIn("category_breakdown", res.data)
+        self.assertIn("zone_breakdowns", res.data)
+
+

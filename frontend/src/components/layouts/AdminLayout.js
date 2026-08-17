@@ -19,6 +19,11 @@ import {
   X,
   Sun,
   Moon,
+  MapPin,
+  TrendingUp,
+  Users,
+  Settings,
+  ShieldAlert,
 } from "lucide-react";
 import { getCurrentUser, logoutAdmin, checkBackendHealth } from "../../lib/api";
 import { useTheme } from "../ThemeProvider";
@@ -78,21 +83,30 @@ export default function AdminLayout({ children }) {
   };
 
   const navItems = [
-    { href: "/admin", label: "Dashboard", icon: Activity },
+    { href: "/admin", label: "Overview", icon: Activity },
     { href: "/admin/queue", label: "Priority Queue", icon: Truck },
-    { href: "/admin/reports", label: "Hazard Moderation", icon: FileCheck2 },
+    { href: "/admin/reports", label: "Hazard Reports", icon: FileCheck2 },
+    { href: "/admin/zones", label: "Zone Management", icon: MapPin },
     { href: "/admin/alerts", label: "Alert Logs", icon: Radio },
+    { href: "/admin/analytics", label: "Analytics & Trends", icon: TrendingUp },
     { href: "/admin/simulate", label: "Crisis Simulator", icon: Sliders },
+    { href: "/admin/users", label: "User Accounts", icon: Users },
+    { href: "/admin/settings", label: "System Settings", icon: Settings },
   ];
 
   const getPageTitle = () => {
     if (pathname === "/admin") return "Command Center Overview";
     if (pathname === "/admin/queue") return "Priority Dispatch Queue";
     if (pathname === "/admin/reports") return "Hazard Report Moderation";
+    if (pathname === "/admin/zones") return "Zone Risk Factor Decomposition";
     if (pathname === "/admin/alerts") return "Emergency Alert Broadcasts";
+    if (pathname === "/admin/analytics") return "Crisis Analytics & Multi-Factor Trends";
     if (pathname === "/admin/simulate") return "Crisis Scenario Simulator";
-    return "Command Center";
+    if (pathname === "/admin/users") return "User Accounts & Activity";
+    if (pathname === "/admin/settings") return "System Settings & Thresholds";
+    return "Municipal Command Center";
   };
+
 
   if (loading) {
     return (
