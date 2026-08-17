@@ -50,18 +50,21 @@ async function executeFetch(baseUrl, endpoint, options) {
     defaultHeaders["Content-Type"] = "application/json";
   }
 
-  // Attach token if stored from login
+  // Attach token if stored from login (admin_token or nagdrishti_token)
   if (typeof window !== "undefined") {
-    const adminToken = localStorage.getItem("admin_token");
-    if (adminToken) {
-      defaultHeaders["Authorization"] = `Token ${adminToken}`;
+    const token = localStorage.getItem("admin_token") || localStorage.getItem("nagdrishti_token");
+    if (token) {
+      defaultHeaders["Authorization"] = `Token ${token}`;
     }
   }
 
-  // Attach CSRF token for mutating requests if cookie exists
+  // Attach CSRF token for mutating requests
   const method = (options.method || "GET").toUpperCase();
   if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-    const csrfToken = getCookie("csrftoken");
+    let csrfToken = getCookie("csrftoken");
+    if (!csrfToken && typeof window !== "undefined") {
+      csrfToken = sessionStorage.getItem("nagdrishti_csrf");
+    }
     if (csrfToken) {
       defaultHeaders["X-CSRFToken"] = csrfToken;
     }
@@ -88,6 +91,12 @@ async function executeFetch(baseUrl, endpoint, options) {
   }
 
   if (!res.ok) {
+    if (res.status === 401 || res.status === 403) {
+      if (typeof window !== "undefined" && !endpoint.includes("/api/auth/login") && !endpoint.includes("/api/auth/signup")) {
+        window.dispatchEvent(new CustomEvent("nagdrishti:session-expired", { detail: { status: res.status, endpoint } }));
+      }
+    }
+
     let errorMsg = `HTTP ${res.status}: ${res.statusText}`;
     if (data) {
       if (typeof data === "string") {
@@ -206,19 +215,52 @@ export async function simulateRainfall(payload) {
   });
 }
 
-// 7. Auth (Admin Session + Token)
-export async function loginAdmin(username, password) {
-  const res = await request("/api/auth/login/", {
+// 7. Auth (Citizen & Admin Session + Token)
+export async function getCsrfToken() {
+  try {
+    const res = await request("/api/auth/csrf/");
+    if (res && res.csrftoken && typeof window !== "undefined") {
+      sessionStorage.setItem("nagdrishti_csrf", res.csrftoken);
+    }
+    return res?.csrftoken;
+  } catch {
+    return null;
+  }
+}
+
+export async function signupCitizen(username, password, email = "", name = "") {
+  const res = await request("/api/auth/signup/", {
     method: "POST",
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, email, name }),
   });
   if (res && res.token && typeof window !== "undefined") {
-    localStorage.setItem("admin_token", res.token);
+    localStorage.setItem("nagdrishti_token", res.token);
+    if (res.user?.role === "admin" || res.user?.is_staff) {
+      localStorage.setItem("admin_token", res.token);
+    }
   }
   return res;
 }
 
-export async function logoutAdmin() {
+export async function loginUser(username, password, requireAdmin = false) {
+  const res = await request("/api/auth/login/", {
+    method: "POST",
+    body: JSON.stringify({ username, password, require_admin: requireAdmin }),
+  });
+  if (res && res.token && typeof window !== "undefined") {
+    localStorage.setItem("nagdrishti_token", res.token);
+    if (res.user?.role === "admin" || res.user?.is_staff) {
+      localStorage.setItem("admin_token", res.token);
+    }
+  }
+  return res;
+}
+
+export async function loginAdmin(username, password) {
+  return loginUser(username, password, true);
+}
+
+export async function logoutUser() {
   try {
     await request("/api/auth/logout/", {
       method: "POST",
@@ -226,12 +268,26 @@ export async function logoutAdmin() {
   } finally {
     if (typeof window !== "undefined") {
       localStorage.removeItem("admin_token");
+      localStorage.removeItem("nagdrishti_token");
     }
   }
 }
 
+export async function logoutAdmin() {
+  return logoutUser();
+}
+
 export async function getCurrentUser() {
-  return request("/api/auth/me/");
+  try {
+    return await request("/api/auth/me/");
+  } catch (err) {
+    if (err.status === 401 || err.status === 403) {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("nagdrishti:session-expired"));
+      }
+    }
+    return { authenticated: false, user: null };
+  }
 }
 
 // 8. Health Check

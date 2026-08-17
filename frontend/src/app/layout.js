@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "../components/ThemeProvider";
+import CustomCursor from "../components/CustomCursor";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -73,7 +74,10 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${inter.className} min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] antialiased selection:bg-[#0F766E] selection:text-white dark:selection:bg-[#14B8A6] dark:selection:text-[#042F2E]`}>
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <CustomCursor />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

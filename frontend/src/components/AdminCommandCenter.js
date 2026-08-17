@@ -98,11 +98,11 @@ export default function AdminCommandCenter({
       try {
         const userRes = await getCurrentUser();
         if (mounted) {
-          if (userRes && userRes.authenticated) {
+          if (userRes && userRes.authenticated && (userRes.user?.is_staff || userRes.user?.is_superuser || userRes.user?.role === "admin")) {
             setCurrentUser(userRes.user);
             loadAdminData();
           } else {
-            setCurrentUser(null);
+            setCurrentUser(userRes?.user || null);
           }
           setAuthChecked(true);
         }
@@ -114,9 +114,19 @@ export default function AdminCommandCenter({
       }
     };
 
+    const handleSessionExpired = () => {
+      if (mounted) {
+        setCurrentUser(null);
+        setLoginError("Session expired. Please sign in again.");
+      }
+    };
+
+    window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
+
     initAuth();
     return () => {
       mounted = false;
+      window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
     };
   }, []);
 

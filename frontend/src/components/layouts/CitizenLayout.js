@@ -24,9 +24,12 @@ import {
   Download,
   Smartphone,
   AlertTriangle,
+  User,
+  LogIn,
+  LogOut,
 } from "lucide-react";
 import { useTheme } from "../ThemeProvider";
-import { getWeather, getRiskZones } from "../../lib/api";
+import { getWeather, getRiskZones, getCurrentUser, logoutUser } from "../../lib/api";
 
 export default function CitizenLayout({ children }) {
   const pathname = usePathname();
@@ -36,6 +39,7 @@ export default function CitizenLayout({ children }) {
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [sosModalOpen, setSosModalOpen] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
+  const [user, setUser] = useState(null);
 
   // Weather & Risk quick ticker
   const [weather, setWeather] = useState({ condition: "Live Doppler", rainfall_intensity_mm: 0 });
@@ -46,6 +50,16 @@ export default function CitizenLayout({ children }) {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    getCurrentUser()
+      .then((data) => {
+        if (data && data.authenticated) {
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null));
+
     getWeather()
       .then((data) => {
         if (data) setWeather(data);
@@ -76,6 +90,15 @@ export default function CitizenLayout({ children }) {
 
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      setUser(null);
+    } catch (err) {
+      console.warn("Logout error:", err);
+    }
+  };
 
   const handleInstallApp = async () => {
     if (deferredPrompt) {
@@ -245,32 +268,93 @@ export default function CitizenLayout({ children }) {
           {/* Sidebar Footer */}
           <div className="p-3 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2">
             {!sidebarCollapsed ? (
-              <div className="p-3 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Officer Access</span>
-                  <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A]">
-                    Desk
-                  </span>
+              <>
+                {user ? (
+                  <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center font-bold text-xs shrink-0">
+                          {(user.name || user.username || "C")[0].toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate">
+                            {user.name || user.username}
+                          </p>
+                          <span className="text-[10px] font-medium text-[#64748B] dark:text-[#94A3B8] block capitalize">
+                            {user.role || (user.is_staff ? "Officer" : "Citizen")}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="p-1.5 rounded-lg text-[#64748B] dark:text-[#94A3B8] hover:text-[#DC2626] dark:hover:text-[#F87171] hover:bg-[#FEE2E2] dark:hover:bg-red-500/10 transition cursor-pointer"
+                        title="Sign Out"
+                      >
+                        <LogOut className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Citizen Account</span>
+                      <span className="text-[10px] font-medium uppercase px-1.5 py-0.5 rounded bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4]">
+                        Auth
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+                      Sign in to manage verified hazard reports
+                    </p>
+                    <Link
+                      href="/login"
+                      className="w-full py-2 px-3 rounded-lg bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-medium text-xs flex items-center justify-center gap-1.5 transition"
+                    >
+                      <LogIn className="w-3.5 h-3.5" />
+                      <span>Sign In / Register</span>
+                    </Link>
+                  </div>
+                )}
+
+                <div className="p-2.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0B1220] border border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5 text-[#64748B] dark:text-[#94A3B8]">
+                    <Lock className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span className="text-[11px] font-medium">Officer Desk</span>
+                  </div>
+                  <Link
+                    href="/admin/login"
+                    className="text-[11px] font-semibold text-[#0F766E] dark:text-[#14B8A6] hover:underline"
+                  >
+                    Portal →
+                  </Link>
                 </div>
-                <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
-                  Municipal command & dispatch console
-                </p>
+              </>
+            ) : (
+              <div className="space-y-1">
+                {user ? (
+                  <button
+                    onClick={handleLogout}
+                    className="w-full p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] text-[#64748B] hover:text-[#DC2626] flex justify-center hover:bg-[#FEE2E2] dark:hover:bg-red-500/10 cursor-pointer transition"
+                    title={`Signed in as ${user.username} (Click to logout)`}
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="w-full p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] flex justify-center hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B]"
+                    title="Sign In / Register"
+                  >
+                    <LogIn className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                  </Link>
+                )}
                 <Link
                   href="/admin/login"
-                  className="w-full py-2 px-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#E2E8F0] font-medium text-xs flex items-center justify-center gap-1.5 transition"
+                  className="w-full p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] flex justify-center hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B]"
+                  title="Officer Portal"
                 >
-                  <Lock className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Officer Login</span>
+                  <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                 </Link>
               </div>
-            ) : (
-              <Link
-                href="/admin/login"
-                className="w-full p-2.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] text-[#475569] dark:text-[#CBD5E1] flex justify-center hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B]"
-                title="Officer Login"
-              >
-                <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
-              </Link>
             )}
 
             <div className="flex items-center justify-between pt-1">
@@ -338,6 +422,24 @@ export default function CitizenLayout({ children }) {
               >
                 <span className="w-2 h-2 rounded-full bg-[#DC2626]"></span>
                 <span>{severeZoneCount} Severe {severeZoneCount === 1 ? "Ward" : "Wards"}</span>
+              </Link>
+            )}
+
+            {/* User Account Quick Pill */}
+            {user ? (
+              <div className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] border border-[#E2E8F0] dark:border-[#243244] text-xs">
+                <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+                <span className="font-semibold text-[#0F172A] dark:text-[#F8FAFC] truncate max-w-[120px]">
+                  {user.name || user.username}
+                </span>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-[#F1F5F9] dark:bg-[#162235] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] text-[#0F766E] dark:text-[#14B8A6] border border-[#E2E8F0] dark:border-[#243244] transition"
+              >
+                <LogIn className="w-3.5 h-3.5" />
+                <span>Sign In</span>
               </Link>
             )}
 

@@ -36,16 +36,23 @@ export default function AdminLayout({ children }) {
   useEffect(() => {
     getCurrentUser()
       .then((data) => {
-        if (data && data.authenticated) {
+        if (data && data.authenticated && (data.user?.is_staff || data.user?.is_superuser || data.user?.role === "admin")) {
           setCurrentUser(data.user);
         } else {
-          router.push("/admin/login");
+          router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
         }
       })
       .catch(() => {
-        router.push("/admin/login");
+        router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
       })
       .finally(() => setLoading(false));
+
+    const handleSessionExpired = () => {
+      alert("Municipal Officer session expired. Please sign in again.");
+      router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
+    };
+
+    window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
 
     checkBackendHealth()
       .then((data) => {
@@ -56,7 +63,9 @@ export default function AdminLayout({ children }) {
         }
       })
       .catch(() => setSystemHealth("Standby"));
-  }, [router]);
+
+    return () => window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
+  }, [router, pathname]);
 
   const handleLogout = async () => {
     try {

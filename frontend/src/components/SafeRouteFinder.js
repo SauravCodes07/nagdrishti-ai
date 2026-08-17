@@ -70,7 +70,7 @@ export default function SafeRouteFinder({
   };
 
   return (
-    <div className="bg-[#FFFFFF] dark:bg-[#111C2E] rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-4">
+    <div className="hover-card bg-[#FFFFFF] dark:bg-[#111C2E] rounded-2xl p-5 sm:p-6 border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-4">
       <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243244]">
         <div className="flex items-center space-x-2.5">
           <div className="p-2 bg-[#CCFBF1] dark:bg-teal-500/15 rounded-xl text-[#0F766E] dark:text-[#5EEAD4]">
@@ -84,7 +84,7 @@ export default function SafeRouteFinder({
 
         <button
           onClick={handleSwapLocations}
-          className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0F172A] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition-colors flex items-center space-x-1.5 cursor-pointer"
+          className="hover-btn text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0F172A] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition-colors flex items-center space-x-1.5 cursor-pointer"
           title="Swap start and destination"
         >
           <RefreshCw className="w-3.5 h-3.5" />
@@ -142,7 +142,7 @@ export default function SafeRouteFinder({
       <button
         onClick={handleCalculateRoute}
         disabled={loading}
-        className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
+        className="hover-btn w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
       >
         <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
         <span>{loading ? "Computing A* Path..." : "Find Flood-Safe Route"}</span>

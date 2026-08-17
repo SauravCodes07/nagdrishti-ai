@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   Lock,
@@ -17,8 +17,10 @@ import {
 import { loginAdmin } from "../../../lib/api";
 import { useTheme } from "../../../components/ThemeProvider";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnUrl = searchParams.get("returnUrl") || "/admin";
   const { theme, toggleTheme } = useTheme();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +34,7 @@ export default function AdminLoginPage() {
 
     try {
       await loginAdmin(username, password);
-      router.push("/admin");
+      router.push(returnUrl);
     } catch (err) {
       console.error("Login failed:", err);
       setErrorMsg(
@@ -156,5 +158,19 @@ export default function AdminLoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex items-center justify-center text-[#0F172A] dark:text-[#F8FAFC]">
+          <RefreshCw className="w-8 h-8 animate-spin text-[#0F766E] dark:text-[#14B8A6]" />
+        </div>
+      }
+    >
+      <AdminLoginContent />
+    </Suspense>
   );
 }

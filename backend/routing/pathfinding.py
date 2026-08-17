@@ -32,8 +32,10 @@ NAGPUR_NORTH = 21.25
 NAGPUR_WEST = 79.00
 NAGPUR_EAST = 79.20
 
-# Cache file path
+# Data and Cache file paths
 BASE_DIR = Path(__file__).resolve().parent.parent
+DATA_DIR = BASE_DIR / "routing" / "data"
+STATIC_GRAPH_FILE = DATA_DIR / "nagpur_graph.graphml"
 CACHE_DIR = BASE_DIR / "routing" / "cache"
 CACHE_FILE = CACHE_DIR / "nagpur_graph.graphml"
 
@@ -96,7 +98,7 @@ def haversine_distance_m(lat1: float, lng1: float, lat2: float, lng2: float) -> 
 
 
 def _generate_nagpur_road_grid() -> nx.MultiDiGraph:
-    """Generates a connected coordinate network of 1,296 nodes across Nagpur."""
+    """Generates a connected coordinate network of 1,296 nodes across Nagpur as emergency fallback."""
     G = nx.MultiDiGraph()
     G.graph['crs'] = 'epsg:4326'
     lats = [21.08 + i * (0.14 / 35) for i in range(36)]
@@ -131,18 +133,51 @@ def _generate_nagpur_road_grid() -> nx.MultiDiGraph:
 
 def build_nagpur_road_network(force_refresh: bool = False) -> nx.MultiDiGraph:
     """
-    Loads or downloads the real OpenStreetMap drivable road network of Nagpur.
-    Caches the graph to disk at backend/routing/cache/nagpur_graph.graphml.
+    Loads the committed OpenStreetMap drivable road network of Nagpur from local static storage.
+    Zero runtime dependency on external Overpass API network requests.
+    
+    Optional live refresh is gated behind REBUILD_ROAD_GRAPH=true environment variable.
     """
     global _CACHED_ROAD_GRAPH
     if _CACHED_ROAD_GRAPH is not None and not force_refresh:
         return _CACHED_ROAD_GRAPH
 
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
-    # 1. Load from disk cache if present and valid
-    if CACHE_FILE.exists() and not force_refresh:
+    rebuild_flag = os.environ.get("REBUILD_ROAD_GRAPH", "false").lower() in ("true", "1", "t", "yes")
+
+    # 1. If explicit rebuild flag or force_refresh requested, attempt live Overpass fetch
+    if (rebuild_flag or force_refresh) and not STATIC_GRAPH_FILE.exists():
         try:
+            logger.info("REBUILD_ROAD_GRAPH flag active: Fetching live OSM road network from Overpass API...")
+            ox.settings.requests_timeout = 90
+            G = ox.graph_from_point((21.1458, 79.0882), dist=7500, network_type="drive", simplify=True)
+            ox.save_graphml(G, STATIC_GRAPH_FILE)
+            logger.info(f"Successfully saved newly fetched road network to {STATIC_GRAPH_FILE}")
+            _CACHED_ROAD_GRAPH = G
+            return G
+        except Exception as exc:
+            logger.warning(f"Live Overpass fetch failed ({exc}). Falling back to local static graph.")
+
+    # 2. Primary Production Path: Load directly from committed static file (ZERO network dependency)
+    if STATIC_GRAPH_FILE.exists():
+        try:
+            logger.info(f"Loading Nagpur road network from static file: {STATIC_GRAPH_FILE}")
+            G = ox.load_graphml(STATIC_GRAPH_FILE)
+            if len(G.nodes) >= 500:
+                if 'crs' not in G.graph:
+                    G.graph['crs'] = 'epsg:4326'
+                _CACHED_ROAD_GRAPH = G
+                logger.info(f"Successfully loaded Nagpur road network from local file with {len(G.nodes)} nodes, {len(G.edges)} edges.")
+                return G
+        except Exception as exc:
+            logger.warning(f"Failed to load static graph from {STATIC_GRAPH_FILE}: {exc}.")
+
+    # 3. Secondary Cache Path
+    if CACHE_FILE.exists():
+        try:
+            logger.info(f"Loading Nagpur road network from cache file: {CACHE_FILE}")
             G = ox.load_graphml(CACHE_FILE)
             if len(G.nodes) >= 500:
                 if 'crs' not in G.graph:
@@ -152,12 +187,13 @@ def build_nagpur_road_network(force_refresh: bool = False) -> nx.MultiDiGraph:
         except Exception as exc:
             logger.warning(f"Failed to load cached graph from {CACHE_FILE}: {exc}.")
 
-    # 2. Build and save road graph
+    # 4. Tertiary High-Res Grid Fallback
+    logger.info("Initializing high-density local Nagpur road grid fallback...")
     G_grid = _generate_nagpur_road_grid()
     try:
-        ox.save_graphml(G_grid, CACHE_FILE)
-    except Exception as save_err:
-        logger.warning(f"Could not save graphml: {save_err}")
+        ox.save_graphml(G_grid, STATIC_GRAPH_FILE)
+    except Exception:
+        pass
 
     _CACHED_ROAD_GRAPH = G_grid
     return G_grid
