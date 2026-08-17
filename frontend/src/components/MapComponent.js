@@ -5,10 +5,10 @@ import { Layers, Globe, Map as MapIcon, Moon } from "lucide-react";
 import { API_BASE } from "../lib/api";
 
 export function getRiskColor(category, score) {
-  if (category === "Severe" || score >= 75) return "#DC2626"; // Severe Red
-  if (category === "High" || score >= 50) return "#F97316";   // High Orange
-  if (category === "Medium" || score >= 25) return "#EAB308"; // Medium Amber
-  return "#16A34A"; // Low Green
+  if (category === "Severe" || score >= 75) return "#EF4444"; // Bold Red
+  if (category === "High" || score >= 50) return "#F97316";   // Bold Orange
+  if (category === "Medium" || score >= 25) return "#EAB308"; // Bold Amber
+  return "#10B981"; // Bold Emerald Green
 }
 
 const TILE_PROVIDERS = {
@@ -41,7 +41,7 @@ export default function MapComponent({
   onZoneClick = null,
   onLocationSelected = null,
   isHeroBackground = false,
-  initialLayer = "street",
+  initialLayer = "satellite",
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -70,7 +70,7 @@ export default function MapComponent({
 
     const map = L.map(mapContainerRef.current, {
       center: [21.1458, 79.0882],
-      zoom: isHeroBackground ? 12 : 13,
+      zoom: isHeroBackground ? 12.5 : 13,
       zoomControl: false,
       scrollWheelZoom: !isHeroBackground,
       dragging: true,
@@ -79,7 +79,7 @@ export default function MapComponent({
     });
 
     // Add Base Tile Layer
-    const provider = TILE_PROVIDERS[initialLayer] || TILE_PROVIDERS.street;
+    const provider = TILE_PROVIDERS[initialLayer] || TILE_PROVIDERS.satellite;
     const tileLayer = L.tileLayer(provider.url, {
       attribution: provider.attribution,
       maxZoom: provider.maxZoom,
@@ -110,7 +110,7 @@ export default function MapComponent({
     };
   }, [isHeroBackground, initialLayer]);
 
-  // Handle Layer Switching (Street / Satellite / Dark)
+  // Handle Layer Switching
   const handleSwitchLayer = (layerKey) => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !TILE_PROVIDERS[layerKey]) return;
@@ -130,7 +130,7 @@ export default function MapComponent({
     setLayerMenuOpen(false);
   };
 
-  // Update Zone Polygons
+  // Update Zone Polygons with Bolder Outlines & Rich Fills
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !zonesLayerGroupRef.current) return;
@@ -153,11 +153,13 @@ export default function MapComponent({
 
       const isSelected = selectedZone && (selectedZone.id === zone.id || selectedZone.zone_id === zone.zone_id || selectedZone.zone_name === zone.zone_name);
 
+      // Bolder stroke weight and higher fill opacity for impactful visibility
       const polygon = L.polygon(coords, {
-        color: isSelected ? "#0F766E" : color,
-        weight: isSelected ? 3.5 : 2,
+        color: isSelected ? "#14B8A6" : color,
+        weight: isSelected ? 4 : (isHeroBackground ? 3 : 2.5),
+        opacity: 0.95,
         fillColor: color,
-        fillOpacity: activeLayer === "satellite" ? 0.35 : (isSelected ? 0.4 : 0.2),
+        fillOpacity: isHeroBackground ? 0.38 : (isSelected ? 0.5 : 0.32),
       });
 
       polygon.on("click", () => {
@@ -169,22 +171,22 @@ export default function MapComponent({
       if (!isHeroBackground) {
         // Polygon Popup tooltip
         const popupContent = `
-          <div style="font-family: var(--font-inter), 'Inter', system-ui, sans-serif; min-width: 200px; max-width: 260px; padding: 2px;">
+          <div style="font-family: var(--font-inter), 'Inter', system-ui, sans-serif; min-width: 200px; max-width: 260px; padding: 4px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;">
-              <strong style="font-size: 13px; font-weight: 600;">${zone.zone_name}</strong>
-              <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: ${color}20; color: ${color};">
+              <strong style="font-size: 13px; font-weight: 700;">${zone.zone_name}</strong>
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 8px; border-radius: 6px; background: ${color}25; color: ${color}; border: 1px solid ${color}40;">
                 ${category}
               </span>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px; margin-bottom: 6px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; margin-bottom: 6px;">
               <div>
                 <span style="color: #64748B;">Risk Score:</span>
-                <strong style="display: block; color: ${color}; font-size: 14px; font-weight: 700;">${riskScore.toFixed(1)}</strong>
+                <strong style="display: block; color: ${color}; font-size: 15px; font-weight: 800;">${riskScore.toFixed(1)}</strong>
               </div>
               <div>
                 <span style="color: #64748B;">Rainfall:</span>
-                <strong style="display: block; font-size: 14px; font-weight: 700;">${(zone.rainfall_mm ?? zone.rainfall_intensity_mm ?? 0).toFixed(1)} mm/h</strong>
+                <strong style="display: block; font-size: 15px; font-weight: 800;">${(zone.rainfall_mm ?? zone.rainfall_intensity_mm ?? 0).toFixed(1)} mm/h</strong>
               </div>
             </div>
 
@@ -201,7 +203,7 @@ export default function MapComponent({
     });
   }, [zones, selectedZone, onZoneClick, isHeroBackground, activeLayer]);
 
-  // Update Citizen Reports & Hazard Markers
+  // Update Citizen Reports & Hazard Markers with Bolder Glow
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !reportsLayerGroupRef.current) return;
@@ -225,10 +227,10 @@ export default function MapComponent({
       if (lat === undefined || lng === undefined || lat === null || lng === null) return;
 
       const isWaterlogging = rep.is_waterlogged === true || rep.waterlogging_detected === true;
-      const markerColor = isWaterlogging ? "#DC2626" : "#F59E0B";
+      const markerColor = isWaterlogging ? "#EF4444" : "#F59E0B";
 
       const iconHtml = `
-        <div style="background-color: ${markerColor}; width: 26px; height: 26px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 600;">
+        <div style="background-color: ${markerColor}; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px ${markerColor}90, 0 2px 6px rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; color: white; font-size: 13px; font-weight: 700;">
           ${isWaterlogging ? "🌊" : "⚠️"}
         </div>
       `;
@@ -236,8 +238,8 @@ export default function MapComponent({
       const customIcon = L.divIcon({
         className: "custom-hazard-marker",
         html: iconHtml,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
       });
 
       const marker = L.marker([lat, lng], { icon: customIcon });
@@ -248,10 +250,10 @@ export default function MapComponent({
         const statusText = rep.verification_status === 'Verified' ? '#166534' : rep.verification_status === 'Rejected' ? '#991B1B' : '#854D0E';
 
         const popupContent = `
-          <div style="font-family: var(--font-inter), 'Inter', system-ui, sans-serif; min-width: 220px; max-width: 280px; padding: 2px;">
+          <div style="font-family: var(--font-inter), 'Inter', system-ui, sans-serif; min-width: 220px; max-width: 280px; padding: 4px;">
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px;">
-              <strong style="font-size: 13px; font-weight: 600;">Report #${rep.id}</strong>
-              <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: ${statusBg}; color: ${statusText};">
+              <strong style="font-size: 13px; font-weight: 700;">Report #${rep.id}</strong>
+              <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; padding: 2px 6px; border-radius: 6px; background: ${statusBg}; color: ${statusText};">
                 ${rep.verification_status || 'Pending'}
               </span>
             </div>
@@ -268,7 +270,7 @@ export default function MapComponent({
               <div style="font-weight: 600; color: #0F766E; margin-bottom: 2px;">AI Vision Analysis:</div>
               <div style="display: flex; justify-content: space-between;">
                 <span style="color: #64748B;">Waterlogging:</span>
-                <strong style="color: ${isWaterlogging ? '#DC2626' : '#16A34A'}; font-weight: 600;">
+                <strong style="color: ${isWaterlogging ? '#EF4444' : '#10B981'}; font-weight: 700;">
                   ${rep.waterlogging_confidence ? `${(rep.waterlogging_confidence * 100).toFixed(0)}% Confirmed` : 'Queued'}
                 </strong>
               </div>
@@ -282,7 +284,7 @@ export default function MapComponent({
     });
   }, [reports, isHeroBackground]);
 
-  // Update Safe Route Polyline Overlay
+  // Update Safe Route Polyline Overlay with Bold Glow
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !routeLayerGroupRef.current) return;
@@ -295,9 +297,9 @@ export default function MapComponent({
       const latlngs = activeRouteCoords;
 
       const mainLine = L.polyline(latlngs, {
-        color: "#0F766E",
-        weight: 5,
-        opacity: 0.9,
+        color: "#14B8A6",
+        weight: 6,
+        opacity: 0.95,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(routeLayerGroupRef.current);

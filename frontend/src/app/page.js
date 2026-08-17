@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -22,7 +22,9 @@ import {
   AlertTriangle,
   Globe,
   Map as MapIcon,
-  Shield,
+  Crosshair,
+  Compass,
+  Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useTheme } from "../components/ThemeProvider";
@@ -30,8 +32,8 @@ import { useTheme } from "../components/ThemeProvider";
 const MapComponent = dynamic(() => import("../components/MapComponent"), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full min-h-[500px] bg-[#0F172A] flex items-center justify-center text-xs font-semibold text-[#94A3B8]">
-      Initializing Nagpur GIS Map Layer...
+    <div className="w-full h-full min-h-[500px] bg-[#0B1220] flex items-center justify-center text-xs font-semibold text-[#94A3B8]">
+      Initializing Nagpur GIS PostGIS Map Layer...
     </div>
   ),
 });
@@ -75,6 +77,12 @@ export default function PublicLandingPage() {
   const [loading, setLoading] = useState(true);
   const [sosModalOpen, setSosModalOpen] = useState(false);
 
+  // Interactive Mouse Motion States
+  const heroRef = useRef(null);
+  const [mousePos, setMousePos] = useState({ x: 500, y: 300 });
+  const [hudTilt, setHudTilt] = useState({ rotateX: 0, rotateY: 0 });
+  const [cursorGps, setCursorGps] = useState({ lat: "21.1458° N", lng: "79.0882° E", elevation: "312m" });
+
   useEffect(() => {
     async function loadLandingData() {
       try {
@@ -112,19 +120,48 @@ export default function PublicLandingPage() {
     loadLandingData();
   }, []);
 
+  // Handle Mouse Motion over the Hero Section
+  const handleHeroMouseMove = (e) => {
+    if (!heroRef.current) return;
+    const rect = heroRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    setMousePos({ x, y });
+
+    // Calculate subtle 3D card tilt (-6deg to +6deg)
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotX = ((y - centerY) / centerY) * -5;
+    const rotY = ((x - centerX) / centerX) * 5;
+    setHudTilt({ rotateX: rotX.toFixed(2), rotateY: rotY.toFixed(2) });
+
+    // Approximate real-time GPS coordinates for Nagpur basin
+    const latOffset = (y / rect.height - 0.5) * -0.06;
+    const lngOffset = (x / rect.width - 0.5) * 0.08;
+    const currentLat = (21.1458 + latOffset).toFixed(4);
+    const currentLng = (79.0882 + lngOffset).toFixed(4);
+    const elev = Math.round(310 + (Math.sin(x * 0.01) + Math.cos(y * 0.01)) * 14);
+
+    setCursorGps({
+      lat: `${currentLat}° N`,
+      lng: `${currentLng}° E`,
+      elevation: `${elev}m`,
+    });
+  };
+
   const severeZones = zones.filter((z) => (z.risk_category === "Severe" || (z.latest_risk_score ?? z.risk_score) >= 75));
   const highZones = zones.filter((z) => (z.risk_category === "High" || ((z.latest_risk_score ?? z.risk_score) >= 50 && (z.latest_risk_score ?? z.risk_score) < 75)));
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] antialiased">
+    <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] antialiased civic-grid-bg">
       {/* ========================================================================= */}
       {/* TOP PUBLIC NAVBAR */}
       {/* ========================================================================= */}
-      <header className="sticky top-0 z-50 bg-[#FFFFFF]/95 dark:bg-[#0F172A]/95 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+      <header className="sticky top-0 z-50 bg-[#FFFFFF]/90 dark:bg-[#0F172A]/90 backdrop-blur-md border-b border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between">
           {/* Logo & Brand */}
           <Link href="/" className="flex items-center gap-3">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shrink-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shrink-0 shadow-sm">
               <Image
                 src="/brand/nagdrishti-logo.png"
                 alt="NagDrishti AI"
@@ -192,7 +229,7 @@ export default function PublicLandingPage() {
             {/* Theme Toggle */}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer"
+              className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer shadow-sm"
               title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
               aria-label={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
@@ -206,7 +243,7 @@ export default function PublicLandingPage() {
             {/* Emergency SOS Button */}
             <button
               onClick={() => setSosModalOpen(true)}
-              className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+              className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer shadow-md"
             >
               <PhoneCall className="w-3.5 h-3.5" />
               <span>SOS Help</span>
@@ -218,7 +255,11 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* SECTION 1: RESPONSIVE MOTION-DESIGNED MAP BACKGROUND HERO */}
       {/* ========================================================================= */}
-      <section className="relative min-h-[620px] lg:min-h-[680px] flex items-center overflow-hidden border-b border-[#E2E8F0] dark:border-[#243244]">
+      <section
+        ref={heroRef}
+        onMouseMove={handleHeroMouseMove}
+        className="relative min-h-[640px] lg:min-h-[720px] flex items-center overflow-hidden border-b border-[#E2E8F0] dark:border-[#243244]"
+      >
         {/* Responsive Live Map Background Layer */}
         <div className="absolute inset-0 z-0">
           <MapComponent
@@ -229,26 +270,38 @@ export default function PublicLandingPage() {
           />
         </div>
 
-        {/* Ambient Dark Gradient Overlays for High Text Contrast */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#0B1220]/95 via-[#0B1220]/80 to-[#0B1220]/45 dark:from-[#0B1220]/95 dark:via-[#0B1220]/85 dark:to-[#0B1220]/50" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#0B1220] via-transparent to-[#0B1220]/40" />
+        {/* Ambient Radar Sweep Effect over the Map */}
+        <div className="radar-sweep-beam z-5 opacity-40 dark:opacity-60" />
+
+        {/* Interactive Mouse Spotlight / Crosshair Beam */}
+        <div
+          className="pointer-events-none absolute z-10 w-96 h-96 rounded-full blur-3xl opacity-40 dark:opacity-50 transition-transform duration-75"
+          style={{
+            background: "radial-gradient(circle, rgba(20,184,166,0.35) 0%, rgba(15,118,110,0.1) 50%, transparent 80%)",
+            transform: `translate3d(${mousePos.x - 192}px, ${mousePos.y - 192}px, 0)`,
+          }}
+        />
+
+        {/* Ambient Dark Gradient Overlays for Superb Text Contrast */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#0B1220]/95 via-[#0B1220]/85 to-[#0B1220]/50 dark:from-[#0B1220]/95 dark:via-[#0B1220]/88 dark:to-[#0B1220]/55" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#0B1220] via-transparent to-[#0B1220]/50" />
 
         {/* Interactive Content Container */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Hero Content */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              {/* Status Pill & Layer Switcher */}
+              {/* Status Pill & Dynamic GPS Inspector */}
               <div className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0F766E]/20 backdrop-blur-md border border-[#14B8A6]/30 text-xs font-semibold text-[#5EEAD4]">
-                  <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-pulse"></span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0F766E]/25 backdrop-blur-md border border-[#14B8A6]/40 text-xs font-semibold text-[#5EEAD4] shadow-sm">
+                  <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-ping"></span>
                   <span>Live Geospatial Intelligence • Nagpur Wards</span>
                 </div>
 
                 {/* Satellite / Street toggle directly in Hero */}
                 <button
                   onClick={() => setHeroMapLayer(heroMapLayer === "satellite" ? "street" : "satellite")}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md border border-white/20 text-xs font-medium text-white transition cursor-pointer"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md border border-white/20 text-xs font-medium text-white transition cursor-pointer shadow-sm hover:border-[#14B8A6]/60"
                   title="Toggle background map imagery"
                 >
                   {heroMapLayer === "satellite" ? (
@@ -266,9 +319,9 @@ export default function PublicLandingPage() {
               </div>
 
               {/* Main Headline */}
-              <h1 className="text-3xl sm:text-5xl lg:text-[54px] font-bold text-white tracking-tight leading-[1.08]">
+              <h1 className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-white tracking-tight leading-[1.06] drop-shadow-md">
                 Smarter Nagpur. <br />
-                <span className="text-[#2DD4BF]">Safer Tomorrow.</span>
+                <span className="text-[#2DD4BF] drop-shadow-sm">Safer Tomorrow.</span>
               </h1>
 
               {/* Subtitle */}
@@ -280,7 +333,7 @@ export default function PublicLandingPage() {
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/map"
-                  className="h-11 px-5 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-semibold text-sm flex items-center gap-2 transition shadow-lg shadow-teal-950/40"
+                  className="h-11 px-5 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-bold text-sm flex items-center gap-2 transition shadow-lg shadow-teal-950/50 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <MapPin className="w-4 h-4" />
                   <span>Explore Live Risk Map</span>
@@ -288,7 +341,7 @@ export default function PublicLandingPage() {
 
                 <Link
                   href="/report"
-                  className="h-11 px-5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition"
+                  className="h-11 px-5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-[#14B8A6]/60 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Camera className="w-4 h-4 text-[#2DD4BF]" />
                   <span>Report a Hazard</span>
@@ -303,8 +356,19 @@ export default function PublicLandingPage() {
                 </Link>
               </div>
 
+              {/* Live Mouse Movement Telemetry Coordinate Bar */}
+              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 backdrop-blur-md inline-flex items-center gap-4 text-[11px] font-mono text-slate-300">
+                <div className="flex items-center gap-1.5 text-[#5EEAD4]">
+                  <Crosshair className="w-3.5 h-3.5" />
+                  <span className="font-semibold uppercase tracking-wider text-[10px]">Mouse Focus:</span>
+                </div>
+                <span>Lat: <strong className="text-white">{cursorGps.lat}</strong></span>
+                <span>Lng: <strong className="text-white">{cursorGps.lng}</strong></span>
+                <span className="hidden sm:inline">Elev: <strong className="text-[#5EEAD4]">{cursorGps.elevation}</strong></span>
+              </div>
+
               {/* Trust Badges */}
-              <div className="pt-3 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
+              <div className="pt-2 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>10 NMC Wards Monitored</span>
@@ -320,23 +384,29 @@ export default function PublicLandingPage() {
               </div>
             </div>
 
-            {/* Right Hero Telemetry Glass HUD Card */}
-            <div className="lg:col-span-5">
-              <div className="bg-slate-900/80 border border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4 text-white">
+            {/* Right Hero Telemetry Glass HUD Card with Interactive 3D Parallax Tilt */}
+            <div className="lg:col-span-5 perspective-1000">
+              <div
+                className="bg-slate-900/85 border border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4 text-white transition-transform duration-150 ease-out"
+                style={{
+                  transform: `rotateX(${hudTilt.rotateX}deg) rotateY(${hudTilt.rotateY}deg)`,
+                }}
+              >
                 <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
                   <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#16A34A] animate-ping"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-ping"></span>
                     <span className="font-semibold text-xs text-white uppercase tracking-wider">
                       Live Telemetry HUD
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-slate-400">
-                    PostGIS Real-Time Stream
+                  <span className="text-[11px] font-medium text-[#5EEAD4] flex items-center gap-1">
+                    <Zap className="w-3 h-3 text-[#F59E0B]" />
+                    <span>PostGIS Streaming</span>
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
                     <span className="text-[11px] uppercase font-medium text-slate-400 block">IMD Doppler Radar</span>
                     <span className="text-2xl font-bold text-white mt-0.5 block">
                       {weather.rainfall_intensity_mm ?? 18.5} <span className="text-xs font-normal text-slate-400">mm/h</span>
@@ -344,7 +414,7 @@ export default function PublicLandingPage() {
                     <span className="text-[11px] text-[#2DD4BF] font-medium">{weather.condition || "Moderate Rain"}</span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
+                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
                     <span className="text-[11px] uppercase font-medium text-slate-400 block">Severe Wards</span>
                     <span className="text-2xl font-bold text-[#F87171] mt-0.5 block">
                       {severeZones.length} Wards
@@ -354,12 +424,12 @@ export default function PublicLandingPage() {
                 </div>
 
                 {/* Highest Risk Ward Breakdown */}
-                <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800 space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-semibold text-white">
                       Highest Threat Basin
                     </span>
-                    <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/20 text-[#F87171] border border-red-500/30">
+                    <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/25 text-[#F87171] border border-red-500/40">
                       {selectedZone?.risk_category || "Severe"}
                     </span>
                   </div>
@@ -374,7 +444,7 @@ export default function PublicLandingPage() {
                 <div className="flex items-center gap-2 pt-1">
                   <Link
                     href="/route"
-                    className="flex-1 h-10 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow"
+                    className="flex-1 h-10 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow"
                   >
                     <Navigation className="w-3.5 h-3.5" />
                     <span>Plan Safe Route</span>
@@ -397,10 +467,10 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* SECTION 2: LIVE SAFETY STATS */}
       {/* ========================================================================= */}
-      <section className="py-12 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A]">
+      <section className="py-12 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E] transition">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">IMD Rainfall Feed</span>
                 <CloudRain className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -411,7 +481,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#0F766E] dark:text-[#14B8A6] font-medium">{weather.condition || "Live Doppler Radar"}</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#DC2626] transition">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Flooded Wards</span>
                 <Droplets className="w-4 h-4 text-[#DC2626]" />
@@ -422,7 +492,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">Critical attention needed</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#16A34A] transition">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Safe Road Network</span>
                 <Car className="w-4 h-4 text-[#16A34A]" />
@@ -433,7 +503,7 @@ export default function PublicLandingPage() {
               <p className="text-xs text-[#16A34A] dark:text-[#4ADE80] font-medium">Accessible bypass corridors</p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]">
+            <div className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#F59E0B] transition">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Citizen Reports</span>
                 <Activity className="w-4 h-4 text-[#F59E0B]" />
@@ -466,7 +536,7 @@ export default function PublicLandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Feature 1 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E] transition hover:-translate-y-1">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <CloudRain className="w-5 h-5" />
               </div>
@@ -481,7 +551,7 @@ export default function PublicLandingPage() {
             </div>
 
             {/* Feature 2 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E] transition hover:-translate-y-1">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <Navigation className="w-5 h-5" />
               </div>
@@ -496,7 +566,7 @@ export default function PublicLandingPage() {
             </div>
 
             {/* Feature 3 */}
-            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E]/40 transition">
+            <div className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:border-[#0F766E] transition hover:-translate-y-1">
               <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
                 <Camera className="w-5 h-5" />
               </div>
@@ -539,7 +609,7 @@ export default function PublicLandingPage() {
               return (
                 <div
                   key={s.step}
-                  className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
+                  className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-[#0F766E] transition"
                 >
                   <div className="flex items-center justify-between">
                     <div className="w-8 h-8 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center">
@@ -559,7 +629,7 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* SECTION 5: 24/7 HELPLINES */}
       {/* ========================================================================= */}
-      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#0F172A]" id="about">
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm" id="about">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
           <div className="text-center space-y-2 max-w-2xl mx-auto">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#DC2626] dark:text-[#F87171]">
@@ -577,7 +647,7 @@ export default function PublicLandingPage() {
             {NAGPUR_HELPLINES.map((h) => (
               <div
                 key={h.service}
-                className="p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
+                className="p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)] hover:border-red-400 transition"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
@@ -591,7 +661,7 @@ export default function PublicLandingPage() {
                 </div>
                 <a
                   href={`tel:${h.phone.replace(/[^0-9]/g, "")}`}
-                  className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition"
+                  className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>Call {h.phone}</span>
@@ -605,7 +675,7 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* SECTION 6: FINAL CTA */}
       {/* ========================================================================= */}
-      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F1F5F9] dark:bg-[#0B1220]">
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F1F5F9]/90 dark:bg-[#0B1220]/90">
         <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
           <h2 className="text-2xl sm:text-4xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             One Dashboard for Faster Civic Response
@@ -616,14 +686,14 @@ export default function PublicLandingPage() {
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
             <Link
               href="/dashboard"
-              className="h-11 px-6 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm flex items-center gap-2 transition"
+              className="h-11 px-6 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm flex items-center gap-2 transition shadow-md"
             >
               <LayoutDashboard className="w-4 h-4" />
               <span>Launch Citizen Dashboard</span>
             </Link>
             <Link
               href="/map"
-              className="h-11 px-6 rounded-xl bg-[#FFFFFF] dark:bg-[#162235] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition"
+              className="h-11 px-6 rounded-xl bg-[#FFFFFF] dark:bg-[#162235] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-sm hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] transition shadow-sm"
             >
               <MapPin className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <span>Open Live Flood Map</span>
@@ -635,7 +705,7 @@ export default function PublicLandingPage() {
       {/* ========================================================================= */}
       {/* FOOTER */}
       {/* ========================================================================= */}
-      <footer className="bg-[#FFFFFF] dark:bg-[#0B1220] border-t border-[#E2E8F0] dark:border-[#243244] py-10 text-xs text-[#64748B] dark:text-[#94A3B8]">
+      <footer className="bg-[#FFFFFF]/90 dark:bg-[#0B1220]/90 border-t border-[#E2E8F0] dark:border-[#243244] py-10 text-xs text-[#64748B] dark:text-[#94A3B8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5">
