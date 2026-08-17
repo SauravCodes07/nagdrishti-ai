@@ -13,3 +13,4 @@ twilio>=8.0.0
 sqlparse>=0.5.0
 asgiref>=3.7.0
 osmnx>=1.9.0
+google-auth>=2.0.0

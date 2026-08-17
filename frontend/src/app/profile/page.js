@@ -136,27 +136,56 @@ export default function HelpSafetyPage() {
           </div>
         </div>
 
-        {/* Officer Command Portal Link */}
-        <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
-              <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                Municipal Officer Command Portal
-              </h3>
+        {/* Onboarding Walkthrough & Officer Command Portal */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                  App Walkthrough & Onboarding
+                </h3>
+              </div>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                Review the 4-slide feature guide covering GIS risk maps, flood-safe A* routing, AI vision, and SOS helplines.
+              </p>
             </div>
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-              Access priority dispatch queues, moderate citizen photo reports, and manage SMS & WhatsApp alert dispatches.
-            </p>
+
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  localStorage.removeItem("onboarding_seen");
+                  window.location.href = "/";
+                } catch (_) {}
+              }}
+              className="h-10 px-5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center justify-center gap-2 transition border border-[#CBD5E1] dark:border-[#334155] cursor-pointer"
+            >
+              <span>View Onboarding Tour</span>
+            </button>
           </div>
 
-          <Link
-            href="/admin/login"
-            className="h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition"
-          >
-            <span>Officer Login</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </Link>
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                  Municipal Officer Portal
+                </h3>
+              </div>
+              <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                Access priority dispatch queues, moderate citizen photo reports, and manage SMS & WhatsApp alert dispatches.
+              </p>
+            </div>
+
+            <Link
+              href="/admin/login"
+              className="h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition"
+            >
+              <span>Officer Login</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
         </div>
       </div>
     </CitizenLayout>

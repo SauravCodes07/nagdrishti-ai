@@ -20,15 +20,16 @@
     --text-disabled: #94A3B8;
     --border-subtle: #E2E8F0;
     --border-strong: #CBD5E1;
-    --border-focus: #0F766E;
-    --primary: #0F766E;
-    --primary-hover: #115E59;
-    --primary-light: #CCFBF1;
+    --border-focus: #E8730A;
+    /* Light Mode Primary: Deep Saffron #E8730A (Distinct from Amber #EAB308) */
+    --primary: #E8730A;
+    --primary-hover: #C95F06;
+    --primary-light: #FFEDD5;
     --primary-text: #FFFFFF;
     --civic-blue: #2563EB;
     --civic-blue-light: #DBEAFE;
-    --brand-saffron: #F59E0B;
-    --brand-saffron-light: #FEF3C7;
+    --brand-saffron: #E8730A;
+    --brand-saffron-light: #FFEDD5;
     --risk-low: #16A34A;
     --risk-low-bg: #DCFCE7;
     --risk-low-text: #166534;
@@ -63,14 +64,15 @@
     --border-subtle: #243244;
     --border-strong: #334155;
     --border-focus: #14B8A6;
+    /* Dark Mode Primary: Teal #14B8A6 */
     --primary: #14B8A6;
     --primary-hover: #2DD4BF;
     --primary-light: #99F6E4;
     --primary-text: #042F2E;
     --civic-blue: #3B82F6;
     --civic-blue-light: #93C5FD;
-    --brand-saffron: #F59E0B;
-    --brand-saffron-light: #FDE68A;
+    --brand-saffron: #E8730A;
+    --brand-saffron-light: #FFEDD5;
     --risk-low: #16A34A;
     --risk-low-bg: rgba(22, 163, 74, 0.15);
     --risk-low-text: #4ADE80;
@@ -89,6 +91,69 @@
     --grid-dot: rgba(20, 184, 166, 0.08);
     color-scheme: dark;
   }
+}
+
+/* ========================================================================= */
+/* THEME-AWARE PRIMARY ACTIONS: Saffron (#E8730A) in Light, Teal (#14B8A6) in Dark */
+/* ========================================================================= */
+.btn-primary,
+.bg-brand-primary {
+  background-color: var(--primary) !important;
+  color: var(--primary-text) !important;
+}
+
+.btn-primary:hover,
+.bg-brand-primary:hover {
+  background-color: var(--primary-hover) !important;
+}
+
+.text-brand-primary {
+  color: var(--primary) !important;
+}
+
+.border-brand-primary {
+  border-color: var(--primary) !important;
+}
+
+.bg-brand-primary-light {
+  background-color: var(--primary-light) !important;
+}
+
+/* Theme-swapped legacy utility overrides for complete consistency */
+[data-theme="light"] .bg-\[\#0F766E\],
+.light .bg-\[\#0F766E\],
+:root:not(.dark) .bg-\[\#0F766E\] {
+  background-color: #E8730A !important;
+}
+
+[data-theme="light"] .hover\:bg-\[\#115E59\]:hover,
+.light .hover\:bg-\[\#115E59\]:hover,
+:root:not(.dark) .hover\:bg-\[\#115E59\]:hover {
+  background-color: #C95F06 !important;
+}
+
+[data-theme="light"] .text-\[\#0F766E\],
+.light .text-\[\#0F766E\],
+:root:not(.dark) .text-\[\#0F766E\] {
+  color: #E8730A !important;
+}
+
+[data-theme="light"] .border-\[\#0F766E\],
+.light .border-\[\#0F766E\],
+:root:not(.dark) .border-\[\#0F766E\] {
+  border-color: #E8730A !important;
+}
+
+[data-theme="light"] .focus\:border-\[\#0F766E\]:focus,
+.light .focus\:border-\[\#0F766E\]:focus,
+:root:not(.dark) .focus\:border-\[\#0F766E\]:focus {
+  border-color: #E8730A !important;
+}
+
+[data-theme="light"] .bg-\[\#CCFBF1\],
+.light .bg-\[\#CCFBF1\],
+:root:not(.dark) .bg-\[\#CCFBF1\] {
+  background-color: #FFEDD5 !important;
 }
 
 body {
@@ -220,7 +285,7 @@ a.btn-interactive:active {
 .alert-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.08), 0 4px 6px -2px rgba(15, 23, 42, 0.04);
-  border-color: rgba(15, 118, 110, 0.4) !important;
+  border-color: var(--primary) !important;
 }
 
 .dark .hover-card:hover,

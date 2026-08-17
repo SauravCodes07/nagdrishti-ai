@@ -30,6 +30,7 @@ import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 import { useTheme } from "../components/ThemeProvider";
 import MagneticButton from "../components/MagneticButton";
+import OnboardingModal from "../components/OnboardingModal";
 
 const MapComponent = dynamic(() => import("../components/MapComponent"), {
   ssr: false,
@@ -156,6 +157,9 @@ export default function PublicLandingPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] antialiased civic-grid-bg">
+      {/* First-Launch Onboarding Carousel */}
+      <OnboardingModal />
+
       {/* ========================================================================= */}
       {/* TOP PUBLIC NAVBAR */}
       {/* ========================================================================= */}

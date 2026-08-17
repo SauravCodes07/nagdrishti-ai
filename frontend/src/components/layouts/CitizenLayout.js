@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
@@ -27,19 +27,24 @@ import {
   User,
   LogIn,
   LogOut,
+  RefreshCw,
 } from "lucide-react";
 import { useTheme } from "../ThemeProvider";
 import { getWeather, getRiskZones, getCurrentUser, logoutUser } from "../../lib/api";
 
 export default function CitizenLayout({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [sosModalOpen, setSosModalOpen] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
+  
+  // Auth state
   const [user, setUser] = useState(null);
+  const [authChecking, setAuthChecking] = useState(true);
 
   // Weather & Risk quick ticker
   const [weather, setWeather] = useState({ condition: "Live Doppler", rainfall_intensity_mm: 0 });
@@ -50,25 +55,42 @@ export default function CitizenLayout({ children }) {
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     getCurrentUser()
       .then((data) => {
-        if (data && data.authenticated) {
+        if (!isMounted) return;
+        if (data && data.authenticated && data.user) {
           setUser(data.user);
+          setAuthChecking(false);
         } else {
           setUser(null);
+          // Full-Gate redirect for unauthenticated users
+          router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
         }
       })
-      .catch(() => setUser(null));
+      .catch(() => {
+        if (!isMounted) return;
+        setUser(null);
+        router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
+      });
+
+    const handleSessionExpired = () => {
+      setUser(null);
+      router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
+    };
+
+    window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
 
     getWeather()
       .then((data) => {
-        if (data) setWeather(data);
+        if (data && isMounted) setWeather(data);
       })
       .catch(() => {});
 
     getRiskZones()
       .then((data) => {
-        if (Array.isArray(data)) {
+        if (Array.isArray(data) && isMounted) {
           const severe = data.filter(
             (z) => z.risk_category === "Severe" || (z.latest_risk_score ?? z.risk_score) >= 75
           ).length;
@@ -88,15 +110,21 @@ export default function CitizenLayout({ children }) {
       setIsInstalled(true);
     }
 
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-  }, []);
+    return () => {
+      isMounted = false;
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
+    };
+  }, [pathname, router]);
 
   const handleLogout = async () => {
     try {
       await logoutUser();
       setUser(null);
+      router.replace("/login");
     } catch (err) {
       console.warn("Logout error:", err);
+      router.replace("/login");
     }
   };
 
@@ -143,6 +171,32 @@ export default function CitizenLayout({ children }) {
     if (pathname === "/profile") return "Civic Helplines & Safety";
     return "NagDrishti AI";
   };
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center text-[#0F172A] dark:text-[#F8FAFC] space-y-4 p-4 antialiased">
+        <div className="w-12 h-12 rounded-xl bg-[#0F172A] p-1.5 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shadow-sm animate-pulse">
+          <Image
+            src="/brand/nagdrishti-logo.png"
+            alt="NagDrishti AI"
+            width={36}
+            height={36}
+            className="object-contain"
+            priority
+          />
+        </div>
+        <div className="text-center space-y-1">
+          <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6]">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span>Verifying Authenticated Session...</span>
+          </div>
+          <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
+            Nagpur Urban Crisis Response System
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] flex flex-col md:flex-row antialiased">

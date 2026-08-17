@@ -11,7 +11,7 @@ from zones.views import ZoneRiskListView, ZoneDispatchView, CityWeatherView
 from routing.views import RoutePathfindView
 from risk.views import PriorityQueueView, SimulateRainfallView
 from alerts.views import AlertLogListView, BroadcastAlertListView
-from config.auth_views import LoginView, LogoutView, CurrentUserView, SignupView, CSRFTokenView
+from config.auth_views import LoginView, LogoutView, CurrentUserView, SignupView, CSRFTokenView, GoogleAuthView
 
 
 def health(request):
@@ -74,6 +74,7 @@ urlpatterns = [
     path('api/auth/logout/', LogoutView.as_view(), name='auth-logout'),
     path('api/auth/me/', CurrentUserView.as_view(), name='auth-me'),
     path('api/auth/csrf/', CSRFTokenView.as_view(), name='auth-csrf'),
+    path('api/auth/google/', GoogleAuthView.as_view(), name='auth-google'),
 
     # Media files serving for citizen hazard photos
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),

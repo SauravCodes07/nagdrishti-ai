@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import { getSafeRoute, getRiskZones, getReports } from "../../lib/api";
+import LocationSearchInput from "../../components/LocationSearchInput";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
   ssr: false,
@@ -22,29 +23,12 @@ const MapComponent = dynamic(() => import("../../components/MapComponent"), {
   ),
 });
 
-const NAGPUR_HUBS = [
-  { name: "Zero Mile Center", lat: 21.1458, lng: 79.0882 },
-  { name: "Sitabuldi Junction", lat: 21.1465, lng: 79.0825 },
-  { name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 },
-  { name: "Sadar Residency Rd", lat: 21.1605, lng: 79.0830 },
-  { name: "Mahal Gandhi Gate", lat: 21.1470, lng: 79.1020 },
-  { name: "Gandhibagh Market", lat: 21.1560, lng: 79.1010 },
-  { name: "Dhantoli Lokmat Sq", lat: 21.1330, lng: 79.0810 },
-  { name: "Medical Square", lat: 21.1310, lng: 79.0980 },
-  { name: "Hanuman Nagar Sq", lat: 21.1250, lng: 79.1050 },
-  { name: "Nehru Nagar Sq", lat: 21.1200, lng: 79.1350 },
-  { name: "Mangalwari Sadar", lat: 21.1750, lng: 79.0750 },
-  { name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 },
-  { name: "Wardha Road Ajni", lat: 21.1180, lng: 79.0780 },
-  { name: "Shankar Nagar Sq", lat: 21.1390, lng: 79.0600 },
-];
-
 function SafeRouteContent() {
   const searchParams = useSearchParams();
   const destQuery = searchParams ? searchParams.get("destination") : null;
 
-  const [startPoint, setStartPoint] = useState(NAGPUR_HUBS[2]); // Dharampeth
-  const [endPoint, setEndPoint] = useState(NAGPUR_HUBS[11]); // Lakadganj
+  const [startPoint, setStartPoint] = useState({ name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 });
+  const [endPoint, setEndPoint] = useState({ name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 });
 
   const [zones, setZones] = useState([]);
   const [reports, setReports] = useState([]);
@@ -62,14 +46,18 @@ function SafeRouteContent() {
     }).catch(() => {});
 
     if (destQuery) {
-      const match = NAGPUR_HUBS.find((h) => h.name.toLowerCase().includes(destQuery.toLowerCase()));
-      if (match) setEndPoint(match);
+      setEndPoint({ name: destQuery, lat: 21.1458, lng: 79.0882 });
     }
   }, [destQuery]);
 
   const handleCalculateRoute = async () => {
     if (!startPoint || !endPoint) {
       setError("Please select both Origin and Destination.");
+      return;
+    }
+
+    if (!startPoint.lat || !startPoint.lng || !endPoint.lat || !endPoint.lng) {
+      setError("Please select valid locations with coordinates.");
       return;
     }
 
@@ -80,6 +68,7 @@ function SafeRouteContent() {
       const data = await getSafeRoute(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
       setRouteResult(data);
     } catch (err) {
+      console.error("[Route Page Error]:", err);
       setError(err.message || "Failed to calculate safe route across road graph.");
     } finally {
       setLoading(false);
@@ -128,53 +117,25 @@ function SafeRouteContent() {
               </button>
             </div>
 
-            {/* Origin Picker */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1] flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#0F766E] dark:bg-[#14B8A6]"></span>
-                <span>Origin (Start Location)</span>
-              </label>
+            {/* Origin Search */}
+            <LocationSearchInput
+              label="Origin (Start Location)"
+              value={startPoint}
+              onChange={(loc) => setStartPoint(loc)}
+              allowCurrentLocation={true}
+              placeholder="Search origin in Nagpur (e.g. Sitabuldi, Dharampeth)..."
+              dotColor="teal"
+            />
 
-              <select
-                value={`${startPoint.lat},${startPoint.lng}`}
-                onChange={(e) => {
-                  const [lat, lng] = e.target.value.split(",").map(Number);
-                  const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
-                  setStartPoint(hub || { name: `Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
-                }}
-                className="w-full text-xs font-normal bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] rounded-xl px-3.5 py-2.5 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6] cursor-pointer"
-              >
-                {NAGPUR_HUBS.map((hub) => (
-                  <option key={`start-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
-                    {hub.name} ({hub.lat.toFixed(4)}, {hub.lng.toFixed(4)})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Destination Picker */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1] flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#DC2626]"></span>
-                <span>Destination (Arrival Point)</span>
-              </label>
-
-              <select
-                value={`${endPoint.lat},${endPoint.lng}`}
-                onChange={(e) => {
-                  const [lat, lng] = e.target.value.split(",").map(Number);
-                  const hub = NAGPUR_HUBS.find((h) => Math.abs(h.lat - lat) < 0.001 && Math.abs(h.lng - lng) < 0.001);
-                  setEndPoint(hub || { name: `Coordinates (${lat.toFixed(3)}, ${lng.toFixed(3)})`, lat, lng });
-                }}
-                className="w-full text-xs font-normal bg-[#FFFFFF] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] rounded-xl px-3.5 py-2.5 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6] cursor-pointer"
-              >
-                {NAGPUR_HUBS.map((hub) => (
-                  <option key={`end-${hub.name}`} value={`${hub.lat},${hub.lng}`}>
-                    {hub.name} ({hub.lat.toFixed(4)}, {hub.lng.toFixed(4)})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Destination Search */}
+            <LocationSearchInput
+              label="Destination (Arrival Point)"
+              value={endPoint}
+              onChange={(loc) => setEndPoint(loc)}
+              allowCurrentLocation={false}
+              placeholder="Search destination in Nagpur (e.g. Lakadganj, Sadar)..."
+              dotColor="red"
+            />
 
             {/* Action Button */}
             <button

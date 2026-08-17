@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { loginAdmin } from "../../../lib/api";
 import { useTheme } from "../../../components/ThemeProvider";
+import GoogleSignInButton from "../../../components/GoogleSignInButton";
 
 function AdminLoginContent() {
   const router = useRouter();
@@ -145,6 +146,25 @@ function AdminLoginContent() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-[#E2E8F0] dark:border-[#243244]"></div>
+          <span className="flex-shrink mx-3 text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+            Or sign in with
+          </span>
+          <div className="flex-grow border-t border-[#E2E8F0] dark:border-[#243244]"></div>
+        </div>
+
+        {/* Google Sign-In */}
+        <GoogleSignInButton
+          requireAdmin={true}
+          text="Officer Sign in with Google"
+          onSuccess={() => {
+            router.push(returnUrl);
+          }}
+          onError={(msg) => setErrorMsg(msg)}
+        />
 
         {/* Back Link */}
         <div className="pt-2 border-t border-[#E2E8F0] dark:border-[#243244] text-center">

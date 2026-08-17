@@ -12,6 +12,12 @@ module.exports = {
         sans: ["var(--font-inter)", "Inter", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
       },
       colors: {
+        primary: {
+          DEFAULT: "var(--primary)",
+          hover: "var(--primary-hover)",
+          light: "var(--primary-light)",
+          text: "var(--primary-text)",
+        },
         teal: {
           50: "#f0fdfa",
           100: "#ccfbf1",
@@ -32,8 +38,9 @@ module.exports = {
           "blue-dark-light": "#93C5FD",
         },
         saffron: {
-          DEFAULT: "#F59E0B",
-          light: "#FEF3C7",
+          DEFAULT: "#E8730A",
+          hover: "#C95F06",
+          light: "#FFEDD5",
           "dark-light": "#FDE68A",
         },
         surface: {

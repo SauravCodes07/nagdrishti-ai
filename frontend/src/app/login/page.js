@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { loginUser, signupCitizen, getCurrentUser } from "../../lib/api";
 import { useTheme } from "../../components/ThemeProvider";
+import GoogleSignInButton from "../../components/GoogleSignInButton";
 
 function LoginContent() {
   const router = useRouter();
@@ -255,6 +256,26 @@ function LoginContent() {
             )}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative flex py-1 items-center">
+          <div className="flex-grow border-t border-[#E2E8F0] dark:border-[#243244]"></div>
+          <span className="flex-shrink mx-3 text-[11px] font-medium text-[#64748B] dark:text-[#94A3B8] uppercase tracking-wider">
+            Or continue with
+          </span>
+          <div className="flex-grow border-t border-[#E2E8F0] dark:border-[#243244]"></div>
+        </div>
+
+        {/* Google Sign-In */}
+        <GoogleSignInButton
+          requireAdmin={false}
+          text={activeTab === "signup" ? "Sign up with Google" : "Sign in with Google"}
+          onSuccess={() => {
+            setSuccessMsg("Google sign-in successful! Redirecting...");
+            setTimeout(() => router.push(returnUrl), 500);
+          }}
+          onError={(msg) => setErrorMsg(msg)}
+        />
 
         {/* Municipal Officer Command Desk Shortcut */}
         <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2 text-center">

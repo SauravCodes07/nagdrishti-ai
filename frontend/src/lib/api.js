@@ -80,7 +80,19 @@ async function executeFetch(baseUrl, endpoint, options) {
     cache: "no-store",
   };
 
-  const res = await fetch(url, config);
+  let res;
+  try {
+    res = await fetch(url, config);
+  } catch (netErr) {
+    console.error(`[NagDrishti Diagnostic] Network/CORS Error: Failed to reach ${url}. Request aborted by browser. Check server status or CORS_ALLOWED_ORIGINS. Details:`, {
+      endpoint,
+      baseUrl,
+      error: netErr.message,
+      type: netErr.name,
+    });
+    throw netErr;
+  }
+
   const contentType = res.headers.get("content-type");
   let data = null;
 
@@ -91,8 +103,15 @@ async function executeFetch(baseUrl, endpoint, options) {
   }
 
   if (!res.ok) {
+    console.warn(`[NagDrishti Diagnostic] Backend returned non-2xx response for [${method} ${endpoint}] (HTTP ${res.status}):`, {
+      status: res.status,
+      statusText: res.statusText,
+      url,
+      responseBody: data,
+    });
+
     if (res.status === 401 || res.status === 403) {
-      if (typeof window !== "undefined" && !endpoint.includes("/api/auth/login") && !endpoint.includes("/api/auth/signup")) {
+      if (typeof window !== "undefined" && !endpoint.includes("/api/auth/login") && !endpoint.includes("/api/auth/signup") && !endpoint.includes("/api/auth/google")) {
         window.dispatchEvent(new CustomEvent("nagdrishti:session-expired", { detail: { status: res.status, endpoint } }));
       }
     }
@@ -114,6 +133,7 @@ async function executeFetch(baseUrl, endpoint, options) {
     const err = new Error(errorMsg);
     err.status = res.status;
     err.data = data;
+    err.url = url;
     throw err;
   }
   return data;
@@ -138,7 +158,7 @@ async function request(endpoint, options = {}) {
         }
       }
     }
-    console.error(`API Error [${endpoint}]:`, err.message);
+    console.error(`API Error [${endpoint}]:`, err.message, { status: err.status, data: err.data });
     throw err;
   }
 }
@@ -258,6 +278,20 @@ export async function loginUser(username, password, requireAdmin = false) {
 
 export async function loginAdmin(username, password) {
   return loginUser(username, password, true);
+}
+
+export async function loginWithGoogle(credential, requireAdmin = false) {
+  const res = await request("/api/auth/google/", {
+    method: "POST",
+    body: JSON.stringify({ credential, require_admin: requireAdmin }),
+  });
+  if (res && res.token && typeof window !== "undefined") {
+    localStorage.setItem("nagdrishti_token", res.token);
+    if (res.user?.role === "admin" || res.user?.is_staff) {
+      localStorage.setItem("admin_token", res.token);
+    }
+  }
+  return res;
 }
 
 export async function logoutUser() {

@@ -126,3 +126,54 @@ class AuthAndGatingTests(TestCase):
         res = self.client.get("/api/auth/csrf/")
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertIn("csrftoken", res.data)
+
+    def test_05_google_auth_missing_token(self):
+        res = self.client.post("/api/auth/google/", {}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", res.data)
+
+    def test_06_google_auth_invalid_token(self):
+        from unittest.mock import patch
+        with patch("google.oauth2.id_token.verify_oauth2_token", side_effect=ValueError("Token expired")):
+            res = self.client.post("/api/auth/google/", {"credential": "invalid_token_123"}, format="json")
+            self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+            self.assertIn("error", res.data)
+
+    def test_07_google_auth_success_creates_user_and_session(self):
+        from unittest.mock import patch
+        mock_payload = {
+            "iss": "accounts.google.com",
+            "email": "amit.patil@gmail.com",
+            "email_verified": True,
+            "name": "Amit Patil",
+            "picture": "https://lh3.googleusercontent.com/a/mock-pic",
+        }
+        with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_payload):
+            res = self.client.post("/api/auth/google/", {"credential": "valid_mock_google_id_token"}, format="json")
+            self.assertEqual(res.status_code, status.HTTP_200_OK)
+            self.assertEqual(res.data["user"]["email"], "amit.patil@gmail.com")
+            self.assertEqual(res.data["user"]["name"], "Amit Patil")
+            self.assertEqual(res.data["user"]["role"], "citizen")
+            self.assertIn("token", res.data)
+
+            # Verify session is established
+            me_res = self.client.get("/api/auth/me/")
+            self.assertTrue(me_res.data["authenticated"])
+            self.assertEqual(me_res.data["user"]["email"], "amit.patil@gmail.com")
+
+    def test_08_google_auth_admin_requirement_denied_for_citizen(self):
+        from unittest.mock import patch
+        mock_payload = {
+            "iss": "accounts.google.com",
+            "email": "regular.citizen@gmail.com",
+            "email_verified": True,
+            "name": "Regular Citizen",
+        }
+        with patch("google.oauth2.id_token.verify_oauth2_token", return_value=mock_payload):
+            res = self.client.post(
+                "/api/auth/google/",
+                {"credential": "valid_token", "require_admin": True},
+                format="json"
+            )
+            self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
