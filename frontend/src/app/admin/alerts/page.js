@@ -4,9 +4,14 @@ import { useEffect, useState } from "react";
 import {
   RefreshCw,
   Search,
+  Radio,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getAlertLogs } from "../../../lib/api";
+import { RiskPulse, HoverLiftCard } from "../../../components/motion";
 
 export default function AdminAlertLogsPage() {
   const [logs, setLogs] = useState([]);
@@ -55,14 +60,15 @@ export default function AdminAlertLogsPage() {
             </p>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={fetchLogs}
             disabled={loading}
             className="h-10 px-3.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium text-xs shadow-sm transition flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#0F766E] dark:text-[#14B8A6]" : ""}`} />
             <span>Sync Logs</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Search Filter */}
@@ -73,7 +79,7 @@ export default function AdminAlertLogsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search by ward name, dispatch message, or channel..."
-            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-normal focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
+            className="w-full pl-10 pr-3.5 py-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] text-[#0F172A] dark:text-[#F8FAFC] text-xs font-normal focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6] transition-colors"
           />
         </div>
 
@@ -92,47 +98,58 @@ export default function AdminAlertLogsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
-                {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition">
-                    <td className="p-3.5 font-mono text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : "Live"}
-                    </td>
+                <AnimatePresence>
+                  {filteredLogs.map((log) => (
+                    <motion.tr
+                      layout
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      key={log.id}
+                      className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition-colors"
+                    >
+                      <td className="p-3.5 font-mono text-[#64748B] dark:text-[#94A3B8] whitespace-nowrap">
+                        {log.created_at ? new Date(log.created_at).toLocaleString() : "Live"}
+                      </td>
 
-                    <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                      {log.zone_name || "Nagpur Citywide"}
-                    </td>
+                      <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                        {log.zone_name || "Nagpur Citywide"}
+                      </td>
 
-                    <td className="p-3.5">
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4] border border-[#0F766E]/20">
-                        {log.channel || "SMS Gateway"}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4] border border-[#0F766E]/20">
+                          {log.channel || "SMS Gateway"}
+                        </span>
+                      </td>
 
-                    <td className="p-3.5">
-                      <span
-                        className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
-                          log.severity === "Severe"
-                            ? "bg-[#FEE2E2] text-[#991B1B]"
-                            : log.severity === "High"
-                            ? "bg-[#FFEDD5] text-[#9A3412]"
-                            : "bg-[#FEF9C3] text-[#854D0E]"
-                        }`}
-                      >
-                        {log.severity || "Severe"}
-                      </span>
-                    </td>
+                      <td className="p-3.5">
+                        <RiskPulse category={log.severity}>
+                          <span
+                            className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
+                              log.severity === "Severe"
+                                ? "bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]"
+                                : log.severity === "High"
+                                ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-orange-500/20 dark:text-[#FB923C]"
+                                : "bg-[#FEF9C3] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A]"
+                            }`}
+                          >
+                            {log.severity || "Severe"}
+                          </span>
+                        </RiskPulse>
+                      </td>
 
-                    <td className="p-3.5 text-[#334155] dark:text-[#CBD5E1] max-w-sm">
-                      <p className="line-clamp-2 leading-relaxed">{log.message}</p>
-                    </td>
+                      <td className="p-3.5 text-[#334155] dark:text-[#CBD5E1] max-w-sm">
+                        <p className="line-clamp-2 leading-relaxed">{log.message}</p>
+                      </td>
 
-                    <td className="p-3.5 text-right">
-                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]">
-                        {log.status || "Delivered"}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="p-3.5 text-right">
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]">
+                          {log.status || "Delivered"}
+                        </span>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>

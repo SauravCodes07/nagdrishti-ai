@@ -21,9 +21,16 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import { getCurrentUser, logoutUser, getReports } from "../../lib/api";
 import { useTheme } from "../../components/ThemeProvider";
+import {
+  ScrollReveal,
+  HoverLiftCard,
+  StaggerGrid,
+  StaggerItem,
+} from "../../components/motion";
 
 const EMERGENCY_SERVICES = [
   {
@@ -122,7 +129,7 @@ export default function CitizenProfilePage() {
         </div>
 
         {/* User Identity Card */}
-        <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 sm:p-7 shadow-sm space-y-6">
+        <HoverLiftCard className="p-6 sm:p-7 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0] dark:border-[#243244]">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded-2xl bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] font-bold text-xl flex items-center justify-center border border-[#0F766E]/20 shrink-0">
@@ -145,22 +152,24 @@ export default function CitizenProfilePage() {
             </div>
 
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={toggleTheme}
                 className="px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
                 title="Toggle Theme"
               >
                 {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-[#F59E0B]" /> : <Moon className="w-3.5 h-3.5 text-[#0F766E]" />}
                 <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileTap={{ scale: 0.95 }}
                 onClick={handleLogout}
                 className="px-3 py-2 rounded-xl bg-[#FEF2F2] dark:bg-red-500/15 hover:bg-[#FEE2E2] dark:hover:bg-red-500/25 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-[#991B1B] dark:text-[#F87171] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" />
                 <span>Sign Out</span>
-              </button>
+              </motion.button>
             </div>
           </div>
 
@@ -185,7 +194,7 @@ export default function CitizenProfilePage() {
               <p className="font-bold text-green-600 dark:text-green-400">CSRF Protected</p>
             </div>
           </div>
-        </div>
+        </HoverLiftCard>
 
         {/* Emergency Contacts Directory */}
         <div className="space-y-4">
@@ -196,33 +205,37 @@ export default function CitizenProfilePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {EMERGENCY_SERVICES.map((serv) => (
-              <div
-                key={serv.title}
-                className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3 flex flex-col justify-between"
-              >
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
-                      {serv.badge}
-                    </span>
-                    <PhoneCall className="w-4 h-4 text-[#DC2626]" />
-                  </div>
-                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{serv.title}</h3>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">{serv.desc}</p>
-                </div>
-
-                <a
-                  href={`tel:${serv.phone.replace(/[^0-9]/g, "")}`}
-                  className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-2 transition"
+              <StaggerItem key={serv.title}>
+                <HoverLiftCard
+                  riskCategory="Severe"
+                  className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3 flex flex-col justify-between h-full"
                 >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Call {serv.phone}</span>
-                </a>
-              </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
+                        {serv.badge}
+                      </span>
+                      <PhoneCall className="w-4 h-4 text-[#DC2626]" />
+                    </div>
+                    <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{serv.title}</h3>
+                    <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">{serv.desc}</p>
+                  </div>
+
+                  <motion.a
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    href={`tel:${serv.phone.replace(/[^0-9]/g, "")}`}
+                    className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>Call {serv.phone}</span>
+                  </motion.a>
+                </HoverLiftCard>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         </div>
 
         {/* Monsoon Survival Guidelines */}
@@ -234,29 +247,28 @@ export default function CitizenProfilePage() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {SAFETY_TIPS.map((tip, idx) => (
-              <div
-                key={tip.title}
-                className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-6 h-6 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] text-xs font-bold flex items-center justify-center">
-                    0{idx + 1}
-                  </span>
-                  <h3 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{tip.title}</h3>
-                </div>
-                <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed pl-8.5 font-normal">
-                  {tip.desc}
-                </p>
-              </div>
+              <StaggerItem key={tip.title}>
+                <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2 h-full">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-6 h-6 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] text-xs font-bold flex items-center justify-center font-mono">
+                      0{idx + 1}
+                    </span>
+                    <h3 className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{tip.title}</h3>
+                  </div>
+                  <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed pl-8.5 font-normal">
+                    {tip.desc}
+                  </p>
+                </HoverLiftCard>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         </div>
 
         {/* Onboarding Tour & Officer Desk Links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -269,16 +281,18 @@ export default function CitizenProfilePage() {
               </p>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
               onClick={handleRestartTour}
               className="h-10 px-5 rounded-xl bg-[#F1F5F9] dark:bg-[#162235] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center justify-center gap-2 transition border border-[#CBD5E1] dark:border-[#334155] cursor-pointer"
             >
               <span>Replay Onboarding Tour</span>
-            </button>
-          </div>
+            </motion.button>
+          </HoverLiftCard>
 
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -291,14 +305,16 @@ export default function CitizenProfilePage() {
               </p>
             </div>
 
-            <Link
-              href="/admin/login"
-              className="h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition"
-            >
-              <span>Officer Portal</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+              <Link
+                href="/admin/login"
+                className="w-full h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition shadow-sm"
+              >
+                <span>Officer Portal</span>
+                <ExternalLink className="w-3.5 h-3.5" />
+              </Link>
+            </motion.div>
+          </HoverLiftCard>
         </div>
       </div>
     </CitizenLayout>

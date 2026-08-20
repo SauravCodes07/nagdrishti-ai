@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   FileCheck2,
   Truck,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { getCurrentUser, logoutAdmin, checkBackendHealth } from "../../lib/api";
 import { useTheme } from "../ThemeProvider";
+import PageTransition from "../motion/PageTransition";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
@@ -107,7 +109,6 @@ export default function AdminLayout({ children }) {
     return "Municipal Command Center";
   };
 
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex items-center justify-center text-[#0F172A] dark:text-[#F8FAFC]">
@@ -171,7 +172,7 @@ export default function AdminLayout({ children }) {
         </div>
 
         {/* Navigation Links */}
-        <nav className="p-3 space-y-1 flex-1">
+        <nav className="p-3 space-y-1 flex-1 overflow-y-auto">
           {!sidebarCollapsed && (
             <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1.5 tracking-wider">
               Command Operations
@@ -187,16 +188,23 @@ export default function AdminLayout({ children }) {
                 key={item.href}
                 href={item.href}
                 title={sidebarCollapsed ? item.label : undefined}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors relative ${
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm relative transition-colors ${
                   isActive
-                    ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
-                    : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
+                    ? "text-[#0F766E] dark:text-[#5EEAD4] font-semibold"
+                    : "text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium"
                 }`}
               >
-                <Icon className="w-4 h-4 shrink-0" />
-                {!sidebarCollapsed && <span>{item.label}</span>}
+                {isActive && (
+                  <motion.div
+                    layoutId="active-admin-nav"
+                    className="absolute inset-0 bg-[#CCFBF1] dark:bg-teal-500/15 border border-[#0F766E]/15 dark:border-teal-500/20 rounded-xl"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <Icon className="w-4 h-4 shrink-0 relative z-10" />
+                {!sidebarCollapsed && <span className="relative z-10">{item.label}</span>}
                 {isActive && !sidebarCollapsed && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] dark:bg-[#14B8A6] ml-auto"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#0F766E] dark:bg-[#14B8A6] ml-auto relative z-10"></span>
                 )}
               </Link>
             );
@@ -275,9 +283,12 @@ export default function AdminLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* System Status Pill */}
+            {/* Live System Status Pill */}
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] text-xs">
-              <span className="w-2 h-2 rounded-full bg-[#16A34A]"></span>
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+              </span>
               <span className="font-medium text-[#475569] dark:text-[#CBD5E1]">
                 System: <strong className="text-[#0F172A] dark:text-[#F8FAFC] font-semibold">{systemHealth}</strong>
               </span>
@@ -289,109 +300,125 @@ export default function AdminLayout({ children }) {
               className="p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer"
               title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
+              <motion.div
+                key={theme}
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
+              </motion.div>
             </button>
           </div>
         </header>
 
-        {/* Main Body */}
+        {/* Main Body with PageTransition */}
         <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-          <div key={pathname}>
+          <PageTransition routeKey={pathname}>
             {children}
-          </div>
+          </PageTransition>
         </main>
       </div>
 
       {/* ========================================================================= */}
       {/* MOBILE ADMIN DRAWER */}
       {/* ========================================================================= */}
-      {mobileDrawerOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-50 bg-slate-950/60 flex"
-          onClick={() => setMobileDrawerOpen(false)}
-        >
-          <div
-            className="w-72 bg-[#FFFFFF] dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#243244] shadow-xl"
-            onClick={(e) => e.stopPropagation()}
+      <AnimatePresence>
+        {mobileDrawerOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="md:hidden fixed inset-0 z-50 bg-slate-950/60 flex"
+            onClick={() => setMobileDrawerOpen(false)}
           >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243244]">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155]">
-                    <Image
-                      src="/brand/nagdrishti-logo.png"
-                      alt="NagDrishti AI"
-                      width={28}
-                      height={28}
-                      className="object-contain"
-                    />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="w-72 bg-[#FFFFFF] dark:bg-[#0F172A] h-full p-5 flex flex-col justify-between border-r border-[#E2E8F0] dark:border-[#243244] shadow-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-[#E2E8F0] dark:border-[#243244]">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#0F172A] p-1 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155]">
+                      <Image
+                        src="/brand/nagdrishti-logo.png"
+                        alt="NagDrishti AI"
+                        width={28}
+                        height={28}
+                        className="object-contain"
+                      />
+                    </div>
+                    <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC]">NagDrishti HQ</span>
                   </div>
-                  <span className="font-bold text-base text-[#0F172A] dark:text-[#F8FAFC]">NagDrishti HQ</span>
+
+                  <button
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
                 </div>
 
+                <div className="space-y-1">
+                  <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1 tracking-wider">
+                    Command Ops
+                  </div>
+
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = pathname === item.href;
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileDrawerOpen(false)}
+                        className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
+                          isActive
+                            ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
+                            : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium"
+                        }`}
+                      >
+                        <Icon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+
+                  <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-4 pb-1 tracking-wider">
+                    Citizen App
+                  </div>
+
+                  <Link
+                    href="/dashboard"
+                    onClick={() => setMobileDrawerOpen(false)}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                  >
+                    <Home className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span>Citizen Dashboard</span>
+                  </Link>
+                </div>
+              </div>
+
+              <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244]">
                 <button
-                  onClick={() => setMobileDrawerOpen(false)}
-                  className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                  onClick={() => {
+                    setMobileDrawerOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full py-2.5 px-3 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 hover:bg-red-200 dark:hover:bg-red-500/25 text-[#991B1B] dark:text-[#F87171] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
                 >
-                  <X className="w-5 h-5" />
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out ({currentUser?.username || "Officer"})</span>
                 </button>
               </div>
-
-              <div className="space-y-1">
-                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 py-1 tracking-wider">
-                  Command Ops
-                </div>
-
-                {navItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.href;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={() => setMobileDrawerOpen(false)}
-                      className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm transition-colors ${
-                        isActive
-                          ? "bg-[#CCFBF1] text-[#0F766E] font-semibold dark:bg-teal-500/15 dark:text-[#5EEAD4]"
-                          : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] font-medium"
-                      }`}
-                    >
-                      <Icon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
-                      <span>{item.label}</span>
-                    </Link>
-                  );
-                })}
-
-                <div className="text-[11px] font-medium uppercase text-[#64748B] dark:text-[#94A3B8] px-3 pt-4 pb-1 tracking-wider">
-                  Citizen App
-                </div>
-
-                <Link
-                  href="/dashboard"
-                  onClick={() => setMobileDrawerOpen(false)}
-                  className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
-                >
-                  <Home className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Citizen Dashboard</span>
-                </Link>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244]">
-              <button
-                onClick={() => {
-                  setMobileDrawerOpen(false);
-                  handleLogout();
-                }}
-                className="w-full py-2.5 px-3 rounded-lg bg-[#FEE2E2] dark:bg-red-500/15 hover:bg-red-200 dark:hover:bg-red-500/25 text-[#991B1B] dark:text-[#F87171] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-              >
-                <LogOut className="w-4 h-4" />
-                <span>Sign Out ({currentUser?.username || "Officer"})</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

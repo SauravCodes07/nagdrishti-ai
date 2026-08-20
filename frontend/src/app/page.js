@@ -25,12 +25,23 @@ import {
   Crosshair,
   Compass,
   Zap,
+  Shield,
+  Radio,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../components/ThemeProvider";
-import MagneticButton from "../components/MagneticButton";
 import OnboardingModal from "../components/OnboardingModal";
+import {
+  ScrollReveal,
+  AnimatedCounter,
+  MagneticButton,
+  HoverLiftCard,
+  RiskPulse,
+  StaggerGrid,
+  StaggerItem,
+  AnimatedIcon,
+} from "../components/motion";
 
 const MapComponent = dynamic(() => import("../components/MapComponent"), {
   ssr: false,
@@ -131,11 +142,11 @@ export default function PublicLandingPage() {
     const y = e.clientY - rect.top;
     setMousePos({ x, y });
 
-    // Calculate subtle 3D card tilt (-6deg to +6deg)
+    // Calculate subtle 3D card tilt (-5deg to +5deg)
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
-    const rotX = ((y - centerY) / centerY) * -5;
-    const rotY = ((x - centerX) / centerX) * 5;
+    const rotX = ((y - centerY) / centerY) * -4.5;
+    const rotY = ((x - centerX) / centerX) * 4.5;
     setHudTilt({ rotateX: rotX.toFixed(2), rotateY: rotY.toFixed(2) });
 
     // Approximate real-time GPS coordinates for Nagpur basin
@@ -232,28 +243,36 @@ export default function PublicLandingPage() {
 
           {/* Right Action Cluster */}
           <div className="flex items-center gap-2.5 sm:gap-3">
-            {/* Theme Toggle */}
+            {/* Theme Toggle with Rotation Animation */}
             <button
               onClick={toggleTheme}
               className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer shadow-sm"
               title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
-              aria-label={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
-              {theme === "dark" ? (
-                <Sun className="w-4 h-4 text-[#F59E0B]" />
-              ) : (
-                <Moon className="w-4 h-4 text-[#0F766E]" />
-              )}
+              <motion.div
+                key={theme}
+                initial={{ rotate: -90, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 0.25 }}
+              >
+                {theme === "dark" ? (
+                  <Sun className="w-4 h-4 text-[#F59E0B]" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#0F766E]" />
+                )}
+              </motion.div>
             </button>
 
             {/* Emergency SOS Button */}
-            <button
+            <motion.button
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setSosModalOpen(true)}
               className="h-10 px-3.5 sm:px-4 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs sm:text-sm flex items-center gap-1.5 transition cursor-pointer shadow-md"
             >
               <PhoneCall className="w-3.5 h-3.5" />
               <span>SOS Help</span>
-            </button>
+            </motion.button>
           </div>
         </div>
       </header>
@@ -283,6 +302,18 @@ export default function PublicLandingPage() {
           />
         </motion.div>
 
+        {/* Ambient Floating Water & Radar Glyphs drifting in loops */}
+        <motion.div
+          animate={{ y: [0, -15, 0], rotate: [0, 8, 0] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-16 right-20 w-32 h-32 rounded-full border border-teal-500/20 pointer-events-none z-10 hidden xl:block"
+        />
+        <motion.div
+          animate={{ y: [0, 18, 0], rotate: [0, -6, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+          className="absolute bottom-20 left-12 w-24 h-24 rounded-full border border-teal-400/15 pointer-events-none z-10 hidden xl:block"
+        />
+
         {/* Ambient Radar Sweep Effect over the Map */}
         <div className="radar-sweep-beam z-5 opacity-40 dark:opacity-60" />
 
@@ -303,20 +334,14 @@ export default function PublicLandingPage() {
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Hero Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-              className="lg:col-span-7 space-y-6 text-left"
-            >
+            <div className="lg:col-span-7 space-y-6 text-left">
               {/* Status Pill & Dynamic GPS Inspector */}
-              <div className="flex flex-wrap items-center gap-2">
+              <ScrollReveal direction="down" delay={0.05} className="flex flex-wrap items-center gap-2">
                 <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0F766E]/25 backdrop-blur-md border border-[#14B8A6]/40 text-xs font-semibold text-[#5EEAD4] shadow-sm">
                   <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-ping"></span>
                   <span>Live Geospatial Intelligence • Nagpur Wards</span>
                 </div>
 
-                {/* Satellite / Street toggle directly in Hero */}
                 <button
                   onClick={() => setHeroMapLayer(heroMapLayer === "satellite" ? "street" : "satellite")}
                   className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md border border-white/20 text-xs font-medium text-white transition cursor-pointer shadow-sm hover:border-[#14B8A6]/60"
@@ -334,21 +359,57 @@ export default function PublicLandingPage() {
                     </>
                   )}
                 </button>
-              </div>
+              </ScrollReveal>
 
-              {/* Main Headline */}
-              <h1 className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-white tracking-tight leading-[1.06] drop-shadow-md">
-                Smarter Nagpur. <br />
-                <span className="text-[#2DD4BF] drop-shadow-sm">Safer Tomorrow.</span>
-              </h1>
+              {/* Main Headline with Word-by-Word Stagger */}
+              <motion.h1
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: { opacity: 0 },
+                  visible: {
+                    opacity: 1,
+                    transition: { staggerChildren: 0.12 },
+                  },
+                }}
+                className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-white tracking-tight leading-[1.06] drop-shadow-md"
+              >
+                <motion.span
+                  variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+                  className="inline-block mr-2"
+                >
+                  Smarter
+                </motion.span>
+                <motion.span
+                  variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+                  className="inline-block"
+                >
+                  Nagpur.
+                </motion.span>
+                <br />
+                <motion.span
+                  variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+                  className="inline-block mr-2 text-[#2DD4BF] drop-shadow-sm"
+                >
+                  Safer
+                </motion.span>
+                <motion.span
+                  variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
+                  className="inline-block text-[#2DD4BF] drop-shadow-sm"
+                >
+                  Tomorrow.
+                </motion.span>
+              </motion.h1>
 
               {/* Subtitle */}
-              <p className="text-sm sm:text-base text-slate-200 max-w-xl leading-relaxed font-normal">
-                NagDrishti AI combines live IMD Doppler radar rainfall feeds, elevation hydrology, and citizen photo verification to predict street-level inundation and steer citizens through flood-safe corridors.
-              </p>
+              <ScrollReveal delay={0.2}>
+                <p className="text-sm sm:text-base text-slate-200 max-w-xl leading-relaxed font-normal">
+                  NagDrishti AI combines live IMD Doppler radar rainfall feeds, elevation hydrology, and citizen photo verification to predict street-level inundation and steer citizens through flood-safe corridors.
+                </p>
+              </ScrollReveal>
 
               {/* Primary Action Buttons with Magnetic Pull */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <ScrollReveal delay={0.28} className="flex flex-wrap items-center gap-3 pt-2">
                 <MagneticButton>
                   <Link
                     href="/map"
@@ -378,7 +439,7 @@ export default function PublicLandingPage() {
                     <span>Safe Routes</span>
                   </Link>
                 </MagneticButton>
-              </div>
+              </ScrollReveal>
 
               {/* Live Mouse Movement Telemetry Coordinate Bar */}
               <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 backdrop-blur-md inline-flex items-center gap-4 text-[11px] font-mono text-slate-300">
@@ -392,7 +453,7 @@ export default function PublicLandingPage() {
               </div>
 
               {/* Trust Badges */}
-              <div className="pt-2 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
+              <ScrollReveal delay={0.35} className="pt-2 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
                 <div className="flex items-center gap-1.5">
                   <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>10 NMC Wards Monitored</span>
@@ -405,12 +466,12 @@ export default function PublicLandingPage() {
                   <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
                   <span>Vision AI Hazard Verification</span>
                 </div>
-              </div>
-            </motion.div>
+              </ScrollReveal>
+            </div>
 
             {/* Right Hero Telemetry Glass HUD Card with Interactive 3D Parallax Tilt */}
             <div className="lg:col-span-5 perspective-1000">
-              <div
+              <HoverLiftCard
                 className="bg-slate-900/85 border border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4 text-white transition-transform duration-150 ease-out"
                 style={{
                   transform: `rotateX(${hudTilt.rotateX}deg) rotateY(${hudTilt.rotateY}deg)`,
@@ -433,7 +494,7 @@ export default function PublicLandingPage() {
                   <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
                     <span className="text-[11px] uppercase font-medium text-slate-400 block">IMD Doppler Radar</span>
                     <span className="text-2xl font-bold text-white mt-0.5 block">
-                      {weather.rainfall_intensity_mm ?? 18.5} <span className="text-xs font-normal text-slate-400">mm/h</span>
+                      <AnimatedCounter value={weather.rainfall_intensity_mm ?? 18.5} decimals={1} suffix=" mm/h" />
                     </span>
                     <span className="text-[11px] text-[#2DD4BF] font-medium">{weather.condition || "Moderate Rain"}</span>
                   </div>
@@ -441,7 +502,7 @@ export default function PublicLandingPage() {
                   <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
                     <span className="text-[11px] uppercase font-medium text-slate-400 block">Severe Wards</span>
                     <span className="text-2xl font-bold text-[#F87171] mt-0.5 block">
-                      {severeZones.length} Wards
+                      <AnimatedCounter value={severeZones.length} suffix=" Wards" />
                     </span>
                     <span className="text-[11px] text-[#F87171] font-medium">Critical Inundation</span>
                   </div>
@@ -453,9 +514,11 @@ export default function PublicLandingPage() {
                     <span className="font-semibold text-white">
                       Highest Threat Basin
                     </span>
-                    <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/25 text-[#F87171] border border-red-500/40">
-                      {selectedZone?.risk_category || "Severe"}
-                    </span>
+                    <RiskPulse category={selectedZone?.risk_category || "Severe"}>
+                      <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/25 text-[#F87171] border border-red-500/40">
+                        {selectedZone?.risk_category || "Severe"}
+                      </span>
+                    </RiskPulse>
                   </div>
                   <div className="font-semibold text-sm text-[#2DD4BF]">
                     {selectedZone?.zone_name || "Sitabuldi & Narendra Nagar Basin"}
@@ -482,95 +545,79 @@ export default function PublicLandingPage() {
                     <span>Full Map View</span>
                   </Link>
                 </div>
-              </div>
+              </HoverLiftCard>
             </div>
           </div>
         </div>
       </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 2: LIVE SAFETY STATS */}
+      {/* SECTION 2: LIVE SAFETY STATS STRIP WITH STAGGERED REVEALS & COUNTERS */}
       {/* ========================================================================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-40px" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="py-12 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm"
-      >
+      <section className="py-12 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              {
-                label: "IMD Rainfall Feed",
-                val: `${weather.rainfall_intensity_mm ?? 0}`,
-                unit: "mm/h",
-                sub: weather.condition || "Live Doppler Radar",
-                icon: CloudRain,
-                color: "text-[#0F766E] dark:text-[#14B8A6]",
-              },
-              {
-                label: "Flooded Wards",
-                val: `${severeZones.length}`,
-                unit: `/ ${zones.length || 10}`,
-                sub: "Critical attention needed",
-                icon: Droplets,
-                color: "text-[#DC2626] dark:text-[#F87171]",
-              },
-              {
-                label: "Safe Road Network",
-                val: `${zones.length > 0 ? Math.round((1 - (severeZones.length / zones.length)) * 100) : 92}%`,
-                unit: "",
-                sub: "Accessible bypass corridors",
-                icon: Car,
-                color: "text-[#16A34A] dark:text-[#4ADE80]",
-              },
-              {
-                label: "Citizen Reports",
-                val: `${reports.length}`,
-                unit: "",
-                sub: "Crowdsourced ground intel",
-                icon: Activity,
-                color: "text-[#854D0E] dark:text-[#FDE68A]",
-              },
-            ].map((stat, idx) => {
-              const Icon = stat.icon;
-              return (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.08 }}
-                  className="hover-card p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-                >
-                  <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
-                    <span className="text-xs font-medium uppercase tracking-wider">{stat.label}</span>
-                    <Icon className={`w-4 h-4 ${stat.color}`} />
-                  </div>
-                  <div className="text-3xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                    {stat.val} {stat.unit && <span className="text-xs font-normal text-[#64748B]">{stat.unit}</span>}
-                  </div>
-                  <p className={`text-xs font-medium ${stat.color}`}>{stat.sub}</p>
-                </motion.div>
-              );
-            })}
-          </div>
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StaggerItem>
+              <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-xs font-medium uppercase tracking-wider">IMD Rainfall Feed</span>
+                  <AnimatedIcon icon={CloudRain} type="wiggle" className="text-[#0F766E] dark:text-[#14B8A6]" />
+                </div>
+                <div className="text-3xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <AnimatedCounter value={weather.rainfall_intensity_mm ?? 0} decimals={1} suffix=" mm/h" />
+                </div>
+                <p className="text-xs font-medium text-[#0F766E] dark:text-[#14B8A6]">{weather.condition || "Live Doppler Radar"}</p>
+              </HoverLiftCard>
+            </StaggerItem>
+
+            <StaggerItem>
+              <HoverLiftCard riskCategory="Severe" className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-xs font-medium uppercase tracking-wider">Flooded Wards</span>
+                  <AnimatedIcon icon={Droplets} type="pulse" className="text-[#DC2626]" />
+                </div>
+                <div className="text-3xl font-bold text-[#DC2626] dark:text-[#F87171]">
+                  <AnimatedCounter value={severeZones.length} suffix={` / ${zones.length || 10}`} />
+                </div>
+                <p className="text-xs font-medium text-[#DC2626] dark:text-[#F87171]">Critical attention needed</p>
+              </HoverLiftCard>
+            </StaggerItem>
+
+            <StaggerItem>
+              <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-xs font-medium uppercase tracking-wider">Safe Road Network</span>
+                  <AnimatedIcon icon={Car} type="scale" className="text-[#16A34A]" />
+                </div>
+                <div className="text-3xl font-bold text-[#16A34A] dark:text-[#4ADE80]">
+                  <AnimatedCounter value={zones.length > 0 ? Math.round((1 - (severeZones.length / zones.length)) * 100) : 92} suffix="%" />
+                </div>
+                <p className="text-xs font-medium text-[#16A34A] dark:text-[#4ADE80]">Accessible bypass corridors</p>
+              </HoverLiftCard>
+            </StaggerItem>
+
+            <StaggerItem>
+              <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+                <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
+                  <span className="text-xs font-medium uppercase tracking-wider">Citizen Reports</span>
+                  <AnimatedIcon icon={Activity} type="pulse" className="text-[#F59E0B]" />
+                </div>
+                <div className="text-3xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                  <AnimatedCounter value={reports.length} />
+                </div>
+                <p className="text-xs font-medium text-[#854D0E] dark:text-[#FDE68A]">Crowdsourced ground intel</p>
+              </HoverLiftCard>
+            </StaggerItem>
+          </StaggerGrid>
         </div>
-      </motion.section>
+      </section>
 
       {/* ========================================================================= */}
       {/* SECTION 3: KEY PLATFORM CAPABILITIES */}
       {/* ========================================================================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244]"
-      >
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <ScrollReveal direction="up" className="text-center space-y-2 max-w-2xl mx-auto">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
               Core Capabilities
             </span>
@@ -580,141 +627,117 @@ export default function PublicLandingPage() {
             <p className="text-sm text-[#475569] dark:text-[#CBD5E1]">
               Integrating meteorological data, topological hydrology, and computer vision for predictive response.
             </p>
-          </div>
+          </ScrollReveal>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Feature 1 */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.05 }}
-              className="hover-card p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
-                <CloudRain className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Real-Time Risk Monitoring</h3>
-              <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                Aggregates Doppler radar rainfall with Nagpur's digital elevation model and municipal drain capacities to calculate dynamic 0–100 risk scores per ward.
-              </p>
-              <Link href="/map" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
-                <span>View 10-Ward Map</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </motion.div>
+            <ScrollReveal direction="up" delay={0.05}>
+              <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
+                    <AnimatedIcon icon={CloudRain} type="wiggle" />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Real-Time Risk Monitoring</h3>
+                  <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                    Aggregates Doppler radar rainfall with Nagpur's digital elevation model and municipal drain capacities to calculate dynamic 0–100 risk scores per ward.
+                  </p>
+                </div>
+                <Link href="/map" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
+                  <span>View 10-Ward Map</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </HoverLiftCard>
+            </ScrollReveal>
 
             {/* Feature 2 */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-              className="hover-card p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
-                <Navigation className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Flood-Penalized Safe Routing</h3>
-              <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                Custom A* routing engine built on OpenStreetMap graph that dynamically penalizes waterlogged intersections, guiding citizens through dry corridors.
-              </p>
-              <Link href="/route" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
-                <span>Plan Safe Route</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </motion.div>
+            <ScrollReveal direction="up" delay={0.15}>
+              <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
+                    <AnimatedIcon icon={Navigation} type="rotate" />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Flood-Penalized Safe Routing</h3>
+                  <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                    Custom A* routing engine built on OpenStreetMap graph that dynamically penalizes waterlogged intersections, guiding citizens through dry corridors.
+                  </p>
+                </div>
+                <Link href="/route" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
+                  <span>Plan Safe Route</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </HoverLiftCard>
+            </ScrollReveal>
 
             {/* Feature 3 */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.25 }}
-              className="hover-card p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)]"
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
-                <Camera className="w-5 h-5" />
-              </div>
-              <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">AI Vision Hazard Verification</h3>
-              <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                Citizens upload roadside photos which are automatically analyzed by Hugging Face Vision AI to confirm waterlogging depth and pothole hazards.
-              </p>
-              <Link href="/report" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
-                <span>Report Road Hazard</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </motion.div>
+            <ScrollReveal direction="up" delay={0.25}>
+              <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full flex flex-col justify-between">
+                <div className="space-y-3">
+                  <div className="w-10 h-10 rounded-xl bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center border border-[#0F766E]/20">
+                    <AnimatedIcon icon={Camera} type="pulse" />
+                  </div>
+                  <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">AI Vision Hazard Verification</h3>
+                  <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                    Citizens upload roadside photos which are automatically analyzed by Hugging Face Vision AI to confirm waterlogging depth and pothole hazards.
+                  </p>
+                </div>
+                <Link href="/report" className="hover-link inline-flex items-center gap-1 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6] pt-1">
+                  <span>Report Road Hazard</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </Link>
+              </HoverLiftCard>
+            </ScrollReveal>
           </div>
         </div>
-      </motion.section>
+      </section>
 
       {/* ========================================================================= */}
-      {/* SECTION 4: CITIZEN WORKFLOW */}
+      {/* SECTION 4: CITIZEN WORKFLOW WITH STAGGERED REVEALS */}
       {/* ========================================================================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244]"
-      >
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <ScrollReveal direction="up" className="text-center space-y-2 max-w-2xl mx-auto">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
               Citizen Workflow
             </span>
             <h2 className="text-2xl sm:text-3xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Five Steps to Safer Travel in Nagpur
             </h2>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
               { step: "01", title: "Check Conditions", desc: "View real-time IMD radar rainfall across Nagpur before departing.", icon: CloudRain },
               { step: "02", title: "Understand Risk", desc: "Review severe and high flood danger wards along your commute.", icon: Activity },
               { step: "03", title: "Find Safe Routes", desc: "Calculate risk-penalized A* paths avoiding submerged underpasses.", icon: Navigation },
               { step: "04", title: "Report Hazards", desc: "Upload road photo evidence to verify ground truth with AI Vision.", icon: Camera },
               { step: "05", title: "Receive Alerts", desc: "Get automated WhatsApp & SMS alerts if danger escalates in your ward.", icon: Bell },
-            ].map((s, idx) => {
+            ].map((s) => {
               const Icon = s.icon;
               return (
-                <motion.div
-                  key={s.step}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.45, delay: idx * 0.08 }}
-                  className="hover-card p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="w-8 h-8 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center">
-                      <Icon className="w-4 h-4" />
+                <StaggerItem key={s.step}>
+                  <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-2.5 shadow-[0_1px_3px_rgba(15,23,42,0.04)] h-full">
+                    <div className="flex items-center justify-between">
+                      <div className="w-8 h-8 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] flex items-center justify-center">
+                        <AnimatedIcon icon={Icon} type="wiggle" size={16} />
+                      </div>
+                      <span className="text-lg font-bold text-[#94A3B8] dark:text-[#64748B] font-mono">{s.step}</span>
                     </div>
-                    <span className="text-lg font-bold text-[#94A3B8] dark:text-[#64748B]">{s.step}</span>
-                  </div>
-                  <h4 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{s.title}</h4>
-                  <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">{s.desc}</p>
-                </motion.div>
+                    <h4 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{s.title}</h4>
+                    <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">{s.desc}</p>
+                  </HoverLiftCard>
+                </StaggerItem>
               );
             })}
-          </div>
+          </StaggerGrid>
         </div>
-      </motion.section>
+      </section>
 
       {/* ========================================================================= */}
       {/* SECTION 5: 24/7 HELPLINES */}
       {/* ========================================================================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm"
-        id="about"
-      >
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF]/80 dark:bg-[#0F172A]/80 backdrop-blur-sm" id="about">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <ScrollReveal direction="up" className="text-center space-y-2 max-w-2xl mx-auto">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#DC2626] dark:text-[#F87171]">
               Emergency Response Network
             </span>
@@ -724,52 +747,45 @@ export default function PublicLandingPage() {
             <p className="text-sm text-[#475569] dark:text-[#CBD5E1]">
               Immediate municipal and emergency numbers for flash flood rescue, vehicle inundation, and life safety.
             </p>
-          </div>
+          </ScrollReveal>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {NAGPUR_HELPLINES.map((h, idx) => (
-              <motion.div
-                key={h.service}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className="hover-card p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)]"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
-                    {h.badge}
-                  </span>
-                  <PhoneCall className="w-4 h-4 text-[#DC2626]" />
-                </div>
-                <div>
-                  <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{h.service}</h3>
-                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">{h.desc}</p>
-                </div>
-                <a
-                  href={`tel:${h.phone.replace(/[^0-9]/g, "")}`}
-                  className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
-                >
-                  <PhoneCall className="w-3.5 h-3.5" />
-                  <span>Call {h.phone}</span>
-                </a>
-              </motion.div>
+          <StaggerGrid className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {NAGPUR_HELPLINES.map((h) => (
+              <StaggerItem key={h.service}>
+                <HoverLiftCard riskCategory="Severe" className="p-5 sm:p-6 rounded-2xl bg-[#F8FAFC] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 space-y-3 shadow-[0_1px_3px_rgba(15,23,42,0.04)] h-full flex flex-col justify-between">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
+                        {h.badge}
+                      </span>
+                      <PhoneCall className="w-4 h-4 text-[#DC2626]" />
+                    </div>
+                    <div>
+                      <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">{h.service}</h3>
+                      <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-0.5">{h.desc}</p>
+                    </div>
+                  </div>
+                  <motion.a
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    href={`tel:${h.phone.replace(/[^0-9]/g, "")}`}
+                    className="w-full h-10 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>Call {h.phone}</span>
+                  </motion.a>
+                </HoverLiftCard>
+              </StaggerItem>
             ))}
-          </div>
+          </StaggerGrid>
         </div>
-      </motion.section>
+      </section>
 
       {/* ========================================================================= */}
       {/* SECTION 6: FINAL CTA */}
       {/* ========================================================================= */}
-      <motion.section
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F1F5F9]/90 dark:bg-[#0B1220]/90"
-      >
-        <div className="max-w-3xl mx-auto px-4 text-center space-y-4">
+      <section className="py-16 sm:py-20 border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F1F5F9]/90 dark:bg-[#0B1220]/90">
+        <ScrollReveal direction="up" className="max-w-3xl mx-auto px-4 text-center space-y-4">
           <h2 className="text-2xl sm:text-4xl font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             One Dashboard for Faster Civic Response
           </h2>
@@ -796,8 +812,8 @@ export default function PublicLandingPage() {
               </Link>
             </MagneticButton>
           </div>
-        </div>
-      </motion.section>
+        </ScrollReveal>
+      </section>
 
       {/* ========================================================================= */}
       {/* FOOTER */}
@@ -868,53 +884,70 @@ export default function PublicLandingPage() {
         </div>
       </footer>
 
-      {/* Emergency SOS Modal */}
-      {sosModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 flex items-center justify-center p-4">
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/60 rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3 border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
-              <div className="w-10 h-10 rounded-xl bg-[#FEE2E2] dark:bg-red-500/15 text-[#DC2626] dark:text-[#F87171] flex items-center justify-center border border-red-200 dark:border-red-800/40">
-                <AlertTriangle className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Emergency Helplines (Nagpur)</h3>
-                <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">Immediate Municipal & Police Assistance</p>
-              </div>
-            </div>
-
-            <div className="space-y-2.5">
-              <a
-                href="tel:07122567035"
-                className="flex items-center justify-between p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 hover:bg-red-100 dark:hover:bg-red-900/40 transition"
-              >
-                <div>
-                  <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">NMC 24/7 Flood Control</div>
-                  <div className="text-xs text-[#DC2626] dark:text-[#F87171] font-bold">0712-2567035</div>
-                </div>
-                <span className="h-8 px-3 rounded-lg bg-[#DC2626] text-white font-semibold text-xs flex items-center">Call Now</span>
-              </a>
-
-              <a
-                href="tel:112"
-                className="flex items-center justify-between p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition"
-              >
-                <div>
-                  <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Police Emergency</div>
-                  <div className="text-xs text-[#64748B] dark:text-[#94A3B8]">112 (National Toll-Free)</div>
-                </div>
-                <span className="h-8 px-3 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center border border-[#CBD5E1] dark:border-[#334155]">Dial 112</span>
-              </a>
-            </div>
-
-            <button
-              onClick={() => setSosModalOpen(false)}
-              className="w-full h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] text-[#334155] dark:text-[#CBD5E1] font-medium text-xs hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition cursor-pointer"
+      {/* Emergency SOS Modal with fast entrance */}
+      <AnimatePresence>
+        {sosModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 10 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 10 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
+              className="bg-[#FFFFFF] dark:bg-[#111C2E] border-2 border-red-500 dark:border-red-600 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4"
             >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="flex items-center gap-3 border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FEE2E2] dark:bg-red-500/15 text-[#DC2626] dark:text-[#F87171] flex items-center justify-center border border-red-200 dark:border-red-800/40">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Emergency Helplines (Nagpur)</h3>
+                  <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">Immediate Municipal & Police Assistance</p>
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <motion.a
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="tel:07122567035"
+                  className="flex items-center justify-between p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/30 border border-red-200 dark:border-red-800/40 hover:bg-red-100 dark:hover:bg-red-900/40 transition cursor-pointer"
+                >
+                  <div>
+                    <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">NMC 24/7 Flood Control</div>
+                    <div className="text-xs text-[#DC2626] dark:text-[#F87171] font-bold">0712-2567035</div>
+                  </div>
+                  <span className="h-8 px-3 rounded-lg bg-[#DC2626] text-white font-semibold text-xs flex items-center">Call Now</span>
+                </motion.a>
+
+                <motion.a
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  href="tel:112"
+                  className="flex items-center justify-between p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] transition cursor-pointer"
+                >
+                  <div>
+                    <div className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">Police Emergency</div>
+                    <div className="text-xs text-[#64748B] dark:text-[#94A3B8]">112 (National Toll-Free)</div>
+                  </div>
+                  <span className="h-8 px-3 rounded-lg bg-[#F1F5F9] dark:bg-[#1E293B] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-xs flex items-center border border-[#CBD5E1] dark:border-[#334155]">Dial 112</span>
+                </motion.a>
+              </div>
+
+              <button
+                onClick={() => setSosModalOpen(false)}
+                className="w-full h-10 rounded-xl bg-[#F1F5F9] dark:bg-[#0F172A] text-[#334155] dark:text-[#CBD5E1] font-medium text-xs hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition cursor-pointer"
+              >
+                Close
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

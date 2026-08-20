@@ -10,7 +10,14 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { motion } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
+import {
+  ScrollReveal,
+  AnimatedCounter,
+  HoverLiftCard,
+  RiskPulse,
+} from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
   ssr: false,
@@ -87,26 +94,29 @@ export default function MapPage() {
           </div>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.95 }}
               onClick={fetchMapData}
               disabled={loading}
               className="h-10 px-3.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] font-medium text-xs shadow-sm transition cursor-pointer flex items-center gap-1.5"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#0F766E] dark:text-[#14B8A6]" : ""}`} />
               <span>Refresh Map</span>
-            </button>
+            </motion.button>
 
-            <Link
-              href="/report"
-              className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-1.5 transition"
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>Report Hazard</span>
-            </Link>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
+              <Link
+                href="/report"
+                className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-1.5 transition shadow-sm"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Report Hazard</span>
+              </Link>
+            </motion.div>
           </div>
         </div>
 
-        {/* Severity Filter Chips */}
+        {/* Severity Filter Chips with layoutId Animated Sliding Pill */}
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <span className="text-xs font-medium text-[#64748B] dark:text-[#94A3B8] flex items-center gap-1 shrink-0">
             <Filter className="w-3.5 h-3.5" />
@@ -119,19 +129,32 @@ export default function MapPage() {
             { id: "high", label: `High (${highZonesCount})` },
             { id: "medium", label: "Medium" },
             { id: "low", label: "Low" },
-          ].map((f) => (
-            <button
-              key={f.id}
-              onClick={() => setFilterMode(f.id)}
-              className={`h-8 px-3 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                filterMode === f.id
-                  ? "bg-[#0F766E] text-white dark:bg-[#14B8A6] dark:text-[#042F2E]"
-                  : "bg-[#FFFFFF] dark:bg-[#111C2E] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+          ].map((f) => {
+            const isSelected = filterMode === f.id;
+            return (
+              <button
+                key={f.id}
+                onClick={() => setFilterMode(f.id)}
+                className={`relative h-8 px-3.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                  isSelected
+                    ? "text-white dark:text-[#042F2E]"
+                    : "text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC]"
+                }`}
+              >
+                {isSelected && (
+                  <motion.div
+                    layoutId="active-map-filter"
+                    className="absolute inset-0 bg-[#0F766E] dark:bg-[#14B8A6] rounded-lg -z-10 shadow-sm"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                {!isSelected && (
+                  <span className="absolute inset-0 bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-lg -z-20" />
+                )}
+                <span className="relative z-10">{f.label}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* 2-Column Responsive Layout on Desktop */}
@@ -160,25 +183,30 @@ export default function MapPage() {
 
           {/* Right Inspector & Ward Details Panel */}
           <div className="lg:col-span-4 space-y-4">
-            <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4">
+            <HoverLiftCard
+              riskCategory={selectedZone?.risk_category || "Low"}
+              className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4"
+            >
               <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
                   Zone Details
                 </span>
                 {selectedZone && (
-                  <span
-                    className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded ${
-                      selectedZone.risk_category === "Severe"
-                        ? "bg-[#FEE2E2] text-[#991B1B]"
-                        : selectedZone.risk_category === "High"
-                        ? "bg-[#FFEDD5] text-[#9A3412]"
-                        : selectedZone.risk_category === "Medium"
-                        ? "bg-[#FEF9C3] text-[#854D0E]"
-                        : "bg-[#DCFCE7] text-[#166534]"
-                    }`}
-                  >
-                    {selectedZone.risk_category || "Low"}
-                  </span>
+                  <RiskPulse category={selectedZone.risk_category}>
+                    <span
+                      className={`text-[11px] font-semibold uppercase px-2 py-0.5 rounded ${
+                        selectedZone.risk_category === "Severe"
+                          ? "bg-[#FEE2E2] text-[#991B1B]"
+                          : selectedZone.risk_category === "High"
+                          ? "bg-[#FFEDD5] text-[#9A3412]"
+                          : selectedZone.risk_category === "Medium"
+                          ? "bg-[#FEF9C3] text-[#854D0E]"
+                          : "bg-[#DCFCE7] text-[#166534]"
+                      }`}
+                    >
+                      {selectedZone.risk_category || "Low"}
+                    </span>
+                  </RiskPulse>
                 )}
               </div>
 
@@ -197,15 +225,14 @@ export default function MapPage() {
                     <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
                       <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] uppercase font-medium block">Risk Score</span>
                       <span className="text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 block">
-                        {(selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 15).toFixed(1)}
+                        <AnimatedCounter value={selectedZone.latest_risk_score ?? selectedZone.risk_score ?? 15} decimals={1} />
                       </span>
                     </div>
 
                     <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
                       <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] uppercase font-medium block">Rainfall</span>
                       <span className="text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-0.5 block">
-                        {(selectedZone.rainfall_mm ?? selectedZone.rainfall_intensity_mm ?? 18).toFixed(1)}
-                        <span className="text-xs font-normal text-[#64748B]"> mm/h</span>
+                        <AnimatedCounter value={selectedZone.rainfall_mm ?? selectedZone.rainfall_intensity_mm ?? 18} decimals={1} suffix=" mm/h" />
                       </span>
                     </div>
                   </div>
@@ -231,20 +258,22 @@ export default function MapPage() {
                     </div>
                   </div>
 
-                  <Link
-                    href={`/route?destination=${encodeURIComponent(selectedZone.zone_name)}`}
-                    className="w-full h-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <Navigation className="w-3.5 h-3.5" />
-                    <span>Plan Safe Route to {selectedZone.zone_name}</span>
-                  </Link>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                    <Link
+                      href={`/route?destination=${encodeURIComponent(selectedZone.zone_name)}`}
+                      className="w-full h-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm"
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                      <span>Plan Safe Route to {selectedZone.zone_name}</span>
+                    </Link>
+                  </motion.div>
                 </div>
               ) : (
                 <div className="text-center py-8 text-[#64748B] dark:text-[#94A3B8] text-xs font-normal">
                   Select a ward polygon from the map to view detailed risk intelligence.
                 </div>
               )}
-            </div>
+            </HoverLiftCard>
           </div>
         </div>
       </div>

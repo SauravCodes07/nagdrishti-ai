@@ -13,10 +13,13 @@ import {
   RefreshCw,
   Sun,
   Moon,
+  ShieldCheck,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { loginAdmin } from "../../../lib/api";
 import { useTheme } from "../../../components/ThemeProvider";
 import GoogleSignInButton from "../../../components/GoogleSignInButton";
+import { MagneticButton } from "../../../components/motion";
 
 function AdminLoginContent() {
   const router = useRouter();
@@ -52,19 +55,25 @@ function AdminLoginContent() {
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center p-4 text-[#0F172A] dark:text-[#F8FAFC] antialiased">
       {/* Top Bar for Theme Toggle */}
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-        <button
+        <motion.button
+          whileTap={{ scale: 0.92 }}
           onClick={toggleTheme}
           className="p-2.5 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition-colors shadow-sm cursor-pointer"
           title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
         >
           {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
-        </button>
+        </motion.button>
       </div>
 
-      <div className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-7 shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-5">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 15 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 350, damping: 28 }}
+        className="w-full max-w-md bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-7 shadow-[0_1px_3px_rgba(15,23,42,0.08)] space-y-5"
+      >
         {/* Brand Logo & Header */}
         <div className="text-center space-y-2.5">
-          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center mx-auto border border-[#E2E8F0] dark:border-[#334155]">
+          <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-[#0F172A] p-1 flex items-center justify-center mx-auto border border-[#E2E8F0] dark:border-[#334155] shadow-sm">
             <Image
               src="/brand/nagdrishti-logo.png"
               alt="NagDrishti AI"
@@ -88,12 +97,19 @@ function AdminLoginContent() {
         </div>
 
         {/* Error Alert */}
-        {errorMsg && (
-          <div className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-[#991B1B] dark:text-[#F87171] text-xs font-medium flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 text-[#DC2626] mt-0.5" />
-            <span>{errorMsg}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {errorMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-[#991B1B] dark:text-[#F87171] text-xs font-medium flex items-start gap-2"
+            >
+              <AlertTriangle className="w-4 h-4 shrink-0 text-[#DC2626] mt-0.5" />
+              <span>{errorMsg}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Login Form */}
         <form onSubmit={handleLogin} className="space-y-3.5">
@@ -131,20 +147,22 @@ function AdminLoginContent() {
             </div>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer pt-1"
-          >
-            {loading ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <>
-                <span>Access Command Center</span>
-                <ArrowRight className="w-4 h-4" />
-              </>
-            )}
-          </button>
+          <MagneticButton>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer pt-1"
+            >
+              {loading ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <>
+                  <span>Access Command Center</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </MagneticButton>
         </form>
 
         {/* Divider */}
@@ -176,7 +194,7 @@ function AdminLoginContent() {
             <span>Return to Public Website</span>
           </Link>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

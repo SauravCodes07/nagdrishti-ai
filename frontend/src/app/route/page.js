@@ -9,10 +9,20 @@ import {
   ShieldCheck,
   AlertTriangle,
   RefreshCw,
+  Clock,
+  MapPin,
+  CheckCircle2,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import { getSafeRoute, getRiskZones, getReports } from "../../lib/api";
 import LocationSearchInput from "../../components/LocationSearchInput";
+import {
+  ScrollReveal,
+  AnimatedCounter,
+  HoverLiftCard,
+  MagneticButton,
+} from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
   ssr: false,
@@ -98,7 +108,7 @@ function SafeRouteContent() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Route Calculator Form */}
         <div className="lg:col-span-5 space-y-4">
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-5">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-5">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -107,14 +117,16 @@ function SafeRouteContent() {
                 </h2>
               </div>
 
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={handleSwap}
                 className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#475569] dark:text-[#CBD5E1] font-medium text-xs flex items-center gap-1 transition cursor-pointer"
                 title="Swap Origin and Destination"
               >
                 <RefreshCw className="w-3 h-3" />
                 <span>Swap</span>
-              </button>
+              </motion.button>
             </div>
 
             {/* Origin Search */}
@@ -138,57 +150,74 @@ function SafeRouteContent() {
             />
 
             {/* Action Button */}
-            <button
-              onClick={handleCalculateRoute}
-              disabled={loading}
-              className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-              <span>{loading ? "Computing A* Path..." : "Find Flood-Safe Route"}</span>
-            </button>
+            <MagneticButton>
+              <button
+                onClick={handleCalculateRoute}
+                disabled={loading}
+                className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+              >
+                <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+                <span>{loading ? "Computing A* Path..." : "Find Flood-Safe Route"}</span>
+              </button>
+            </MagneticButton>
 
             {/* Error Banner */}
-            {error && (
-              <div className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-[#991B1B] dark:text-[#F87171] flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 8 }}
+                  className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-xs font-medium text-[#991B1B] dark:text-[#F87171] flex items-center gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                  <span>{error}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Results Breakdown */}
-            {routeResult && (
-              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[#16A34A] dark:text-[#4ADE80] font-semibold text-xs">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Safe Path Calculated</span>
-                  </div>
-                  <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                    {routeResult.distance_km || routeResult.total_distance_km} km
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Distance</span>
-                    <span className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                      {routeResult.distance_km || routeResult.total_distance_km} km
+            <AnimatePresence>
+              {routeResult && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                  className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-inner"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-[#16A34A] dark:text-[#4ADE80] font-semibold text-xs">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Safe Path Calculated</span>
+                    </div>
+                    <span className="text-xs font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                      {(routeResult.distance_km || routeResult.total_distance_km || 0).toFixed(1)} km
                     </span>
                   </div>
-                  <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Estimated Time</span>
-                    <span className="text-base font-bold text-[#0F766E] dark:text-[#14B8A6]">
-                      ~{routeResult.estimated_minutes || routeResult.estimated_time_min || 14} min
-                    </span>
-                  </div>
-                </div>
 
-                <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                  {routeResult.safety_explanation || "Path safely routes around high-risk basin coordinates."}
-                </p>
-              </div>
-            )}
-          </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244]">
+                      <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Distance</span>
+                      <span className="text-base font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                        <AnimatedCounter value={routeResult.distance_km || routeResult.total_distance_km || 0} decimals={1} suffix=" km" />
+                      </span>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244]">
+                      <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Estimated Time</span>
+                      <span className="text-base font-bold text-[#0F766E] dark:text-[#14B8A6]">
+                        <AnimatedCounter value={routeResult.estimated_minutes || routeResult.estimated_time_min || 14} prefix="~" suffix=" min" />
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
+                    {routeResult.safety_explanation || "Path safely routes around high-risk basin coordinates."}
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </HoverLiftCard>
         </div>
 
         {/* Right Column: Interactive Map Screen */}
@@ -197,8 +226,15 @@ function SafeRouteContent() {
             <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
               Route Topology & Drainage Basins
             </span>
-            <span className="text-[11px] font-medium text-[#0F766E] dark:text-[#14B8A6]">
-              {routeResult ? "Safe Corridor Rendered" : "Select Points & Calculate"}
+            <span className="text-[11px] font-medium text-[#0F766E] dark:text-[#14B8A6] flex items-center gap-1">
+              {routeResult ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />
+                  <span>Safe Corridor Active</span>
+                </>
+              ) : (
+                <span>Select Points & Calculate</span>
+              )}
             </span>
           </div>
 

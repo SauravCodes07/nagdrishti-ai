@@ -15,8 +15,14 @@ import {
   Sliders,
   ShieldAlert,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getAdminAnalytics, getRiskZones, updateDispatchStatus } from "../../../lib/api";
+import {
+  HoverLiftCard,
+  RiskPulse,
+  AnimatedCounter,
+} from "../../../components/motion";
 
 const MapComponent = dynamic(() => import("../../../components/MapComponent"), {
   ssr: false,
@@ -102,18 +108,19 @@ export default function AdminZonesPage() {
             </p>
           </div>
 
-          <button
+          <motion.button
+            whileTap={{ scale: 0.95 }}
             onClick={fetchData}
             disabled={loading}
             className="px-3.5 py-2 rounded-xl bg-[#FFFFFF] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition shadow-sm flex items-center gap-1.5 self-start cursor-pointer"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-[#0F766E] dark:text-[#14B8A6]" : ""}`} />
             <span>Refresh Analytics</span>
-          </button>
+          </motion.button>
         </div>
 
         {/* Formula Explainer Bar */}
-        <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-2.5">
+        <HoverLiftCard className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-2.5">
           <div className="flex items-center gap-2">
             <Info className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
             <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -128,7 +135,7 @@ export default function AdminZonesPage() {
             <span className="text-emerald-600 dark:text-emerald-400">0.15 × 30d Historical</span> +{" "}
             <span className="text-red-600 dark:text-red-400">0.10 × 24h Reports</span>
           </div>
-        </div>
+        </HoverLiftCard>
 
         {/* 2-Column Responsive Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -147,7 +154,9 @@ export default function AdminZonesPage() {
               {analytics?.zone_breakdowns?.map((zb) => {
                 const isSelected = zb.zone_id === (selectedBreakdown?.zone_id || selectedZoneId);
                 return (
-                  <div
+                  <motion.div
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
                     key={zb.zone_id}
                     onClick={() => setSelectedZoneId(zb.zone_id)}
                     className={`p-3.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-3 ${
@@ -178,7 +187,7 @@ export default function AdminZonesPage() {
                         Risk Index
                       </span>
                     </div>
-                  </div>
+                  </motion.div>
                 );
               })}
             </div>
@@ -187,7 +196,7 @@ export default function AdminZonesPage() {
           {/* Right Column: Detailed Factor Decomposition Card & GIS Map */}
           <div className="lg:col-span-7 space-y-6">
             {selectedBreakdown ? (
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-sm space-y-6">
+              <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-6">
                 {/* Zone Card Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E2E8F0] dark:border-[#243244]">
                   <div>
@@ -195,9 +204,11 @@ export default function AdminZonesPage() {
                       <h2 className="text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                         {selectedBreakdown.zone_name} Ward
                       </h2>
-                      <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getCategoryBadgeClass(selectedBreakdown.category)}`}>
-                        {selectedBreakdown.category} Alert ({selectedBreakdown.total_score}%)
-                      </span>
+                      <RiskPulse category={selectedBreakdown.category}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded border ${getCategoryBadgeClass(selectedBreakdown.category)}`}>
+                          {selectedBreakdown.category} Alert ({selectedBreakdown.total_score}%)
+                        </span>
+                      </RiskPulse>
                     </div>
                     <p className="text-xs text-[#64748B] dark:text-[#94A3B8] mt-1">
                       Computed using live rainfall telemetry & municipal GIS layers
@@ -222,7 +233,7 @@ export default function AdminZonesPage() {
                   </div>
                 </div>
 
-                {/* 5-Factor Decomposition Progress Bars */}
+                {/* 5-Factor Decomposition Progress Bars with Spring Motion Animation */}
                 <div className="space-y-4">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
                     Component Weight Contribution Breakdown
@@ -239,9 +250,11 @@ export default function AdminZonesPage() {
                       </span>
                     </div>
                     <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-600 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${selectedBreakdown.components?.rainfall?.normalized_score || 0}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${selectedBreakdown.components?.rainfall?.normalized_score || 0}%` }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="bg-blue-600 h-full rounded-full"
                       />
                     </div>
                   </div>
@@ -257,9 +270,11 @@ export default function AdminZonesPage() {
                       </span>
                     </div>
                     <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-amber-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${selectedBreakdown.components?.drainage_deficit?.deficit_score || 0}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${selectedBreakdown.components?.drainage_deficit?.deficit_score || 0}%` }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="bg-amber-500 h-full rounded-full"
                       />
                     </div>
                   </div>
@@ -275,9 +290,11 @@ export default function AdminZonesPage() {
                       </span>
                     </div>
                     <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-purple-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${selectedBreakdown.components?.elevation?.normalized_score || 0}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${selectedBreakdown.components?.elevation?.normalized_score || 0}%` }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="bg-purple-500 h-full rounded-full"
                       />
                     </div>
                   </div>
@@ -293,9 +310,11 @@ export default function AdminZonesPage() {
                       </span>
                     </div>
                     <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${selectedBreakdown.components?.historical_incidents?.normalized_score || 0}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${selectedBreakdown.components?.historical_incidents?.normalized_score || 0}%` }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="bg-emerald-500 h-full rounded-full"
                       />
                     </div>
                   </div>
@@ -311,9 +330,11 @@ export default function AdminZonesPage() {
                       </span>
                     </div>
                     <div className="w-full bg-[#E2E8F0] dark:bg-[#334155] h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-red-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${selectedBreakdown.components?.report_density?.normalized_score || 0}%` }}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${selectedBreakdown.components?.report_density?.normalized_score || 0}%` }}
+                        transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                        className="bg-red-500 h-full rounded-full"
                       />
                     </div>
                   </div>
@@ -328,7 +349,7 @@ export default function AdminZonesPage() {
                     <MapComponent zones={zones} />
                   </div>
                 </div>
-              </div>
+              </HoverLiftCard>
             ) : (
               <div className="p-12 text-center text-xs font-semibold text-[#64748B] dark:text-[#94A3B8]">
                 Loading zone analytics breakdown...

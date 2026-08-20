@@ -14,8 +14,10 @@ import {
   CloudRain,
   Key,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { checkBackendHealth } from "../../../lib/api";
+import { HoverLiftCard, MagneticButton } from "../../../components/motion";
 
 export default function AdminSettingsPage() {
   const [health, setHealth] = useState(null);
@@ -56,16 +58,23 @@ export default function AdminSettingsPage() {
           </p>
         </div>
 
-        {savedMsg && (
-          <div className="p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-green-500/15 border border-green-200 dark:border-green-500/30 text-[#166534] dark:text-[#4ADE80] text-xs font-semibold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
-            <span>{savedMsg}</span>
-          </div>
-        )}
+        <AnimatePresence>
+          {savedMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-green-500/15 border border-green-200 dark:border-green-500/30 text-[#166534] dark:text-[#4ADE80] text-xs font-semibold flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
+              <span>{savedMsg}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form onSubmit={handleSaveSettings} className="space-y-6">
           {/* Section 1: Risk Classification Thresholds */}
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-sm space-y-4">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Sliders className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -125,10 +134,10 @@ export default function AdminSettingsPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </HoverLiftCard>
 
           {/* Section 2: Emergency Alert Dispatch Channels */}
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-sm space-y-4">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Radio className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -171,10 +180,10 @@ export default function AdminSettingsPage() {
                 />
               </label>
             </div>
-          </div>
+          </HoverLiftCard>
 
           {/* Section 3: Telemetry Integrations Status */}
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 shadow-sm space-y-4">
+          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Server className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -235,16 +244,18 @@ export default function AdminSettingsPage() {
                 </span>
               </div>
             </div>
-          </div>
+          </HoverLiftCard>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-bold text-xs sm:text-sm shadow-sm transition flex items-center gap-2 cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>Save System Settings</span>
-            </button>
+            <MagneticButton>
+              <button
+                type="submit"
+                className="px-6 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-bold text-xs sm:text-sm shadow-sm transition flex items-center gap-2 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>Save System Settings</span>
+              </button>
+            </MagneticButton>
           </div>
         </form>
       </div>

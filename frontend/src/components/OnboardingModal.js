@@ -88,7 +88,7 @@ const ONBOARDING_SLIDES = [
           {/* Blocked straight path (red dashed) */}
           <path d="M 40 75 L 260 75" stroke="#DC2626" strokeWidth="2" strokeDasharray="4 4" opacity="0.6" />
 
-          {/* Safe bypass path (teal/saffron solid) */}
+          {/* Safe bypass path (teal solid) */}
           <motion.path
             d="M 40 75 Q 150 15 260 75"
             fill="none"
@@ -211,8 +211,6 @@ export default function OnboardingModal({ forceOpen = false, onClose }) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [touchStart, setTouchStart] = useState(null);
-  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -257,26 +255,20 @@ export default function OnboardingModal({ forceOpen = false, onClose }) {
     }
   };
 
-  // Touch swipe support for mobile
-  const handleTouchStart = (e) => {
-    setTouchEnd(null);
-    setTouchStart(e.targetTouches[0].clientX);
-  };
+  const handleDragEnd = (e, { offset, velocity }) => {
+    const swipeThreshold = 50;
+    const isFastSwipe = Math.abs(velocity.x) > 400;
 
-  const handleTouchMove = (e) => {
-    setTouchEnd(e.targetTouches[0].clientX);
-  };
-
-  const handleTouchEnd = () => {
-    if (!touchStart || !touchEnd) return;
-    const distance = touchStart - touchEnd;
-    const isLeftSwipe = distance > 50;
-    const isRightSwipe = distance < -50;
-
-    if (isLeftSwipe) {
-      handleNext();
-    } else if (isRightSwipe) {
-      handlePrev();
+    if (offset.x < -swipeThreshold || (isFastSwipe && velocity.x < 0)) {
+      if (currentSlide < ONBOARDING_SLIDES.length - 1) {
+        setDirection(1);
+        setCurrentSlide((prev) => prev + 1);
+      }
+    } else if (offset.x > swipeThreshold || (isFastSwipe && velocity.x > 0)) {
+      if (currentSlide > 0) {
+        setDirection(-1);
+        setCurrentSlide((prev) => prev - 1);
+      }
     }
   };
 
@@ -286,12 +278,7 @@ export default function OnboardingModal({ forceOpen = false, onClose }) {
   const isLast = currentSlide === ONBOARDING_SLIDES.length - 1;
 
   return (
-    <div
-      className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
+    <div className="fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
       <div className="relative w-full max-w-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-3xl p-6 sm:p-7 shadow-2xl text-[#0F172A] dark:text-[#F8FAFC] space-y-5 overflow-hidden">
         {/* Top Controls: Slide count & Skip */}
         <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
@@ -310,8 +297,8 @@ export default function OnboardingModal({ forceOpen = false, onClose }) {
           </button>
         </div>
 
-        {/* Animated Slide Content */}
-        <div className="min-h-[340px] flex flex-col justify-between">
+        {/* Animated Drag-Enabled Slide Content */}
+        <div className="min-h-[340px] flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
               key={currentSlide}
@@ -320,11 +307,15 @@ export default function OnboardingModal({ forceOpen = false, onClose }) {
               initial="enter"
               animate="center"
               exit="exit"
+              drag="x"
+              dragConstraints={{ left: 0, right: 0 }}
+              dragElastic={0.25}
+              onDragEnd={handleDragEnd}
               transition={{
-                x: { type: "spring", stiffness: 300, damping: 30 },
+                x: { type: "spring", stiffness: 350, damping: 32 },
                 opacity: { duration: 0.2 },
               }}
-              className="space-y-4"
+              className="space-y-4 touch-pan-y select-none"
             >
               {/* Visual Graphic */}
               <div>{slide.renderGraphic()}</div>
