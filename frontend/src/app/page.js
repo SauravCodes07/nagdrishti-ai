@@ -107,7 +107,7 @@ export default function PublicLandingPage() {
         search.includes("error_description=") ||
         hash.includes("access_token=")
       ) {
-        window.location.replace(`https://nagdrishti-ai.vercel.app/auth/callback${search}${hash}`);
+        window.location.replace(`/auth/callback${search}${hash}`);
       }
     }
   }, []);
