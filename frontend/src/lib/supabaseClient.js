@@ -26,7 +26,7 @@ export const getSiteUrl = () => {
   if (typeof window !== "undefined") {
     const origin = window.location.origin;
     const hostname = window.location.hostname;
-    // Local development
+    // Local development strictly when running on localhost or 127.0.0.1
     if (hostname === "localhost" || hostname === "127.0.0.1") {
       return origin.replace(/\/+$/, "");
     }
@@ -38,7 +38,7 @@ export const getSiteUrl = () => {
 
   // 2. Explicit environment variable check
   const envUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (envUrl) {
+  if (envUrl && !envUrl.includes("localhost")) {
     return envUrl.replace(/\/+$/, "");
   }
 
@@ -88,6 +88,8 @@ export async function signInWithGoogleViaSupabase({
   const callbackUrl = `${siteUrl}/auth/callback?returnUrl=${encodeURIComponent(
     sanitizedReturnUrl
   )}&role=${requireAdmin ? "admin" : "citizen"}`;
+
+  console.log("[OAuth] redirectTo:", callbackUrl);
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
