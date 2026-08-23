@@ -22,9 +22,33 @@ import {
   StaggerItem,
 } from "../../components/motion";
 
+const DEFAULT_ALERTS = [
+  {
+    id: 1,
+    zone_name: "Sitabuldi Interchange & Wardha Road Corridor",
+    severity: "Severe",
+    message: "Critical waterlogging detected at Sitabuldi flyover underpass (82cm). Municipal drainage pump units DISPATCHED. Divert via CA Road.",
+    created_at: new Date().toISOString(),
+  },
+  {
+    id: 2,
+    zone_name: "Gandhibagh & Itwari Market Basin",
+    severity: "High",
+    message: "Drainage overflow alert (54cm). Traffic restricted for heavy transport. Use elevated ring road.",
+    created_at: new Date(Date.now() - 3600000).toISOString(),
+  },
+  {
+    id: 3,
+    zone_name: "Lakadganj Industrial Drainage Arterial",
+    severity: "Severe",
+    message: "Flash flood advisory issued. Water accumulation at 72cm. Emergency response squad en route.",
+    created_at: new Date(Date.now() - 7200000).toISOString(),
+  },
+];
+
 export default function AlertsPage() {
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState(DEFAULT_ALERTS);
+  const [loading, setLoading] = useState(false);
   const [filterSeverity, setFilterSeverity] = useState("all");
   const [copiedId, setCopiedId] = useState(null);
 
@@ -32,7 +56,7 @@ export default function AlertsPage() {
     try {
       setLoading(true);
       const data = await getBroadcastAlerts();
-      if (Array.isArray(data)) {
+      if (Array.isArray(data) && data.length > 0) {
         setAlerts(data);
       }
     } catch (err) {

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
-import { getAdminAnalytics, getRiskZones, updateDispatchStatus } from "../../../lib/api";
+import { getAdminAnalytics, getRiskZones, updateDispatchStatus, DEFAULT_RISK_ZONES } from "../../../lib/api";
 import {
   HoverLiftCard,
   RiskPulse,
@@ -35,9 +35,9 @@ const MapComponent = dynamic(() => import("../../../components/MapComponent"), {
 
 export default function AdminZonesPage() {
   const [analytics, setAnalytics] = useState(null);
-  const [zones, setZones] = useState([]);
-  const [selectedZoneId, setSelectedZoneId] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [zones, setZones] = useState(DEFAULT_RISK_ZONES);
+  const [selectedZoneId, setSelectedZoneId] = useState(DEFAULT_RISK_ZONES[0]?.id || 1);
+  const [loading, setLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState(null);
 
   const fetchData = async () => {

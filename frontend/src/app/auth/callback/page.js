@@ -67,10 +67,27 @@ function AuthCallbackContent() {
           if (!activeSession || !activeSession.user) return;
           const user = activeSession.user;
           const userRole = role === "admin" ? "admin" : "citizen";
+          const userName =
+            user.user_metadata?.full_name ||
+            user.user_metadata?.name ||
+            user.email?.split("@")[0] ||
+            (userRole === "admin" ? "Officer" : "Citizen");
+
+          const userObj = {
+            id: user.id,
+            username: user.email?.split("@")[0] || user.id,
+            email: user.email || "",
+            name: userName,
+            picture: user.user_metadata?.avatar_url || user.user_metadata?.picture || "",
+            is_staff: userRole === "admin",
+            is_superuser: userRole === "admin",
+            role: userRole,
+          };
 
           if (typeof window !== "undefined") {
             const tokenValue = activeSession.access_token || `sb_${user.id}`;
             localStorage.setItem("nagdrishti_token", tokenValue);
+            localStorage.setItem("nagdrishti_user", JSON.stringify(userObj));
             if (userRole === "admin") {
               localStorage.setItem("admin_token", tokenValue);
             }
@@ -80,7 +97,7 @@ function AuthCallbackContent() {
             setStatus("success");
             setTimeout(() => {
               router.replace(returnUrl);
-            }, 500);
+            }, 250);
           }
         };
 
@@ -104,7 +121,7 @@ function AuthCallbackContent() {
             setStatus("error");
             setErrorMessage("Authentication timed out or could not be completed. Please try signing in again.");
           }
-        }, 8000);
+        }, 5000);
 
         return () => {
           authListener?.subscription?.unsubscribe();
@@ -124,7 +141,7 @@ function AuthCallbackContent() {
     return () => {
       isMounted = false;
     };
-  }, [router, returnUrl, role, searchParams, status]);
+  }, [router, returnUrl, role, searchParams]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center p-4 text-[#0F172A] dark:text-[#F8FAFC]">

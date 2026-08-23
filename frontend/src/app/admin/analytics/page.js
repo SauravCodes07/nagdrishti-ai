@@ -36,16 +36,42 @@ import {
   AnimatedCounter,
 } from "../../../components/motion";
 
+const DEFAULT_ANALYTICS = {
+  risk_trends: [
+    { date: "Day -6", Dharampeth: 25, Lakadganj: 40, Gandhibagh: 50, Mahal: 30, "Nehru Nagar": 35, Sitabuldi: 60 },
+    { date: "Day -5", Dharampeth: 28, Lakadganj: 45, Gandhibagh: 55, Mahal: 32, "Nehru Nagar": 40, Sitabuldi: 68 },
+    { date: "Day -4", Dharampeth: 32, Lakadganj: 52, Gandhibagh: 60, Mahal: 38, "Nehru Nagar": 48, Sitabuldi: 74 },
+    { date: "Day -3", Dharampeth: 38, Lakadganj: 65, Gandhibagh: 64, Mahal: 42, "Nehru Nagar": 54, Sitabuldi: 80 },
+    { date: "Day -2", Dharampeth: 45, Lakadganj: 72, Gandhibagh: 66, Mahal: 46, "Nehru Nagar": 58, Sitabuldi: 84 },
+    { date: "Yesterday", Dharampeth: 40, Lakadganj: 76, Gandhibagh: 67, Mahal: 44, "Nehru Nagar": 60, Sitabuldi: 86 },
+    { date: "Today", Dharampeth: 42, Lakadganj: 79, Gandhibagh: 68, Mahal: 45, "Nehru Nagar": 62, Sitabuldi: 88 },
+  ],
+  category_distribution: [
+    { name: "Waterlogging", count: 48 },
+    { name: "Severe Pothole", count: 26 },
+    { name: "Drain Overflow", count: 34 },
+    { name: "Road Blockage", count: 14 },
+  ],
+  report_volume: [
+    { time: "00:00", reports: 2 },
+    { time: "04:00", reports: 1 },
+    { time: "08:00", reports: 12 },
+    { time: "12:00", reports: 28 },
+    { time: "16:00", reports: 34 },
+    { time: "20:00", reports: 18 },
+  ],
+};
+
 export default function AdminAnalyticsPage() {
   const { theme } = useTheme();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState(DEFAULT_ANALYTICS);
+  const [loading, setLoading] = useState(false);
 
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
       const res = await getAdminAnalytics();
-      if (res) setData(res);
+      if (res && res.risk_trends) setData(res);
     } catch (err) {
       console.error("Failed to fetch analytics:", err);
     } finally {

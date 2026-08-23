@@ -1,6 +1,7 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
 import { ThemeProvider } from "../components/ThemeProvider";
+import { AuthProvider } from "../context/AuthContext";
 import CustomCursor from "../components/CustomCursor";
 
 const inter = Inter({
@@ -11,7 +12,7 @@ const inter = Inter({
 });
 
 export const metadata = {
-  metadataBase: new URL("https://nagdrishti.netlify.app"),
+  metadataBase: new URL("https://nagdrishti-ai.vercel.app"),
   title: "NagDrishti AI — Nagpur Urban Safety & Crisis Management",
   description:
     "AI-powered predictive civic safety platform for real-time rainfall waterlogging detection, emergency response coordination, and safe road navigation across Nagpur.",
@@ -75,8 +76,10 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.className} min-h-full flex flex-col bg-[#F8FAFC] dark:bg-[#0B1220] text-[#0F172A] dark:text-[#F8FAFC] antialiased selection:bg-[#0F766E] selection:text-white dark:selection:bg-[#14B8A6] dark:selection:text-[#042F2E]`}>
         <ThemeProvider>
-          <CustomCursor />
-          {children}
+          <AuthProvider>
+            <CustomCursor />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

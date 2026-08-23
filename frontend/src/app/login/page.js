@@ -19,8 +19,9 @@ import {
   KeyRound,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { loginUser, signupCitizen, getCurrentUser } from "../../lib/api";
+import { loginUser, signupCitizen } from "../../lib/api";
 import { useTheme } from "../../components/ThemeProvider";
+import { useAuth } from "../../context/AuthContext";
 import GoogleSignInButton from "../../components/GoogleSignInButton";
 import { MagneticButton } from "../../components/motion";
 
@@ -30,6 +31,7 @@ function LoginContent() {
   const returnUrl = searchParams.get("returnUrl") || "/dashboard";
 
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, saveSession } = useAuth();
   const [activeTab, setActiveTab] = useState("signin"); // "signin" | "signup"
 
   // Form Fields
@@ -44,14 +46,10 @@ function LoginContent() {
 
   // Check if already logged in
   useEffect(() => {
-    getCurrentUser()
-      .then((data) => {
-        if (data && data.authenticated) {
-          router.push(returnUrl);
-        }
-      })
-      .catch(() => {});
-  }, [router, returnUrl]);
+    if (isAuthenticated) {
+      router.replace(returnUrl);
+    }
+  }, [isAuthenticated, router, returnUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -61,16 +59,22 @@ function LoginContent() {
 
     try {
       if (activeTab === "signup") {
-        await signupCitizen(username, password, email, name);
+        const res = await signupCitizen(username, password, email, name);
+        if (res?.user && res?.token) {
+          saveSession(res.user, res.token);
+        }
         setSuccessMsg("Account registered successfully! Redirecting...");
       } else {
-        await loginUser(username, password, false);
+        const res = await loginUser(username, password, false);
+        if (res?.user && res?.token) {
+          saveSession(res.user, res.token);
+        }
         setSuccessMsg("Welcome back! Loading your citizen dashboard...");
       }
 
       setTimeout(() => {
-        router.push(returnUrl);
-      }, 500);
+        router.replace(returnUrl);
+      }, 300);
     } catch (err) {
       console.error("Auth failed:", err);
       setErrorMsg(

@@ -36,15 +36,15 @@ const MapComponent = dynamic(() => import("../../components/MapComponent"), {
   ),
 });
 
-import { getRiskZones, getReports, getBroadcastAlerts, getWeather } from "../../lib/api";
+import { getRiskZones, getReports, getBroadcastAlerts, getWeather, DEFAULT_RISK_ZONES, DEFAULT_WEATHER } from "../../lib/api";
 
 export default function AppDashboardPage() {
-  const [loading, setLoading] = useState(true);
-  const [zones, setZones] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [zones, setZones] = useState(DEFAULT_RISK_ZONES);
   const [reports, setReports] = useState([]);
   const [alerts, setAlerts] = useState([]);
-  const [weather, setWeather] = useState({ condition: "Showers", rainfall_intensity_mm: 18.5 });
-  const [selectedZone, setSelectedZone] = useState(null);
+  const [weather, setWeather] = useState(DEFAULT_WEATHER);
+  const [selectedZone, setSelectedZone] = useState(() => DEFAULT_RISK_ZONES[1] || DEFAULT_RISK_ZONES[0]);
 
   const loadData = async () => {
     try {

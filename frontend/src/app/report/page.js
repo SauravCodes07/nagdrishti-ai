@@ -22,6 +22,9 @@ import {
   AnimatedCounter,
 } from "../../components/motion";
 
+import LocationSearchInput from "../../components/LocationSearchInput";
+import { getCurrentGpsLocation, getNmcWardInfo } from "../../lib/geoService";
+
 const HAZARD_CATEGORIES = [
   { id: "waterlogging", label: "Waterlogging", icon: "🌊" },
   { id: "pothole", label: "Severe Pothole", icon: "🕳️" },
@@ -30,6 +33,11 @@ const HAZARD_CATEGORIES = [
 ];
 
 export default function ReportHazardPage() {
+  const [selectedLocation, setSelectedLocation] = useState({
+    name: "Dharampeth Square",
+    lat: 21.1472,
+    lng: 79.0664,
+  });
   const [lat, setLat] = useState(21.1472);
   const [lng, setLng] = useState(79.0664);
   const [description, setDescription] = useState("");
@@ -51,24 +59,12 @@ export default function ReportHazardPage() {
     }
   };
 
-  const handleLocateMe = () => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
+  const handleLocationChange = (loc) => {
+    if (loc && loc.lat && loc.lng) {
+      setLat(loc.lat);
+      setLng(loc.lng);
+      setSelectedLocation(loc);
     }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLat(parseFloat(pos.coords.latitude.toFixed(5)));
-        setLng(parseFloat(pos.coords.longitude.toFixed(5)));
-        setLocating(false);
-      },
-      (err) => {
-        alert("Could not detect location: " + err.message);
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   };
 
   const handleSubmit = async (e) => {
@@ -149,47 +145,19 @@ export default function ReportHazardPage() {
                 </div>
               </div>
 
-              {/* GPS Location Fields */}
+              {/* Location Picker */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="text-xs font-medium uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
-                    2. Incident Coordinates (GPS)
-                  </label>
-                  <button
-                    type="button"
-                    onClick={handleLocateMe}
-                    disabled={locating}
-                    className="text-xs font-medium text-[#0F766E] dark:text-[#14B8A6] hover:underline flex items-center gap-1 cursor-pointer"
-                  >
-                    <LocateFixed className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
-                    <span>{locating ? "Detecting GPS..." : "Auto-Detect My GPS"}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Latitude</span>
-                    <input
-                      type="number"
-                      step="0.00001"
-                      value={lat}
-                      onChange={(e) => setLat(parseFloat(e.target.value))}
-                      className="w-full bg-transparent text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC] font-mono focus:outline-none mt-0.5"
-                      required
-                    />
-                  </div>
-                  <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
-                    <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8] font-medium uppercase block">Longitude</span>
-                    <input
-                      type="number"
-                      step="0.00001"
-                      value={lng}
-                      onChange={(e) => setLng(parseFloat(e.target.value))}
-                      className="w-full bg-transparent text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC] font-mono focus:outline-none mt-0.5"
-                      required
-                    />
-                  </div>
-                </div>
+                <label className="text-xs font-medium uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] block">
+                  2. Incident Location & Ward
+                </label>
+                <LocationSearchInput
+                  label="Search Nagpur Location or Use GPS"
+                  value={selectedLocation}
+                  onChange={handleLocationChange}
+                  allowCurrentLocation={true}
+                  placeholder="Search landmark, ward, or street in Nagpur..."
+                  dotColor="teal"
+                />
               </div>
 
               {/* Photo Upload Input with AI Scanning Overlay */}

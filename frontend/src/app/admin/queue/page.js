@@ -12,9 +12,17 @@ import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getPriorityQueue, updateDispatchStatus } from "../../../lib/api";
 import { RiskPulse, HoverLiftCard } from "../../../components/motion";
 
+const DEFAULT_PRIORITY_QUEUE = [
+  { zone_id: 2, zone_name: "Sitabuldi Interchange", risk_category: "Severe", risk_score: 88.4, rainfall_mm: 36.5, drainage_capacity: 0.35, pending_reports_count: 5, dispatch_status: "Dispatched" },
+  { zone_id: 6, zone_name: "Lakadganj Industrial", risk_category: "Severe", risk_score: 79.2, rainfall_mm: 31.0, drainage_capacity: 0.40, pending_reports_count: 4, dispatch_status: "Dispatched" },
+  { zone_id: 3, zone_name: "Gandhibagh Basin", risk_category: "High", risk_score: 68.0, rainfall_mm: 24.0, drainage_capacity: 0.45, pending_reports_count: 3, dispatch_status: "Dispatched" },
+  { zone_id: 5, zone_name: "Nehru Nagar Arterial", risk_category: "High", risk_score: 62.5, rainfall_mm: 22.5, drainage_capacity: 0.50, pending_reports_count: 2, dispatch_status: "Unassigned" },
+  { zone_id: 9, zone_name: "Satranjipura Corridor", risk_category: "Medium", risk_score: 45.0, rainfall_mm: 16.5, drainage_capacity: 0.60, pending_reports_count: 1, dispatch_status: "Unassigned" },
+];
+
 export default function AdminPriorityQueuePage() {
-  const [queue, setQueue] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [queue, setQueue] = useState(DEFAULT_PRIORITY_QUEUE);
+  const [loading, setLoading] = useState(false);
   const [filterCat, setFilterCat] = useState("All");
   const [updatingId, setUpdatingId] = useState(null);
 
@@ -22,7 +30,7 @@ export default function AdminPriorityQueuePage() {
     try {
       setLoading(true);
       const data = await getPriorityQueue();
-      if (data?.priority_queue) {
+      if (data?.priority_queue && Array.isArray(data.priority_queue)) {
         setQueue(data.priority_queue);
       }
     } catch (err) {

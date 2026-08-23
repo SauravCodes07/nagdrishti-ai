@@ -31,7 +31,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useTheme } from "../ThemeProvider";
-import { getWeather, getRiskZones, getCurrentUser, logoutUser } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
+import { getWeather, getRiskZones } from "../../lib/api";
 import PageTransition from "../motion/PageTransition";
 import RiskPulse from "../motion/RiskPulse";
 
@@ -39,15 +40,12 @@ export default function CitizenLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { user, isAuthenticated, authChecking, logout } = useAuth();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
   const [sosModalOpen, setSosModalOpen] = useState(false);
   const [installModalOpen, setInstallModalOpen] = useState(false);
-  
-  // Auth state
-  const [user, setUser] = useState(null);
-  const [authChecking, setAuthChecking] = useState(true);
 
   // Weather & Risk quick ticker
   const [weather, setWeather] = useState({ condition: "Live Doppler", rainfall_intensity_mm: 0 });
@@ -57,32 +55,16 @@ export default function CitizenLayout({ children }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
+  // Fast unauthenticated redirection
+  useEffect(() => {
+    if (!authChecking && !isAuthenticated) {
+      router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
+    }
+  }, [authChecking, isAuthenticated, pathname, router]);
+
+  // Non-critical background telemetry ticker (runs once on mount, never blocks navigation)
   useEffect(() => {
     let isMounted = true;
-
-    getCurrentUser()
-      .then((data) => {
-        if (!isMounted) return;
-        if (data && data.authenticated && data.user) {
-          setUser(data.user);
-          setAuthChecking(false);
-        } else {
-          setUser(null);
-          router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
-        }
-      })
-      .catch(() => {
-        if (!isMounted) return;
-        setUser(null);
-        router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
-      });
-
-    const handleSessionExpired = () => {
-      setUser(null);
-      router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
-    };
-
-    window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
 
     getWeather()
       .then((data) => {
@@ -115,14 +97,12 @@ export default function CitizenLayout({ children }) {
     return () => {
       isMounted = false;
       window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-      window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
     };
-  }, [pathname, router]);
+  }, []);
 
   const handleLogout = async () => {
     try {
-      await logoutUser();
-      setUser(null);
+      await logout();
       router.replace("/login");
     } catch (err) {
       console.warn("Logout error:", err);
@@ -174,7 +154,8 @@ export default function CitizenLayout({ children }) {
     return "NagDrishti AI";
   };
 
-  if (authChecking) {
+  // Only show brief initial loader if we have zero cached session and are verifying for the first time
+  if (authChecking && !isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center text-[#0F172A] dark:text-[#F8FAFC] space-y-4 p-4 antialiased">
         <div className="w-12 h-12 rounded-xl bg-[#0F172A] p-1.5 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shadow-sm animate-pulse">
@@ -190,7 +171,7 @@ export default function CitizenLayout({ children }) {
         <div className="text-center space-y-1">
           <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#0F766E] dark:text-[#14B8A6]">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span>Verifying Authenticated Session...</span>
+            <span>Connecting Session...</span>
           </div>
           <p className="text-[11px] text-[#64748B] dark:text-[#94A3B8]">
             Nagpur Urban Crisis Response System

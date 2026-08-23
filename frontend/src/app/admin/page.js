@@ -38,14 +38,16 @@ import {
   getReports,
   getWeather,
   updateDispatchStatus,
+  DEFAULT_RISK_ZONES,
+  DEFAULT_WEATHER,
 } from "../../lib/api";
 
 export default function AdminCommandCenterPage() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [queue, setQueue] = useState([]);
-  const [zones, setZones] = useState([]);
+  const [zones, setZones] = useState(DEFAULT_RISK_ZONES);
   const [reports, setReports] = useState([]);
-  const [weather, setWeather] = useState({ condition: "Showers", rainfall_intensity_mm: 18.5 });
+  const [weather, setWeather] = useState(DEFAULT_WEATHER);
 
   const loadData = async () => {
     try {

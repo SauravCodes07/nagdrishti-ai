@@ -23,9 +23,16 @@ import {
   StaggerItem,
 } from "../../../components/motion";
 
+const DEFAULT_ADMIN_USERS = [
+  { id: 1, username: "control_officer", name: "Saurav (NMC Command)", email: "control@nagpur.gov.in", role: "admin", is_staff: true, created_at: "2026-08-20T00:00:00Z", reports_count: 14 },
+  { id: 2, username: "zone2_field_lead", name: "R. Sharma (Zone 2 QRT)", email: "sharma.qrt@nagpur.gov.in", role: "admin", is_staff: true, created_at: "2026-08-21T00:00:00Z", reports_count: 22 },
+  { id: 3, username: "nagpur_citizen_1", name: "Priya Deshmukh", email: "priya.d@gmail.com", role: "citizen", is_staff: false, created_at: "2026-08-22T00:00:00Z", reports_count: 6 },
+  { id: 4, username: "nagpur_citizen_2", name: "Amit Wankhede", email: "amit.w@gmail.com", role: "citizen", is_staff: false, created_at: "2026-08-23T00:00:00Z", reports_count: 3 },
+];
+
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState(DEFAULT_ADMIN_USERS);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
 

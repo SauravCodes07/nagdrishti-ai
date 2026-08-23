@@ -34,11 +34,11 @@ OSRM_BASE_URL = os.environ.get("OSRM_API_URL", "https://router.project-osrm.org"
 OSRM_FALLBACK_URL = "https://routing.openstreetmap.de/routed-car"
 OSRM_TIMEOUT_SECONDS = 8
 
-# Nagpur Bounding Box Coordinates (with margin)
-NAGPUR_SOUTH = 20.80
-NAGPUR_NORTH = 21.40
-NAGPUR_WEST = 78.75
-NAGPUR_EAST = 79.40
+# Extended Nagpur Service Region Coordinates (covering all suburbs, towns & arterial corridors)
+NAGPUR_SOUTH = 20.00
+NAGPUR_NORTH = 22.50
+NAGPUR_WEST = 77.50
+NAGPUR_EAST = 81.00
 
 # Local Graph Data Paths (Used as resilient offline fallback)
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,11 +53,11 @@ _CACHED_ROAD_GRAPH: Optional[nx.MultiDiGraph] = None
 
 
 def validate_nagpur_coordinates(lat: float, lng: float) -> Tuple[bool, str]:
-    """Validates that a given lat/lng coordinate is within the supported Nagpur municipal bounds."""
+    """Validates that a given lat/lng coordinate is within the supported extended Nagpur service region."""
     if not (NAGPUR_SOUTH <= lat <= NAGPUR_NORTH):
-        return False, f"Latitude {lat:.4f} is outside the supported Nagpur municipal area ({NAGPUR_SOUTH:.2f}°N to {NAGPUR_NORTH:.2f}°N)."
+        return False, f"Latitude {lat:.4f} is outside the supported service area ({NAGPUR_SOUTH:.2f}°N to {NAGPUR_NORTH:.2f}°N)."
     if not (NAGPUR_WEST <= lng <= NAGPUR_EAST):
-        return False, f"Longitude {lng:.4f} is outside the supported Nagpur municipal area ({NAGPUR_WEST:.2f}°E to {NAGPUR_EAST:.2f}°E)."
+        return False, f"Longitude {lng:.4f} is outside the supported service area ({NAGPUR_WEST:.2f}°E to {NAGPUR_EAST:.2f}°E)."
     return True, ""
 
 

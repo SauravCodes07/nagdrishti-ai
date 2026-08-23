@@ -23,7 +23,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
-import { getCurrentUser, logoutUser, getReports } from "../../lib/api";
+import { useAuth } from "../../context/AuthContext";
+import { getReports } from "../../lib/api";
 import { useTheme } from "../../components/ThemeProvider";
 import {
   ScrollReveal,
@@ -81,26 +82,28 @@ const SAFETY_TIPS = [
 export default function CitizenProfilePage() {
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const [user, setUser] = useState(null);
+  const { user, logout } = useAuth();
   const [userReports, setUserReports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    Promise.allSettled([getCurrentUser(), getReports()])
-      .then(([userRes, reportsRes]) => {
-        if (userRes.status === "fulfilled" && userRes.value?.user) {
-          setUser(userRes.value.user);
-        }
-        if (reportsRes.status === "fulfilled" && Array.isArray(reportsRes.value)) {
-          setUserReports(reportsRes.value.slice(0, 5));
+    let isMounted = true;
+    getReports()
+      .then((data) => {
+        if (isMounted && Array.isArray(data)) {
+          setUserReports(data.slice(0, 5));
         }
       })
-      .finally(() => setLoading(false));
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleLogout = async () => {
     try {
-      await logoutUser();
+      await logout();
       router.push("/login");
     } catch (err) {
       console.warn("Logout error:", err);

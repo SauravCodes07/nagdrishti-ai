@@ -18,6 +18,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { loginAdmin } from "../../../lib/api";
 import { useTheme } from "../../../components/ThemeProvider";
+import { useAuth } from "../../../context/AuthContext";
 import GoogleSignInButton from "../../../components/GoogleSignInButton";
 import { MagneticButton } from "../../../components/motion";
 
@@ -26,10 +27,18 @@ function AdminLoginContent() {
   const searchParams = useSearchParams();
   const returnUrl = searchParams.get("returnUrl") || "/admin";
   const { theme, toggleTheme } = useTheme();
+  const { isAuthenticated, isAdmin, saveSession } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+
+  // Check if already authenticated as officer
+  useEffect(() => {
+    if (isAuthenticated && isAdmin) {
+      router.replace(returnUrl);
+    }
+  }, [isAuthenticated, isAdmin, router, returnUrl]);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -37,8 +46,11 @@ function AdminLoginContent() {
     setLoading(true);
 
     try {
-      await loginAdmin(username, password);
-      router.push(returnUrl);
+      const res = await loginAdmin(username, password);
+      if (res?.user && res?.token) {
+        saveSession(res.user, res.token);
+      }
+      router.replace(returnUrl);
     } catch (err) {
       console.error("Login failed:", err);
       setErrorMsg(

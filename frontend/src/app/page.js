@@ -57,6 +57,8 @@ import {
   getReports,
   getBroadcastAlerts,
   getWeather,
+  DEFAULT_RISK_ZONES,
+  DEFAULT_WEATHER,
 } from "../lib/api";
 
 const NAGPUR_HELPLINES = [
@@ -82,36 +84,23 @@ const NAGPUR_HELPLINES = [
 
 export default function PublicLandingPage() {
   const { theme, toggleTheme } = useTheme();
-  const [zones, setZones] = useState([]);
+  const [zones, setZones] = useState(DEFAULT_RISK_ZONES);
   const [reports, setReports] = useState([]);
   const [alerts, setAlerts] = useState([]);
-  const [weather, setWeather] = useState({ condition: "Showers", rainfall_intensity_mm: 18.5, temperature: 28 });
-  const [selectedZone, setSelectedZone] = useState(null);
+  const [weather, setWeather] = useState(DEFAULT_WEATHER);
+  const [selectedZone, setSelectedZone] = useState(() => DEFAULT_RISK_ZONES[1] || DEFAULT_RISK_ZONES[0]);
   const [heroMapLayer, setHeroMapLayer] = useState("satellite");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [sosModalOpen, setSosModalOpen] = useState(false);
 
-  // Interactive Mouse Motion States
-  const heroRef = useRef(null);
-  const [mousePos, setMousePos] = useState({ x: 500, y: 300 });
-  const [hudTilt, setHudTilt] = useState({ rotateX: 0, rotateY: 0 });
-  const [cursorGps, setCursorGps] = useState({ lat: "21.1458° N", lng: "79.0882° E", elevation: "312m" });
+  // Stable Geographic Coordinate State (Default: Nagpur Zero Mile Center, auto-updated if GPS permitted)
+  const [gpsCoords, setGpsCoords] = useState({
+    lat: "21.1458° N",
+    lng: "79.0882° E",
+    elevation: "312m",
+  });
 
   // Intercept any OAuth callback parameters reaching root and auto-forward to /auth/callback
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const search = window.location.search;
-      const hash = window.location.hash;
-      if (
-        search.includes("code=") ||
-        search.includes("error_description=") ||
-        hash.includes("access_token=")
-      ) {
-        window.location.replace(`/auth/callback${search}${hash}`);
-      }
-    }
-  }, []);
-
   useEffect(() => {
     async function loadLandingData() {
       try {
@@ -147,36 +136,37 @@ export default function PublicLandingPage() {
     }
 
     loadLandingData();
+
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      if (
+        search.includes("code=") ||
+        search.includes("error_description=") ||
+        hash.includes("access_token=")
+      ) {
+        window.location.replace(`/auth/callback${search}${hash}`);
+      }
+
+      // Check device GPS once on mount if available
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const currentLat = pos.coords.latitude.toFixed(4);
+            const currentLng = pos.coords.longitude.toFixed(4);
+            const elev = pos.coords.altitude ? `${Math.round(pos.coords.altitude)}m` : "312m";
+            setGpsCoords({
+              lat: `${currentLat}° N`,
+              lng: `${currentLng}° E`,
+              elevation: elev,
+            });
+          },
+          () => {},
+          { timeout: 5000, maximumAge: 60000 }
+        );
+      }
+    }
   }, []);
-
-  // Handle Mouse Motion over the Hero Section
-  const handleHeroMouseMove = (e) => {
-    if (!heroRef.current) return;
-    const rect = heroRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setMousePos({ x, y });
-
-    // Calculate subtle 3D card tilt (-5deg to +5deg)
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-    const rotX = ((y - centerY) / centerY) * -4.5;
-    const rotY = ((x - centerX) / centerX) * 4.5;
-    setHudTilt({ rotateX: rotX.toFixed(2), rotateY: rotY.toFixed(2) });
-
-    // Approximate real-time GPS coordinates for Nagpur basin
-    const latOffset = (y / rect.height - 0.5) * -0.06;
-    const lngOffset = (x / rect.width - 0.5) * 0.08;
-    const currentLat = (21.1458 + latOffset).toFixed(4);
-    const currentLng = (79.0882 + lngOffset).toFixed(4);
-    const elev = Math.round(310 + (Math.sin(x * 0.01) + Math.cos(y * 0.01)) * 14);
-
-    setCursorGps({
-      lat: `${currentLat}° N`,
-      lng: `${currentLng}° E`,
-      elevation: `${elev}m`,
-    });
-  };
 
   const severeZones = zones.filter((z) => (z.risk_category === "Severe" || (z.latest_risk_score ?? z.risk_score) >= 75));
   const highZones = zones.filter((z) => (z.risk_category === "High" || ((z.latest_risk_score ?? z.risk_score) >= 50 && (z.latest_risk_score ?? z.risk_score) < 75)));
@@ -296,28 +286,19 @@ export default function PublicLandingPage() {
       {/* SECTION 1: RESPONSIVE MOTION-DESIGNED MAP BACKGROUND HERO */}
       {/* ========================================================================= */}
       <section
-        ref={heroRef}
-        onMouseMove={handleHeroMouseMove}
         className="relative min-h-[640px] lg:min-h-[720px] flex items-center overflow-hidden border-b border-[#E2E8F0] dark:border-[#243244]"
       >
-        {/* Responsive Live Map Background Layer with subtle parallax */}
-        <motion.div
-          className="absolute inset-0 z-0 scale-105 pointer-events-auto"
-          style={{
-            x: (mousePos.x - 500) * 0.015,
-            y: (mousePos.y - 300) * 0.015,
-          }}
-          transition={{ type: "spring", stiffness: 100, damping: 30 }}
-        >
+        {/* Responsive Live Map Background Layer */}
+        <div className="absolute inset-0 z-0 scale-105 pointer-events-auto">
           <MapComponent
             zones={zones}
             reports={reports}
             isHeroBackground={true}
             initialLayer={heroMapLayer}
           />
-        </motion.div>
+        </div>
 
-        {/* Ambient Floating Water & Radar Glyphs drifting in loops */}
+        {/* Ambient Floating Water & Radar Glyphs */}
         <motion.div
           animate={{ y: [0, -15, 0], rotate: [0, 8, 0] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
@@ -330,46 +311,37 @@ export default function PublicLandingPage() {
         />
 
         {/* Ambient Radar Sweep Effect over the Map */}
-        <div className="radar-sweep-beam z-5 opacity-40 dark:opacity-60" />
+        <div className="radar-sweep-beam z-5 opacity-20 dark:opacity-60" />
 
-        {/* Interactive Mouse Spotlight / Crosshair Beam */}
-        <div
-          className="pointer-events-none absolute z-10 w-96 h-96 rounded-full blur-3xl opacity-40 dark:opacity-50 transition-transform duration-75"
-          style={{
-            background: "radial-gradient(circle, rgba(20,184,166,0.35) 0%, rgba(15,118,110,0.1) 50%, transparent 80%)",
-            transform: `translate3d(${mousePos.x - 192}px, ${mousePos.y - 192}px, 0)`,
-          }}
-        />
-
-        {/* Ambient Dark Gradient Overlays for Superb Text Contrast */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#0B1220]/95 via-[#0B1220]/85 to-[#0B1220]/50 dark:from-[#0B1220]/95 dark:via-[#0B1220]/88 dark:to-[#0B1220]/55" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#0B1220] via-transparent to-[#0B1220]/50" />
+        {/* Theme-Aware Gradient Overlays for Readability & High Contrast in both Light and Dark */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/95 via-[#FFFFFF]/85 to-[#FFFFFF]/50 dark:from-[#0B1220]/95 dark:via-[#0B1220]/88 dark:to-[#0B1220]/55" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/90 via-transparent to-[#FFFFFF]/40 dark:from-[#0B1220] dark:via-transparent dark:to-[#0B1220]/50" />
 
         {/* Interactive Content Container */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             {/* Left Hero Content */}
             <div className="lg:col-span-7 space-y-6 text-left">
-              {/* Status Pill & Dynamic GPS Inspector */}
+              {/* Status Pill & Dynamic Map Imagery Toggle */}
               <ScrollReveal direction="down" delay={0.05} className="flex flex-wrap items-center gap-2">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#0F766E]/25 backdrop-blur-md border border-[#14B8A6]/40 text-xs font-semibold text-[#5EEAD4] shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-[#14B8A6] animate-ping"></span>
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#CCFBF1] dark:bg-[#0F766E]/25 backdrop-blur-md border border-[#0F766E]/25 dark:border-[#14B8A6]/40 text-xs font-semibold text-[#0F766E] dark:text-[#5EEAD4] shadow-2xs">
+                  <span className="w-2 h-2 rounded-full bg-[#0F766E] dark:bg-[#14B8A6] animate-ping"></span>
                   <span>Live Geospatial Intelligence • Nagpur Wards</span>
                 </div>
 
                 <button
                   onClick={() => setHeroMapLayer(heroMapLayer === "satellite" ? "street" : "satellite")}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-black/50 hover:bg-black/70 backdrop-blur-md border border-white/20 text-xs font-medium text-white transition cursor-pointer shadow-sm hover:border-[#14B8A6]/60"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black/70 backdrop-blur-md border border-[#CBD5E1] dark:border-white/20 text-xs font-medium text-[#0F172A] dark:text-white transition cursor-pointer shadow-2xs hover:border-[#0F766E] dark:hover:border-[#14B8A6]/60"
                   title="Toggle background map imagery"
                 >
                   {heroMapLayer === "satellite" ? (
                     <>
-                      <Globe className="w-3.5 h-3.5 text-[#5EEAD4]" />
+                      <Globe className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#5EEAD4]" />
                       <span>Satellite Backdrop</span>
                     </>
                   ) : (
                     <>
-                      <MapIcon className="w-3.5 h-3.5 text-[#5EEAD4]" />
+                      <MapIcon className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#5EEAD4]" />
                       <span>Street Backdrop</span>
                     </>
                   )}
@@ -387,7 +359,7 @@ export default function PublicLandingPage() {
                     transition: { staggerChildren: 0.12 },
                   },
                 }}
-                className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-white tracking-tight leading-[1.06] drop-shadow-md"
+                className="text-3xl sm:text-5xl lg:text-[56px] font-bold text-[#0F172A] dark:text-white tracking-tight leading-[1.06]"
               >
                 <motion.span
                   variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
@@ -404,13 +376,13 @@ export default function PublicLandingPage() {
                 <br />
                 <motion.span
                   variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-                  className="inline-block mr-2 text-[#2DD4BF] drop-shadow-sm"
+                  className="inline-block mr-2 text-[#0F766E] dark:text-[#2DD4BF]"
                 >
                   Safer
                 </motion.span>
                 <motion.span
                   variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-                  className="inline-block text-[#2DD4BF] drop-shadow-sm"
+                  className="inline-block text-[#0F766E] dark:text-[#2DD4BF]"
                 >
                   Tomorrow.
                 </motion.span>
@@ -418,7 +390,7 @@ export default function PublicLandingPage() {
 
               {/* Subtitle */}
               <ScrollReveal delay={0.2}>
-                <p className="text-sm sm:text-base text-slate-200 max-w-xl leading-relaxed font-normal">
+                <p className="text-sm sm:text-base text-[#475569] dark:text-slate-200 max-w-xl leading-relaxed font-normal">
                   NagDrishti AI combines live IMD Doppler radar rainfall feeds, elevation hydrology, and citizen photo verification to predict street-level inundation and steer citizens through flood-safe corridors.
                 </p>
               </ScrollReveal>
@@ -428,7 +400,7 @@ export default function PublicLandingPage() {
                 <MagneticButton>
                   <Link
                     href="/map"
-                    className="h-11 px-5 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-bold text-sm flex items-center gap-2 transition shadow-lg shadow-teal-950/50"
+                    className="h-11 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-bold text-sm flex items-center gap-2 transition shadow-md dark:shadow-lg dark:shadow-teal-950/50"
                   >
                     <MapPin className="w-4 h-4" />
                     <span>Explore Live Risk Map</span>
@@ -438,9 +410,9 @@ export default function PublicLandingPage() {
                 <MagneticButton>
                   <Link
                     href="/report"
-                    className="h-11 px-5 rounded-xl bg-slate-900/80 hover:bg-slate-900 border border-slate-700 hover:border-[#14B8A6]/60 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition"
+                    className="h-11 px-5 rounded-xl bg-white/90 hover:bg-white dark:bg-slate-900/80 dark:hover:bg-slate-900 border border-[#CBD5E1] dark:border-slate-700 hover:border-[#0F766E] dark:hover:border-[#14B8A6]/60 text-[#0F172A] dark:text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition shadow-2xs"
                   >
-                    <Camera className="w-4 h-4 text-[#2DD4BF]" />
+                    <Camera className="w-4 h-4 text-[#0F766E] dark:text-[#2DD4BF]" />
                     <span>Report a Hazard</span>
                   </Link>
                 </MagneticButton>
@@ -448,97 +420,93 @@ export default function PublicLandingPage() {
                 <MagneticButton>
                   <Link
                     href="/route"
-                    className="h-11 px-5 rounded-xl bg-slate-900/60 hover:bg-slate-900/80 border border-slate-700 text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition"
+                    className="h-11 px-5 rounded-xl bg-white/80 hover:bg-white dark:bg-slate-900/60 dark:hover:bg-slate-900/80 border border-[#CBD5E1] dark:border-slate-700 hover:border-[#0F766E] dark:hover:border-[#14B8A6]/60 text-[#0F172A] dark:text-white font-semibold text-sm backdrop-blur-md flex items-center gap-2 transition shadow-2xs"
                   >
-                    <Navigation className="w-4 h-4 text-[#2DD4BF]" />
+                    <Navigation className="w-4 h-4 text-[#0F766E] dark:text-[#2DD4BF]" />
                     <span>Safe Routes</span>
                   </Link>
                 </MagneticButton>
               </ScrollReveal>
 
-              {/* Live Mouse Movement Telemetry Coordinate Bar */}
-              <div className="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 backdrop-blur-md inline-flex items-center gap-4 text-[11px] font-mono text-slate-300">
-                <div className="flex items-center gap-1.5 text-[#5EEAD4]">
+              {/* Stable Geographic Coordinate Display (No "MOUSE FOCUS:" label) */}
+              <div className="p-2.5 rounded-xl bg-white/90 dark:bg-slate-950/60 border border-[#CBD5E1] dark:border-slate-800/80 backdrop-blur-md inline-flex items-center gap-3.5 text-[11px] font-mono text-[#475569] dark:text-slate-300 shadow-2xs">
+                <div className="flex items-center gap-1 text-[#0F766E] dark:text-[#5EEAD4]">
                   <Crosshair className="w-3.5 h-3.5" />
-                  <span className="font-semibold uppercase tracking-wider text-[10px]">Mouse Focus:</span>
                 </div>
-                <span>Lat: <strong className="text-white">{cursorGps.lat}</strong></span>
-                <span>Lng: <strong className="text-white">{cursorGps.lng}</strong></span>
-                <span className="hidden sm:inline">Elev: <strong className="text-[#5EEAD4]">{cursorGps.elevation}</strong></span>
+                <span>Lat: <strong className="text-[#0F172A] dark:text-white">{gpsCoords.lat}</strong></span>
+                <span>Lng: <strong className="text-[#0F172A] dark:text-white">{gpsCoords.lng}</strong></span>
+                <span className="hidden sm:inline">Elev: <strong className="text-[#0F766E] dark:text-[#5EEAD4]">{gpsCoords.elevation}</strong></span>
               </div>
 
               {/* Trust Badges */}
-              <ScrollReveal delay={0.35} className="pt-2 flex flex-wrap items-center gap-5 text-xs text-slate-300 font-medium">
+              <ScrollReveal delay={0.35} className="pt-2 flex flex-wrap items-center gap-5 text-xs text-[#475569] dark:text-slate-300 font-medium">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A] dark:text-[#4ADE80]" />
                   <span>10 NMC Wards Monitored</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A] dark:text-[#4ADE80]" />
                   <span>Risk-Penalized Safe Routing</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-[#4ADE80]" />
+                  <CheckCircle2 className="w-4 h-4 text-[#16A34A] dark:text-[#4ADE80]" />
                   <span>Vision AI Hazard Verification</span>
                 </div>
               </ScrollReveal>
             </div>
 
-            {/* Right Hero Telemetry Glass HUD Card with Interactive 3D Parallax Tilt */}
-            <div className="lg:col-span-5 perspective-1000">
+            {/* Right Hero Telemetry Glass HUD Card */}
+            <div className="lg:col-span-5">
               <HoverLiftCard
-                className="bg-slate-900/85 border border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-2xl space-y-4 text-white transition-transform duration-150 ease-out"
-                style={{
-                  transform: `rotateX(${hudTilt.rotateX}deg) rotateY(${hudTilt.rotateY}deg)`,
-                }}
+                className="bg-white/90 dark:bg-slate-900/85 border border-[#E2E8F0] dark:border-slate-700/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl dark:shadow-2xl space-y-4 text-[#0F172A] dark:text-white transition-all"
               >
-                <div className="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-slate-700/60 pb-3">
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-[#10B981] animate-ping"></span>
-                    <span className="font-semibold text-xs text-white uppercase tracking-wider">
+                    <span className="font-semibold text-xs text-[#0F172A] dark:text-white uppercase tracking-wider">
                       Live Telemetry HUD
                     </span>
                   </div>
-                  <span className="text-[11px] font-medium text-[#5EEAD4] flex items-center gap-1">
+                  <span className="text-[11px] font-medium text-[#0F766E] dark:text-[#5EEAD4] flex items-center gap-1">
                     <Zap className="w-3 h-3 text-[#F59E0B]" />
                     <span>PostGIS Streaming</span>
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                    <span className="text-[11px] uppercase font-medium text-slate-400 block">IMD Doppler Radar</span>
-                    <span className="text-2xl font-bold text-white mt-0.5 block">
+                  <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-950/70 border border-[#E2E8F0] dark:border-slate-800">
+                    <span className="text-[11px] uppercase font-medium text-[#64748B] dark:text-slate-400 block">IMD Doppler Radar</span>
+                    <span className="text-2xl font-bold text-[#0F172A] dark:text-white mt-0.5 block">
                       <AnimatedCounter value={weather.rainfall_intensity_mm ?? 18.5} decimals={1} suffix=" mm/h" />
                     </span>
-                    <span className="text-[11px] text-[#2DD4BF] font-medium">{weather.condition || "Moderate Rain"}</span>
+                    <span className="text-[11px] text-[#0F766E] dark:text-[#2DD4BF] font-medium">{weather.condition || "Moderate Rain"}</span>
                   </div>
 
-                  <div className="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800">
-                    <span className="text-[11px] uppercase font-medium text-slate-400 block">Severe Wards</span>
-                    <span className="text-2xl font-bold text-[#F87171] mt-0.5 block">
+                  <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-950/70 border border-[#E2E8F0] dark:border-slate-800">
+                    <span className="text-[11px] uppercase font-medium text-[#64748B] dark:text-slate-400 block">Severe Wards</span>
+                    <span className="text-2xl font-bold text-[#DC2626] dark:text-[#F87171] mt-0.5 block">
                       <AnimatedCounter value={severeZones.length} suffix=" Wards" />
                     </span>
-                    <span className="text-[11px] text-[#F87171] font-medium">Critical Inundation</span>
+                    <span className="text-[11px] text-[#DC2626] dark:text-[#F87171] font-medium">Critical Inundation</span>
                   </div>
                 </div>
 
                 {/* Highest Risk Ward Breakdown */}
-                <div className="p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1.5">
+                <div className="p-3.5 rounded-xl bg-[#F8FAFC] dark:bg-slate-950/80 border border-[#E2E8F0] dark:border-slate-800 space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-white">
+                    <span className="font-semibold text-[#0F172A] dark:text-white">
                       Highest Threat Basin
                     </span>
                     <RiskPulse category={selectedZone?.risk_category || "Severe"}>
-                      <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/25 text-[#F87171] border border-red-500/40">
+                      <span className="font-semibold px-2 py-0.5 rounded text-[10px] bg-red-500/15 dark:bg-red-500/25 text-[#DC2626] dark:text-[#F87171] border border-red-500/30 dark:border-red-500/40">
                         {selectedZone?.risk_category || "Severe"}
                       </span>
                     </RiskPulse>
                   </div>
-                  <div className="font-semibold text-sm text-[#2DD4BF]">
+                  <div className="font-semibold text-sm text-[#0F766E] dark:text-[#2DD4BF]">
                     {selectedZone?.zone_name || "Sitabuldi & Narendra Nagar Basin"}
                   </div>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-[#64748B] dark:text-slate-300">
                     Drainage capacity strained. Underpass bypass routes recommended.
                   </p>
                 </div>
@@ -546,7 +514,7 @@ export default function PublicLandingPage() {
                 <div className="flex items-center gap-2 pt-1">
                   <Link
                     href="/route"
-                    className="flex-1 h-10 rounded-xl bg-[#14B8A6] hover:bg-[#2DD4BF] text-[#042F2E] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow"
+                    className="flex-1 h-10 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-bold text-xs flex items-center justify-center gap-1.5 transition shadow"
                   >
                     <Navigation className="w-3.5 h-3.5" />
                     <span>Plan Safe Route</span>
@@ -554,9 +522,9 @@ export default function PublicLandingPage() {
 
                   <Link
                     href="/map"
-                    className="flex-1 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs flex items-center justify-center gap-1.5 border border-slate-700 transition"
+                    className="flex-1 h-10 rounded-xl bg-[#F1F5F9] hover:bg-[#E2E8F0] dark:bg-slate-800 dark:hover:bg-slate-700 text-[#0F172A] dark:text-white font-semibold text-xs flex items-center justify-center gap-1.5 border border-[#CBD5E1] dark:border-slate-700 transition"
                   >
-                    <MapPin className="w-3.5 h-3.5 text-[#2DD4BF]" />
+                    <MapPin className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#2DD4BF]" />
                     <span>Full Map View</span>
                   </Link>
                 </div>

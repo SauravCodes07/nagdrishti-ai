@@ -109,14 +109,28 @@ export async function signInWithGoogleViaSupabase({
   return data;
 }
 
+let _cachedSbUser = null;
+let _cachedSbUserTimestamp = 0;
+
 /**
- * Retrieves the currently active Supabase user session.
+ * Retrieves the currently active Supabase user session with memory caching and timeout.
  */
-export async function getSupabaseUser() {
+export async function getSupabaseUser(forceRefresh = false) {
   if (!supabase) return null;
+  const now = Date.now();
+  if (!forceRefresh && _cachedSbUser && now - _cachedSbUserTimestamp < 30000) {
+    return _cachedSbUser;
+  }
   try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error || !session) return null;
+    const sessionPromise = supabase.auth.getSession();
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ data: { session: null } }), 3000)
+    );
+    const result = await Promise.race([sessionPromise, timeoutPromise]);
+    const session = result?.data?.session;
+    if (!session || !session.user) return null;
+    _cachedSbUser = session.user;
+    _cachedSbUserTimestamp = now;
     return session.user;
   } catch {
     return null;
@@ -124,9 +138,11 @@ export async function getSupabaseUser() {
 }
 
 /**
- * Signs out from Supabase Auth.
+ * Signs out from Supabase Auth and clears session cache.
  */
 export async function signOutSupabase() {
+  _cachedSbUser = null;
+  _cachedSbUserTimestamp = 0;
   if (!supabase) return;
   try {
     await supabase.auth.signOut();

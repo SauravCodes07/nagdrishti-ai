@@ -26,57 +26,51 @@ import {
   Settings,
   ShieldAlert,
 } from "lucide-react";
-import { getCurrentUser, logoutAdmin, checkBackendHealth } from "../../lib/api";
 import { useTheme } from "../ThemeProvider";
+import { useAuth } from "../../context/AuthContext";
+import { checkBackendHealth } from "../../lib/api";
 import PageTransition from "../motion/PageTransition";
 
 export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const { theme, toggleTheme } = useTheme();
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user: currentUser, isAuthenticated, isAdmin, authChecking, logout } = useAuth();
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
-  const [systemHealth, setSystemHealth] = useState("Checking...");
+  const [systemHealth, setSystemHealth] = useState("Online");
 
+  // Fast unauthenticated / non-admin redirection
   useEffect(() => {
-    getCurrentUser()
-      .then((data) => {
-        if (data && data.authenticated && (data.user?.is_staff || data.user?.is_superuser || data.user?.role === "admin")) {
-          setCurrentUser(data.user);
-        } else {
-          router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
-        }
-      })
-      .catch(() => {
-        router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
-      })
-      .finally(() => setLoading(false));
-
-    const handleSessionExpired = () => {
-      alert("Municipal Officer session expired. Please sign in again.");
+    if (!authChecking && (!isAuthenticated || !isAdmin)) {
       router.push(`/admin/login?returnUrl=${encodeURIComponent(pathname)}`);
-    };
+    }
+  }, [authChecking, isAuthenticated, isAdmin, pathname, router]);
 
-    window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
-
+  // Non-blocking system health check once on mount
+  useEffect(() => {
+    let isMounted = true;
     checkBackendHealth()
       .then((data) => {
         if (data && (data.status === "ok" || data.status === "healthy" || data.database)) {
-          setSystemHealth("Online");
+          if (isMounted) setSystemHealth("Online");
         } else {
-          setSystemHealth("Online");
+          if (isMounted) setSystemHealth("Online");
         }
       })
-      .catch(() => setSystemHealth("Standby"));
+      .catch(() => {
+        if (isMounted) setSystemHealth("Standby");
+      });
 
-    return () => window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
-  }, [router, pathname]);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
-      await logoutAdmin();
+      await logout();
       router.push("/admin/login");
     } catch (err) {
       console.warn("Logout error:", err);
@@ -109,7 +103,7 @@ export default function AdminLayout({ children }) {
     return "Municipal Command Center";
   };
 
-  if (loading) {
+  if (authChecking && (!isAuthenticated || !isAdmin)) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex items-center justify-center text-[#0F172A] dark:text-[#F8FAFC]">
         <div className="flex flex-col items-center gap-3">
