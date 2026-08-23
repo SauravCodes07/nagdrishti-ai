@@ -97,6 +97,21 @@ export default function PublicLandingPage() {
   const [hudTilt, setHudTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [cursorGps, setCursorGps] = useState({ lat: "21.1458° N", lng: "79.0882° E", elevation: "312m" });
 
+  // Intercept any OAuth callback parameters reaching root and auto-forward to /auth/callback
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      if (
+        search.includes("code=") ||
+        search.includes("error_description=") ||
+        hash.includes("access_token=")
+      ) {
+        window.location.replace(`https://nagdrishti-ai.vercel.app/auth/callback${search}${hash}`);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     async function loadLandingData() {
       try {

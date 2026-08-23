@@ -14,42 +14,15 @@ export const isSupabaseConfigured = () => {
 };
 
 // Base production origin constant — used as absolute safety fallback in production
+// Base production origin constant — strictly used for all OAuth flows
 export const PRODUCTION_SITE_URL = "https://nagdrishti-ai.vercel.app";
 
 /**
  * Resolves the authorized application origin for OAuth redirects.
- * In production deployments, it strictly resolves to https://nagdrishti-ai.vercel.app.
- * Localhost is strictly isolated to local development (NODE_ENV === 'development').
+ * Strictly guarantees that OAuth callback ALWAYS targets https://nagdrishti-ai.vercel.app.
+ * Does NOT use window.location.origin, does NOT allow localhost.
  */
 export const getAuthRedirectOrigin = () => {
-  // 1. Check explicit environment variable first
-  const envSiteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-  if (
-    envSiteUrl &&
-    !envSiteUrl.includes("localhost") &&
-    !envSiteUrl.includes("127.0.0.1")
-  ) {
-    return envSiteUrl.replace(/\/+$/, "");
-  }
-
-  // 2. If running in browser:
-  if (typeof window !== "undefined") {
-    const isLocalhost =
-      window.location.hostname === "localhost" ||
-      window.location.hostname === "127.0.0.1";
-
-    // Strictly isolated to local development environment
-    if (isLocalhost && process.env.NODE_ENV === "development") {
-      return window.location.origin.replace(/\/+$/, "");
-    }
-
-    // On production / Vercel preview deployments
-    if (!isLocalhost && window.location.origin.startsWith("https://")) {
-      return window.location.origin.replace(/\/+$/, "");
-    }
-  }
-
-  // 3. Guaranteed production fallback — NEVER fallback to localhost
   return PRODUCTION_SITE_URL;
 };
 
@@ -69,7 +42,7 @@ export const supabase =
 
 /**
  * Initiates Google OAuth sign-in flow via Supabase Authentication.
- * Redirects the browser: Frontend -> Supabase -> Google -> Supabase Callback -> /auth/callback.
+ * Redirects the browser: Frontend -> Supabase -> Google -> Supabase Callback -> https://nagdrishti-ai.vercel.app/auth/callback.
  */
 export async function signInWithGoogleViaSupabase({
   returnUrl = "/dashboard",
@@ -88,9 +61,8 @@ export async function signInWithGoogleViaSupabase({
       ? returnUrl
       : defaultTarget;
 
-  // Determine site origin strictly for OAuth redirect
-  const cleanOrigin = getAuthRedirectOrigin();
-  const callbackUrl = `${cleanOrigin}/auth/callback?returnUrl=${encodeURIComponent(
+  // Strictly enforce the production callback URL: https://nagdrishti-ai.vercel.app/auth/callback
+  const callbackUrl = `${PRODUCTION_SITE_URL}/auth/callback?returnUrl=${encodeURIComponent(
     sanitizedReturnUrl
   )}&role=${requireAdmin ? "admin" : "citizen"}`;
 
