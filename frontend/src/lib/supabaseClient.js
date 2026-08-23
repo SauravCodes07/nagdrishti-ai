@@ -13,7 +13,6 @@ export const isSupabaseConfigured = () => {
   return Boolean(supabaseUrl && supabaseKey);
 };
 
-// Base production origin constant — used as absolute safety fallback in production
 // Base production origin constant — strictly used for all OAuth flows
 export const PRODUCTION_SITE_URL = "https://nagdrishti-ai.vercel.app";
 
