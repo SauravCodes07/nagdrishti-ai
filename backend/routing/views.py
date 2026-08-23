@@ -51,8 +51,10 @@ class RoutePathfindView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        mode = request.query_params.get("mode", "driving").strip().lower()
+
         try:
-            route_result = calculate_safe_route(from_lat, from_lng, to_lat, to_lng)
+            route_result = calculate_safe_route(from_lat, from_lng, to_lat, to_lng, mode=mode)
             if route_result.get("status") == "error":
                 logger.warning(f"Route calculation validation error: {route_result.get('error')}")
                 return Response(route_result, status=status.HTTP_400_BAD_REQUEST)
@@ -60,7 +62,7 @@ class RoutePathfindView(APIView):
                 logger.error(f"Route calculation unavailable: {route_result.get('error')}")
                 return Response(route_result, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             
-            logger.info(f"Route calculated successfully: {route_result.get('distance_km')} km across {route_result.get('node_count')} nodes.")
+            logger.info(f"Route calculated successfully: {route_result.get('distance_km')} km across {len(route_result.get('coordinates', []))} points.")
             return Response(route_result, status=status.HTTP_200_OK)
         except Exception as exc:
             logger.exception(f"Unhandled exception during calculate_safe_route({from_lat}, {from_lng}, {to_lat}, {to_lng}):")

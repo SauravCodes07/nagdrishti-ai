@@ -21,6 +21,7 @@ export default function SafeRouteFinder({
   const [startPoint, setStartPoint] = useState({ name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 });
   const [endPoint, setEndPoint] = useState({ name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 });
 
+  const [travelMode, setTravelMode] = useState("driving");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [routeResult, setRouteResult] = useState(null);
@@ -40,14 +41,14 @@ export default function SafeRouteFinder({
     setError(null);
 
     try {
-      const data = await getSafeRoute(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      const data = await getSafeRoute(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng, travelMode);
       setRouteResult(data);
       if (onRouteFound) {
         onRouteFound(data);
       }
     } catch (err) {
       console.error("[SafeRouteFinder Error]:", err);
-      setError(err.message || "Failed to calculate safe route across road graph.");
+      setError(err.message || "Failed to calculate safe route across road network.");
     } finally {
       setLoading(false);
     }
@@ -67,19 +68,45 @@ export default function SafeRouteFinder({
             <Compass className="w-5 h-5" />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">A* Safe Route Search</h2>
-            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">OSM road network penalized by flood severity</p>
+            <h2 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">Safe Road Route Finder</h2>
+            <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">OpenStreetMap network with flood hazard analysis</p>
           </div>
         </div>
 
-        <button
-          onClick={handleSwapLocations}
-          className="hover-btn text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#0F172A] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition-colors flex items-center space-x-1.5 cursor-pointer"
-          title="Swap start and destination"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Swap</span>
-        </button>
+        <div className="flex items-center gap-1.5">
+          <div className="flex p-0.5 rounded-lg bg-[#F1F5F9] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
+            <button
+              type="button"
+              onClick={() => setTravelMode("driving")}
+              className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition ${
+                travelMode === "driving"
+                  ? "bg-[#FFFFFF] dark:bg-[#1E293B] text-[#0F766E] dark:text-[#5EEAD4] shadow-xs"
+                  : "text-[#64748B] dark:text-[#94A3B8]"
+              }`}
+            >
+              Drive
+            </button>
+            <button
+              type="button"
+              onClick={() => setTravelMode("walking")}
+              className={`px-2 py-0.5 text-[10px] font-semibold rounded-md transition ${
+                travelMode === "walking"
+                  ? "bg-[#FFFFFF] dark:bg-[#1E293B] text-[#0F766E] dark:text-[#5EEAD4] shadow-xs"
+                  : "text-[#64748B] dark:text-[#94A3B8]"
+              }`}
+            >
+              Walk
+            </button>
+          </div>
+
+          <button
+            onClick={handleSwapLocations}
+            className="hover-btn text-xs font-medium text-[#475569] dark:text-[#CBD5E1] hover:text-[#0F172A] dark:hover:text-[#F8FAFC] p-1.5 rounded-lg bg-[#F8FAFC] dark:bg-[#0F172A] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] transition-colors flex items-center cursor-pointer"
+            title="Swap start and destination"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Start Location Search */}
@@ -109,7 +136,7 @@ export default function SafeRouteFinder({
         className="hover-btn w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm transition flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
       >
         <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-        <span>{loading ? "Computing A* Path..." : "Find Flood-Safe Route"}</span>
+        <span>{loading ? "Finding safest road route..." : "Find Flood-Safe Route"}</span>
       </button>
 
       {/* Error Message */}

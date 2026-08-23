@@ -40,6 +40,8 @@ function SafeRouteContent() {
   const [startPoint, setStartPoint] = useState({ name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 });
   const [endPoint, setEndPoint] = useState({ name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 });
 
+  const [travelMode, setTravelMode] = useState("driving"); // "driving" | "walking"
+
   const [zones, setZones] = useState([]);
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -75,11 +77,11 @@ function SafeRouteContent() {
     setError(null);
 
     try {
-      const data = await getSafeRoute(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng);
+      const data = await getSafeRoute(startPoint.lat, startPoint.lng, endPoint.lat, endPoint.lng, travelMode);
       setRouteResult(data);
     } catch (err) {
       console.error("[Route Page Error]:", err);
-      setError(err.message || "Failed to calculate safe route across road graph.");
+      setError(err.message || "Failed to calculate safe route across road network.");
     } finally {
       setLoading(false);
     }
@@ -100,7 +102,7 @@ function SafeRouteContent() {
           Safe Routes
         </h1>
         <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
-          Dynamic A* algorithm on Nagpur's OpenStreetMap graph that penalizes high-risk flood zones and submerged underpasses
+          Real road-network routing using OpenStreetMap & OSRM with real-time flood severity and waterlogging analysis
         </p>
       </div>
 
@@ -117,16 +119,43 @@ function SafeRouteContent() {
                 </h2>
               </div>
 
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={handleSwap}
-                className="px-2.5 py-1 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#475569] dark:text-[#CBD5E1] font-medium text-xs flex items-center gap-1 transition cursor-pointer"
-                title="Swap Origin and Destination"
-              >
-                <RefreshCw className="w-3 h-3" />
-                <span>Swap</span>
-              </motion.button>
+              <div className="flex items-center gap-1.5">
+                {/* Travel Mode Toggle */}
+                <div className="flex p-0.5 rounded-lg bg-[#F1F5F9] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244]">
+                  <button
+                    type="button"
+                    onClick={() => setTravelMode("driving")}
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition ${
+                      travelMode === "driving"
+                        ? "bg-[#FFFFFF] dark:bg-[#1E293B] text-[#0F766E] dark:text-[#5EEAD4] shadow-xs"
+                        : "text-[#64748B] dark:text-[#94A3B8]"
+                    }`}
+                  >
+                    Drive
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTravelMode("walking")}
+                    className={`px-2 py-0.5 text-[11px] font-semibold rounded-md transition ${
+                      travelMode === "walking"
+                        ? "bg-[#FFFFFF] dark:bg-[#1E293B] text-[#0F766E] dark:text-[#5EEAD4] shadow-xs"
+                        : "text-[#64748B] dark:text-[#94A3B8]"
+                    }`}
+                  >
+                    Walk
+                  </button>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleSwap}
+                  className="p-1 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#475569] dark:text-[#CBD5E1] font-medium text-xs flex items-center transition cursor-pointer"
+                  title="Swap Origin and Destination"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                </motion.button>
+              </div>
             </div>
 
             {/* Origin Search */}
@@ -157,7 +186,7 @@ function SafeRouteContent() {
                 className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                <span>{loading ? "Computing A* Path..." : "Find Flood-Safe Route"}</span>
+                <span>{loading ? "Finding safest road route..." : "Find Flood-Safe Route"}</span>
               </button>
             </MagneticButton>
 

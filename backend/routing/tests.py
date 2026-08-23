@@ -63,15 +63,15 @@ class RoutingPathfindingTests(TestCase):
         res = calculate_safe_route(21.1472, 79.0664, 21.1550, 79.1300)
         self.assertEqual(res["status"], "safe_route_found")
         self.assertGreater(res["distance_km"], 0.5)
-        self.assertGreater(len(res["coordinates"]), 2)
+        self.assertGreater(len(res["coordinates"]), 10)
         self.assertIn("safety_explanation", res)
-        self.assertGreaterEqual(res["total_nodes_in_network"], 1000)
+        self.assertIn("geojson", res)
 
     def test_04_arbitrary_points_route(self):
         # Sitabuldi (21.1465, 79.0825) -> Sadar (21.1605, 79.0830)
         res = calculate_safe_route(21.1465, 79.0825, 21.1605, 79.0830)
         self.assertEqual(res["status"], "safe_route_found")
-        self.assertGreater(len(res["coordinates"]), 2)
+        self.assertGreater(len(res["coordinates"]), 10)
 
     def test_09_endpoint_get_route_public(self):
         response = self.client.get("/api/route/?from=21.1472,79.0664&to=21.1550,79.1300")

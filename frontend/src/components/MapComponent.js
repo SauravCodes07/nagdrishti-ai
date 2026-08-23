@@ -284,29 +284,86 @@ export default function MapComponent({
     });
   }, [reports, isHeroBackground]);
 
-  // Update Safe Route Polyline Overlay with Bold Glow
+  // Update Safe Route Polyline Overlay with High-Definition Road Following & Glow
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !routeLayerGroupRef.current) return;
 
     routeLayerGroupRef.current.clearLayers();
 
-    const activeRouteCoords = routeData?.coordinates || route;
+    const activeRouteData = routeData || route;
+    let rawCoords = [];
 
-    if (activeRouteCoords && activeRouteCoords.length > 0) {
-      const latlngs = activeRouteCoords;
+    if (Array.isArray(activeRouteData)) {
+      rawCoords = activeRouteData;
+    } else if (activeRouteData && typeof activeRouteData === "object") {
+      rawCoords = activeRouteData.coordinates || activeRouteData.route_coordinates || activeRouteData.geojson?.coordinates || [];
+    }
 
-      const mainLine = L.polyline(latlngs, {
-        color: "#14B8A6",
-        weight: 6,
-        opacity: 0.95,
-        lineCap: "round",
-        lineJoin: "round",
-      }).addTo(routeLayerGroupRef.current);
+    if (rawCoords && rawCoords.length >= 2) {
+      // Normalize [lng, lat] vs [lat, lng]
+      // Nagpur: Latitude ~21.14, Longitude ~79.08
+      const latlngs = rawCoords
+        .map((pt) => {
+          if (Array.isArray(pt) && pt.length >= 2) {
+            const first = Number(pt[0]);
+            const second = Number(pt[1]);
+            if (first > 50 && second < 50) {
+              return [second, first]; // [lng, lat] -> [lat, lng]
+            }
+            return [first, second];
+          }
+          return null;
+        })
+        .filter(Boolean);
 
-      try {
-        mapInstanceRef.current.fitBounds(mainLine.getBounds(), { padding: [40, 40] });
-      } catch (_) {}
+      if (latlngs.length >= 2) {
+        // Outer ambient glow path
+        L.polyline(latlngs, {
+          color: "#0D9488",
+          weight: 9,
+          opacity: 0.35,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(routeLayerGroupRef.current);
+
+        // Sharp primary road-following polyline
+        const mainLine = L.polyline(latlngs, {
+          color: "#14B8A6",
+          weight: 5,
+          opacity: 0.95,
+          lineCap: "round",
+          lineJoin: "round",
+        }).addTo(routeLayerGroupRef.current);
+
+        // Start point badge
+        const startPoint = latlngs[0];
+        const startIcon = L.divIcon({
+          className: "custom-route-start-marker",
+          html: `<div style="background-color: #10B981; width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 10px rgba(16,185,129,0.8), 0 2px 5px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">A</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        });
+        L.marker(startPoint, { icon: startIcon })
+          .bindPopup("<strong style='font-size: 12px;'>Journey Origin</strong>")
+          .addTo(routeLayerGroupRef.current);
+
+        // End point badge
+        const endPoint = latlngs[latlngs.length - 1];
+        const endIcon = L.divIcon({
+          className: "custom-route-end-marker",
+          html: `<div style="background-color: #EF4444; width: 26px; height: 26px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 10px rgba(239,68,68,0.8), 0 2px 5px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 11px; font-weight: 800;">B</div>`,
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+        });
+        L.marker(endPoint, { icon: endIcon })
+          .bindPopup("<strong style='font-size: 12px;'>Destination Arrival</strong>")
+          .addTo(routeLayerGroupRef.current);
+
+        try {
+          mapInstanceRef.current.fitBounds(mainLine.getBounds(), { padding: [50, 50] });
+        } catch (_) {}
+      }
     }
   }, [routeData, route]);
 

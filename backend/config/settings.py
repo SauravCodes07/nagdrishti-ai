@@ -39,12 +39,13 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
-# CSRF Trusted Origins for Render & Netlify production deployments
+# CSRF Trusted Origins for Render & Vercel production deployments
 CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
     "https://nagdrishti-ai-backend.onrender.com",
     "https://nagdrishti-backend.onrender.com",
     "https://*.vercel.app",
+    "https://nagdrishti-ai.vercel.app",
     "https://nagdrishti.netlify.app",
     "https://*.netlify.app",
     "http://localhost:3000",
@@ -124,6 +125,9 @@ if os.environ.get("SUPABASE_DB_HOST"):
             'PASSWORD': os.environ.get("SUPABASE_DB_PASSWORD", ""),
             'HOST': os.environ.get("SUPABASE_DB_HOST"),
             'PORT': os.environ.get("SUPABASE_DB_PORT", "5432"),
+            'OPTIONS': {
+                'sslmode': os.environ.get("SUPABASE_DB_SSLMODE", "require"),
+            },
         }
     }
 else:
@@ -190,6 +194,7 @@ else:
         "http://127.0.0.1:3000",
         "http://localhost:3001",
         "http://127.0.0.1:3001",
+        "https://nagdrishti-ai.vercel.app",
         "https://nagdrishti.netlify.app",
         "https://nagdrishti-ai.netlify.app",
     ]
