@@ -115,7 +115,7 @@ export default function SafeRouteFinder({
         value={startPoint}
         onChange={(loc) => setStartPoint(loc)}
         allowCurrentLocation={true}
-        placeholder="Search origin in Nagpur (e.g. Sitabuldi, Dharampeth)..."
+        placeholder="Search origin in Nagpur (e.g. Yerla, Sitabuldi, Hingna)..."
         dotColor="teal"
       />
 
@@ -125,7 +125,7 @@ export default function SafeRouteFinder({
         value={endPoint}
         onChange={(loc) => setEndPoint(loc)}
         allowCurrentLocation={false}
-        placeholder="Search destination in Nagpur (e.g. Lakadganj, Sadar)..."
+        placeholder="Search destination in Nagpur (e.g. Lakadganj, Katol, Sadar)..."
         dotColor="red"
       />
 

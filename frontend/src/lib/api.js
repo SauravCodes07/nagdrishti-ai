@@ -335,6 +335,48 @@ export async function getWeather() {
   }
 }
 
+// 5c. TomTom Live Traffic Feed (Flow & Incidents)
+let _lastTrafficIncidents = { timestamp: 0, data: null };
+let _trafficIncidentsAbortController = null;
+
+export async function getTrafficIncidents(bbox = "78.24,20.58,79.66,21.75", force = false) {
+  const now = Date.now();
+  if (!force && _lastTrafficIncidents.data && (now - _lastTrafficIncidents.timestamp) < 55000) {
+    return _lastTrafficIncidents.data;
+  }
+
+  if (_trafficIncidentsAbortController) {
+    _trafficIncidentsAbortController.abort();
+  }
+  _trafficIncidentsAbortController = new AbortController();
+
+  try {
+    const data = await request(`/api/traffic/incidents/?bbox=${encodeURIComponent(bbox)}`, {
+      timeout: 6000,
+      signal: _trafficIncidentsAbortController.signal,
+    });
+    if (data && data.status === "ok") {
+      _lastTrafficIncidents = { timestamp: now, data };
+      return data;
+    }
+    return data || { status: "unavailable", live: false, incidents: [] };
+  } catch (err) {
+    if (err.name === "AbortError") return _lastTrafficIncidents.data || { status: "unavailable", live: false, incidents: [] };
+    console.warn("[Traffic Engine] Incident feed fallback:", err.message);
+    return { status: "unavailable", live: false, incidents: [] };
+  }
+}
+
+export async function getTrafficFlowStatus() {
+  try {
+    const data = await request("/api/traffic/flow/", { timeout: 4000 });
+    if (data && data.status === "ok") return data;
+    return { status: "unavailable", live: false, tile_url: null };
+  } catch (err) {
+    return { status: "unavailable", live: false, tile_url: null };
+  }
+}
+
 // 6. Rainfall Simulation (8-stage demo workflow)
 export async function simulateRainfall(payload) {
   _apiCache.clear();

@@ -312,12 +312,9 @@ export default function PublicLandingPage() {
           className="absolute bottom-20 left-12 w-24 h-24 rounded-full border border-teal-400/15 pointer-events-none z-10 hidden xl:block"
         />
 
-        {/* Ambient Radar Sweep Effect over the Map */}
-        <div className="radar-sweep-beam z-5 opacity-20 dark:opacity-60" />
-
         {/* Theme-Aware Gradient Overlays for High Map Clarity and Crisp Text Readability */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/75 via-[#FFFFFF]/35 to-transparent dark:from-[#0B1220]/80 dark:via-[#0B1220]/45 dark:to-transparent" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/50 via-transparent to-[#FFFFFF]/15 dark:from-[#0B1220]/60 dark:via-transparent dark:to-[#0B1220]/20" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/70 via-[#FFFFFF]/25 to-transparent dark:from-[#0B1220]/75 dark:via-[#0B1220]/30 dark:to-transparent" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/40 via-transparent to-transparent dark:from-[#0B1220]/50 dark:via-transparent dark:to-transparent" />
 
         {/* Interactive Content Container */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">

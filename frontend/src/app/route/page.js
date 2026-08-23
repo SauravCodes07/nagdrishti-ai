@@ -20,7 +20,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import LocationSearchInput from "../../components/LocationSearchInput";
 import { getSafeRoute, getRiskZones, getReports, DEFAULT_RISK_ZONES } from "../../lib/api";
-import { getNmcWardInfo, isWithinServiceRegion } from "../../lib/geoService";
+import { getGeographicCoverage, getNmcWardInfo, isInsideNagpurDistrict, isWithinServiceRegion } from "../../lib/geoService";
 import {
   HoverLiftCard,
   MagneticButton,
@@ -38,9 +38,9 @@ const MapComponent = dynamic(() => import("../../components/MapComponent"), {
 
 const QUICK_TRIP_PRESETS = [
   {
-    name: "Fetri → Lakadganj",
-    desc: "Suburban Corridor",
-    origin: { name: "Fetri (Katol Road)", lat: 21.2185, lng: 78.9620 },
+    name: "Yerla → Lakadganj",
+    desc: "Katol Road to East Nagpur",
+    origin: { name: "Yerla (Katol Road)", lat: 21.2085, lng: 78.9656 },
     dest: { name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 },
   },
   {
@@ -52,19 +52,19 @@ const QUICK_TRIP_PRESETS = [
   {
     name: "Hingna → Sitabuldi",
     desc: "Industrial Transit Link",
-    origin: { name: "Hingna MIDC", lat: 21.0950, lng: 78.9780 },
+    origin: { name: "Hingna MIDC", lat: 20.9916, lng: 78.8732 },
     dest: { name: "Sitabuldi Interchange", lat: 21.1465, lng: 79.0825 },
   },
   {
-    name: "Besa → Sadar",
-    desc: "South to North Radial",
-    origin: { name: "Besa (Manewada Rd)", lat: 21.0850, lng: 79.1020 },
+    name: "Katol → Sadar",
+    desc: "Taluka to Urban Hub",
+    origin: { name: "Katol Town", lat: 21.2752, lng: 78.5866 },
     dest: { name: "Sadar Residency Rd", lat: 21.1605, lng: 79.0830 },
   },
   {
     name: "Kamptee → Airport",
-    desc: "Metropolitan Bypass",
-    origin: { name: "Kamptee Town", lat: 21.2280, lng: 79.1980 },
+    desc: "Metropolitan Arterial",
+    origin: { name: "Kamptee Town", lat: 21.2171, lng: 79.1964 },
     dest: { name: "Wardha Rd Airport T1", lat: 21.0920, lng: 79.0630 },
   },
 ];
@@ -107,8 +107,8 @@ function SafeRouteContent() {
     }
   }, [destQuery]);
 
-  const originWard = startPoint?.lat ? getNmcWardInfo(startPoint.lat, startPoint.lng) : null;
-  const destWard = endPoint?.lat ? getNmcWardInfo(endPoint.lat, endPoint.lng) : null;
+  const originCoverage = startPoint?.lat ? getGeographicCoverage(startPoint.lat, startPoint.lng, startPoint.rawAddressDetails || null) : null;
+  const destCoverage = endPoint?.lat ? getGeographicCoverage(endPoint.lat, endPoint.lng, endPoint.rawAddressDetails || null) : null;
 
   const handleCalculateRoute = async () => {
     if (!startPoint || !endPoint) {
@@ -157,6 +157,20 @@ function SafeRouteContent() {
     setError(null);
   };
 
+  // Helper for dynamic safety assessment text
+  const getSafetyAssessmentText = () => {
+    if (routeResult?.safety_explanation) {
+      return routeResult.safety_explanation;
+    }
+    const isOriginUrban = originCoverage?.coverageState === "NAGPUR_URBAN";
+    const isDestUrban = destCoverage?.coverageState === "NAGPUR_URBAN";
+
+    if (isOriginUrban && isDestUrban) {
+      return "Full NagDrishti risk intelligence active with live NMC municipal flood sensor and drainage telemetry.";
+    }
+    return "Nagpur Rural routing & hazard intelligence active. Route calculated across OpenStreetMap road network with verified hazard data.";
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -165,7 +179,7 @@ function SafeRouteContent() {
           Safe Routes & Navigation
         </h1>
         <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
-          Real OpenStreetMap road routing with NMC municipal flood risk intelligence across Nagpur & surrounding metropolitan areas
+          Real OpenStreetMap road routing with flood risk intelligence across complete Nagpur District (Urban NMC & Rural talukas)
         </p>
       </div>
 
@@ -248,13 +262,13 @@ function SafeRouteContent() {
                 value={startPoint}
                 onChange={(loc) => setStartPoint(loc)}
                 allowCurrentLocation={true}
-                placeholder="Search origin (e.g. Fetri, Sitabuldi, Hingna)..."
+                placeholder="Search origin (e.g. Yerla, Sitabuldi, Hingna)..."
                 dotColor="teal"
               />
-              {originWard && (
+              {originCoverage && (
                 <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] flex items-center gap-1 pl-1">
                   <MapPin className="w-3 h-3 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>{originWard.statusText}</span>
+                  <span>{originCoverage.statusText}</span>
                 </div>
               )}
             </div>
@@ -266,13 +280,13 @@ function SafeRouteContent() {
                 value={endPoint}
                 onChange={(loc) => setEndPoint(loc)}
                 allowCurrentLocation={false}
-                placeholder="Search destination (e.g. Lakadganj, Sadar, Airport)..."
+                placeholder="Search destination (e.g. Lakadganj, Katol, Airport)..."
                 dotColor="red"
               />
-              {destWard && (
+              {destCoverage && (
                 <div className="text-[10px] text-[#64748B] dark:text-[#94A3B8] flex items-center gap-1 pl-1">
                   <MapPin className="w-3 h-3 text-[#DC2626]" />
-                  <span>{destWard.statusText}</span>
+                  <span>{destCoverage.statusText}</span>
                 </div>
               )}
             </div>
@@ -353,8 +367,7 @@ function SafeRouteContent() {
                       <span>Safety Assessment</span>
                     </div>
                     <p className="text-[11px] text-[#475569] dark:text-[#CBD5E1] leading-relaxed">
-                      {routeResult.safety_explanation ||
-                        "Standard road route active. Municipal flood sensor telemetry is concentrated within NMC administrative wards."}
+                      {getSafetyAssessmentText()}
                     </p>
                   </div>
                 </motion.div>
@@ -367,7 +380,7 @@ function SafeRouteContent() {
         <div className="lg:col-span-7 bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3">
           <div className="flex items-center justify-between px-1">
             <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
-              Interactive GIS Map & Ward Boundaries
+              Interactive GIS Map & Boundaries
             </span>
             <span className="text-[11px] font-medium text-[#0F766E] dark:text-[#14B8A6] flex items-center gap-1">
               {routeResult ? (

@@ -201,15 +201,25 @@ body {
   pointer-events: none;
 }
 
-/* Bold Leaflet Polygon Customizations */
+/* Crisp Leaflet Vector & Tile Customizations */
+.leaflet-container {
+  background-color: #0f172a !important;
+  font-family: inherit;
+}
+
+.leaflet-tile {
+  filter: none !important;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+}
+
 .leaflet-interactive {
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
   transition: stroke-width 0.2s ease, fill-opacity 0.2s ease;
 }
 
 .leaflet-interactive:hover {
-  stroke-width: 4.5px !important;
-  fill-opacity: 0.65 !important;
+  stroke-width: 4px !important;
+  fill-opacity: 0.60 !important;
   cursor: pointer;
 }
 

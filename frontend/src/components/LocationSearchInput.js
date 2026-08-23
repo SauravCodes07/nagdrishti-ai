@@ -15,20 +15,32 @@ import {
 } from "lucide-react";
 import {
   searchLocations,
+  getGeographicCoverage,
   getNmcWardInfo,
   getCurrentGpsLocation,
+  isInsideNagpurDistrict,
+  isInsideNmc,
   isWithinServiceRegion,
   POPULAR_NAGPUR_HUBS,
+  GEOGRAPHIC_COVERAGE_STATE,
 } from "../lib/geoService";
 
-export { POPULAR_NAGPUR_HUBS, getNmcWardInfo, isWithinServiceRegion };
+export {
+  POPULAR_NAGPUR_HUBS,
+  getGeographicCoverage,
+  getNmcWardInfo,
+  isInsideNagpurDistrict,
+  isInsideNmc,
+  isWithinServiceRegion,
+  GEOGRAPHIC_COVERAGE_STATE,
+};
 
 export default function LocationSearchInput({
   label,
   value,
   onChange,
   allowCurrentLocation = false,
-  placeholder = "Search address, square, or landmark (e.g. Fetri, Sitabuldi, Sadar)...",
+  placeholder = "Search address, square, village or landmark (e.g. Yerla, Katol, Sitabuldi)...",
   dotColor = "teal", // "teal" | "red"
 }) {
   const [query, setQuery] = useState(value?.name || "");
@@ -43,22 +55,15 @@ export default function LocationSearchInput({
   const debounceTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
-  // Sync internal query when value prop changes externally
+  // Sync internal query and coverage notice when value prop changes externally
   useEffect(() => {
     if (value) {
       if (value.name && value.name !== query) {
         setQuery(value.name);
       }
       if (value.lat && value.lng) {
-        const wardInfo = getNmcWardInfo(value.lat, value.lng);
-        if (!wardInfo.insideNmc) {
-          setStatusNotice({
-            type: "info",
-            text: "Outside NMC municipal limits — routing available, municipal sensor telemetry may be limited.",
-          });
-        } else {
-          setStatusNotice(null);
-        }
+        const coverage = getGeographicCoverage(value.lat, value.lng, value.rawAddressDetails || null);
+        setStatusNotice(coverage.notice);
       }
     }
   }, [value]);
@@ -136,15 +141,8 @@ export default function LocationSearchInput({
     setIsOpen(false);
     setResults([]);
 
-    const wardInfo = getNmcWardInfo(loc.lat, loc.lng);
-    if (!wardInfo.insideNmc) {
-      setStatusNotice({
-        type: "info",
-        text: "Outside NMC municipal limits — routing available, municipal sensor telemetry may be limited.",
-      });
-    } else {
-      setStatusNotice(null);
-    }
+    const coverage = getGeographicCoverage(loc.lat, loc.lng, loc.rawAddressDetails || null);
+    setStatusNotice(coverage.notice);
 
     if (onChange) {
       onChange({
@@ -152,11 +150,15 @@ export default function LocationSearchInput({
         lat: Number(loc.lat),
         lng: Number(loc.lng),
         fullAddress: loc.fullAddress || loc.name,
-        insideNmc: wardInfo.insideNmc,
-        wardNumber: wardInfo.wardNumber,
-        wardName: wardInfo.wardName,
-        zoneName: wardInfo.zoneName,
-        statusText: wardInfo.statusText,
+        coverageState: coverage.coverageState,
+        insideDistrict: coverage.insideDistrict,
+        insideNmc: coverage.insideNmc,
+        wardNumber: coverage.wardNumber,
+        wardName: coverage.wardName,
+        zoneName: coverage.zoneName,
+        statusText: coverage.statusText,
+        badgeText: coverage.badgeText,
+        riskIntelligenceLevel: coverage.riskIntelligenceLevel,
         source: loc.source || "search",
         accuracy: null,
       });
@@ -176,13 +178,10 @@ export default function LocationSearchInput({
       if (loc.isLowAccuracy) {
         setStatusNotice({
           type: "warn",
-          text: `GPS accuracy is moderate (±${loc.accuracy}m). Move outdoors for refined signal.`,
+          text: `GPS accuracy is currently low (±${loc.accuracy} m). Move outdoors or enable precise location.`,
         });
-      } else if (!loc.insideNmc) {
-        setStatusNotice({
-          type: "info",
-          text: "Current location is outside NMC municipal limits — full routing is active.",
-        });
+      } else {
+        setStatusNotice(loc.notice);
       }
 
       if (onChange) {
@@ -191,11 +190,15 @@ export default function LocationSearchInput({
           lat: loc.lat,
           lng: loc.lng,
           fullAddress: loc.fullAddress,
+          coverageState: loc.coverageState,
+          insideDistrict: loc.insideDistrict,
           insideNmc: loc.insideNmc,
           wardNumber: loc.wardNumber,
           wardName: loc.wardName,
           zoneName: loc.zoneName,
           statusText: loc.statusText,
+          badgeText: loc.badgeText,
+          riskIntelligenceLevel: loc.riskIntelligenceLevel,
           source: "gps",
           accuracy: loc.accuracy,
         });
@@ -265,8 +268,8 @@ export default function LocationSearchInput({
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
             else if (!query) {
-              // Pre-populate with top popular hubs
-              setResults(POPULAR_NAGPUR_HUBS.slice(0, 6));
+              // Pre-populate with top popular hubs across Nagpur district
+              setResults(POPULAR_NAGPUR_HUBS.slice(0, 7));
               setIsOpen(true);
             }
           }}
@@ -315,25 +318,28 @@ export default function LocationSearchInput({
           {searching && results.length === 0 && (
             <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8] flex items-center justify-center gap-2">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0F766E] dark:text-[#14B8A6]" />
-              <span>Searching OpenStreetMap geocoder...</span>
+              <span>Searching Nagpur District geocoder...</span>
             </div>
           )}
 
           {!searching && results.length === 0 && (
             <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8]">
-              No locations found matching &quot;{query}&quot;. Try landmark names like &quot;Fetri&quot;, &quot;Sitabuldi&quot;, or &quot;Sadar&quot;.
+              No locations found matching &quot;{query}&quot;. Try place names like &quot;Yerla&quot;, &quot;Katol Road&quot;, &quot;Sitabuldi&quot;, or &quot;Ramtek&quot;.
             </div>
           )}
 
           {results.length > 0 && (
             <div className="divide-y divide-[#F1F5F9] dark:divide-[#1E293B]">
               <div className="px-3 py-1.5 bg-[#F8FAFC] dark:bg-[#0B0F17] text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
-                <span>Nagpur Search Results</span>
+                <span>Nagpur District Results</span>
                 <span>{results.length} found</span>
               </div>
 
               {results.map((loc) => {
                 const isSelected = value && value.lat === loc.lat && value.lng === loc.lng;
+                const isUrban = loc.coverageState === "NAGPUR_URBAN" || loc.insideNmc;
+                const isRural = loc.coverageState === "NAGPUR_RURAL" || (loc.insideDistrict && !loc.insideNmc);
+
                 return (
                   <button
                     key={loc.id || `${loc.lat}_${loc.lng}`}
@@ -346,7 +352,9 @@ export default function LocationSearchInput({
                     <div className="flex items-start gap-2.5 min-w-0">
                       <div
                         className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
-                          loc.insideNmc
+                          isUrban
+                            ? "bg-[#DCFCE7] dark:bg-emerald-500/20 text-[#166534] dark:text-[#4ADE80]"
+                            : isRural
                             ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4]"
                             : "bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8]"
                         }`}
@@ -359,13 +367,17 @@ export default function LocationSearchInput({
                           <span className="font-semibold text-xs text-[#0F172A] dark:text-[#F8FAFC]">
                             {loc.name}
                           </span>
-                          {loc.insideNmc ? (
+                          {isUrban ? (
                             <span className="text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80] border border-emerald-500/20">
                               {loc.wardNumber ? `${loc.wardNumber} • ` : ""}NMC
                             </span>
+                          ) : isRural ? (
+                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4] border border-teal-500/20">
+                              Nagpur Rural
+                            </span>
                           ) : (
                             <span className="text-[10px] font-medium uppercase px-1.5 py-0.2 rounded bg-[#F1F5F9] text-[#475569] dark:bg-slate-800 dark:text-[#CBD5E1] border border-slate-300 dark:border-slate-700">
-                              Extended Corridor
+                              External Area
                             </span>
                           )}
                         </div>

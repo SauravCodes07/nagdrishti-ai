@@ -9,6 +9,7 @@ from django.conf.urls.static import static
 from reports.views import ReportListCreateView, ReportVerifyView
 from zones.views import ZoneRiskListView, ZoneDispatchView, CityWeatherView
 from routing.views import RoutePathfindView
+from routing.traffic_views import TrafficIncidentsView, TrafficFlowView
 from risk.views import PriorityQueueView, SimulateRainfallView
 from alerts.views import AlertLogListView, BroadcastAlertListView
 from config.auth_views import LoginView, LogoutView, CurrentUserView, SignupView, CSRFTokenView, GoogleAuthView
@@ -32,7 +33,7 @@ def health(request):
         "status": "ok",
         "database_engine": db_engine,
         "database_reachable": db_ok,
-        "apps": ["zones", "reports", "risk", "routing", "alerts"],
+        "apps": ["zones", "reports", "risk", "routing", "alerts", "traffic"],
     })
 
 
@@ -58,6 +59,10 @@ urlpatterns = [
 
     # 5. GET /api/route/?from=lat,lng&to=lat,lng (public)
     path('api/route/', RoutePathfindView.as_view(), name='route-pathfind'),
+
+    # 5b. GET /api/traffic/incidents/ & GET /api/traffic/flow/ (public live traffic)
+    path('api/traffic/incidents/', TrafficIncidentsView.as_view(), name='traffic-incidents'),
+    path('api/traffic/flow/', TrafficFlowView.as_view(), name='traffic-flow'),
 
     # 6. GET /api/priority-queue/ (admin only)
     path('api/priority-queue/', PriorityQueueView.as_view(), name='priority-queue'),
