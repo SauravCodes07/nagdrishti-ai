@@ -98,6 +98,7 @@ export default function PublicLandingPage() {
     lat: "21.1458° N",
     lng: "79.0882° E",
     elevation: "312m",
+    isDeviceGps: false,
   });
 
   // Intercept any OAuth callback parameters reaching root and auto-forward to /auth/callback
@@ -159,6 +160,7 @@ export default function PublicLandingPage() {
               lat: `${currentLat}° N`,
               lng: `${currentLng}° E`,
               elevation: elev,
+              isDeviceGps: true,
             });
           },
           () => {},
@@ -313,9 +315,9 @@ export default function PublicLandingPage() {
         {/* Ambient Radar Sweep Effect over the Map */}
         <div className="radar-sweep-beam z-5 opacity-20 dark:opacity-60" />
 
-        {/* Theme-Aware Gradient Overlays for Readability & High Contrast in both Light and Dark */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/95 via-[#FFFFFF]/85 to-[#FFFFFF]/50 dark:from-[#0B1220]/95 dark:via-[#0B1220]/88 dark:to-[#0B1220]/55" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/90 via-transparent to-[#FFFFFF]/40 dark:from-[#0B1220] dark:via-transparent dark:to-[#0B1220]/50" />
+        {/* Theme-Aware Gradient Overlays for High Map Clarity and Crisp Text Readability */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/75 via-[#FFFFFF]/35 to-transparent dark:from-[#0B1220]/80 dark:via-[#0B1220]/45 dark:to-transparent" />
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/50 via-transparent to-[#FFFFFF]/15 dark:from-[#0B1220]/60 dark:via-transparent dark:to-[#0B1220]/20" />
 
         {/* Interactive Content Container */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
@@ -428,14 +430,18 @@ export default function PublicLandingPage() {
                 </MagneticButton>
               </ScrollReveal>
 
-              {/* Stable Geographic Coordinate Display (No "MOUSE FOCUS:" label) */}
-              <div className="p-2.5 rounded-xl bg-white/90 dark:bg-slate-950/60 border border-[#CBD5E1] dark:border-slate-800/80 backdrop-blur-md inline-flex items-center gap-3.5 text-[11px] font-mono text-[#475569] dark:text-slate-300 shadow-2xs">
-                <div className="flex items-center gap-1 text-[#0F766E] dark:text-[#5EEAD4]">
-                  <Crosshair className="w-3.5 h-3.5" />
+              {/* Civic Center / GPS Location Badge */}
+              <div className="p-2.5 rounded-xl bg-white/90 dark:bg-slate-950/70 border border-[#CBD5E1] dark:border-slate-800/80 backdrop-blur-md inline-flex items-center gap-3 text-[11px] font-medium text-[#475569] dark:text-slate-300 shadow-2xs">
+                <div className="flex items-center gap-1.5 text-[#0F766E] dark:text-[#5EEAD4] font-semibold">
+                  <MapPin className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
+                  <span>{gpsCoords.isDeviceGps ? "Current GPS Location:" : "Nagpur Center (Zero Mile):"}</span>
                 </div>
-                <span>Lat: <strong className="text-[#0F172A] dark:text-white">{gpsCoords.lat}</strong></span>
-                <span>Lng: <strong className="text-[#0F172A] dark:text-white">{gpsCoords.lng}</strong></span>
-                <span className="hidden sm:inline">Elev: <strong className="text-[#0F766E] dark:text-[#5EEAD4]">{gpsCoords.elevation}</strong></span>
+                <span className="font-mono text-[#0F172A] dark:text-white font-semibold">
+                  {gpsCoords.lat}, {gpsCoords.lng}
+                </span>
+                <span className="hidden sm:inline text-[#64748B] dark:text-slate-400 font-mono">
+                  • {gpsCoords.elevation} MSL
+                </span>
               </div>
 
               {/* Trust Badges */}

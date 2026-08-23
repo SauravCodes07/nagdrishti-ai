@@ -18,19 +18,24 @@ export default function CustomCursor() {
   const followerY = useSpring(mouseY, springConfig);
 
   useEffect(() => {
-    // Only enable custom cursor for precise pointer devices (desktop with mouse)
+    if (typeof window === "undefined") return;
+
     const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
     setEnabled(mediaQuery.matches);
 
     const handleMediaChange = (e) => setEnabled(e.matches);
-    mediaQuery.addEventListener("change", handleMediaChange);
+    try {
+      mediaQuery.addEventListener("change", handleMediaChange);
+    } catch (_) {
+      mediaQuery.addListener(handleMediaChange);
+    }
 
     if (!mediaQuery.matches) return;
 
     const handleMouseMove = (e) => {
       mouseX.set(e.clientX);
       mouseY.set(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      setIsVisible(true);
     };
 
     const handleMouseLeave = () => {
@@ -41,7 +46,6 @@ export default function CustomCursor() {
       setIsVisible(true);
     };
 
-    // Global event delegation for interactive hover states
     const handleMouseOver = (e) => {
       const target = e.target;
       if (!target || !(target instanceof Element)) return;
@@ -62,18 +66,22 @@ export default function CustomCursor() {
     };
 
     window.addEventListener("mousemove", handleMouseMove, { passive: true });
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter);
-    document.addEventListener("mouseover", handleMouseOver);
+    document.addEventListener("mouseleave", handleMouseLeave, { passive: true });
+    document.addEventListener("mouseenter", handleMouseEnter, { passive: true });
+    document.addEventListener("mouseover", handleMouseOver, { passive: true });
 
     return () => {
-      mediaQuery.removeEventListener("change", handleMediaChange);
+      try {
+        mediaQuery.removeEventListener("change", handleMediaChange);
+      } catch (_) {
+        mediaQuery.removeListener(handleMediaChange);
+      }
       window.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
       document.removeEventListener("mouseover", handleMouseOver);
     };
-  }, [mouseX, mouseY, isVisible]);
+  }, [mouseX, mouseY]);
 
   if (!enabled || !isVisible) return null;
 

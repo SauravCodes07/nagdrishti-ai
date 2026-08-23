@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Layers, Globe, Map as MapIcon, Moon, MapPin, Navigation } from "lucide-react";
 import { reverseGeocodeLocation } from "../lib/geoService";
 
@@ -196,18 +196,24 @@ export default function MapComponent({
     mapInstanceRef.current = map;
 
     return () => {
-      map.remove();
-      mapInstanceRef.current = null;
+      if (mapInstanceRef.current) {
+        try {
+          mapInstanceRef.current.remove();
+        } catch (_) {}
+        mapInstanceRef.current = null;
+      }
     };
-  }, [isHeroBackground, initialLayer]);
+  }, [isHeroBackground]);
 
-  // Handle Layer Switching
-  const handleSwitchLayer = (layerKey) => {
+  // Handle Layer Switching smoothly on existing map instance
+  const handleSwitchLayer = useCallback((layerKey) => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !TILE_PROVIDERS[layerKey]) return;
 
     if (currentTileLayerRef.current) {
-      mapInstanceRef.current.removeLayer(currentTileLayerRef.current);
+      try {
+        mapInstanceRef.current.removeLayer(currentTileLayerRef.current);
+      } catch (_) {}
     }
 
     const provider = TILE_PROVIDERS[layerKey];
@@ -219,7 +225,14 @@ export default function MapComponent({
     currentTileLayerRef.current = newTileLayer;
     setActiveLayer(layerKey);
     setLayerMenuOpen(false);
-  };
+  }, []);
+
+  // Sync external initialLayer prop changes (e.g. from hero toggle) without destroying map instance
+  useEffect(() => {
+    if (initialLayer && initialLayer !== activeLayer && mapInstanceRef.current) {
+      handleSwitchLayer(initialLayer);
+    }
+  }, [initialLayer, activeLayer, handleSwitchLayer]);
 
   // Update Zone Polygons
   useEffect(() => {

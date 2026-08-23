@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from "react";
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { supabase, signOutSupabase } from "../lib/supabaseClient";
 import { API_BASE, getApiBase } from "../lib/api";
 
@@ -97,15 +97,31 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Background verification of session (never blocks page navigation)
+  // Stable ref for saveSession and current user/token to prevent dependency cycles
+  const saveSessionRef = useRef(saveSession);
+  useEffect(() => {
+    saveSessionRef.current = saveSession;
+  }, [saveSession]);
+
+  const userRef = useRef(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const tokenRef = useRef(token);
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
+
+  // Background verification of session (never blocks page navigation, run strictly when requested)
   const verifySession = useCallback(async (isInitialMount = false) => {
     try {
       // 1. Check Supabase active session first (fastest local check)
       if (supabase) {
         try {
-          const { data, error } = await Promise.race([
+          const { data } = await Promise.race([
             supabase.auth.getSession(),
-            new Promise((resolve) => setTimeout(() => resolve({ data: { session: null }, error: new Error("timeout") }), 2000)),
+            new Promise((resolve) => setTimeout(() => resolve({ data: { session: null } }), 1500)),
           ]);
 
           if (data?.session?.user) {
@@ -129,13 +145,11 @@ export function AuthProvider({ children }) {
               role: isOfficer ? "admin" : "citizen",
             };
 
-            saveSession(formattedUser, tokenValue);
+            saveSessionRef.current(formattedUser, tokenValue);
             setAuthChecking(false);
             return { authenticated: true, user: formattedUser, token: tokenValue };
           }
-        } catch (sbErr) {
-          // Supabase session check error or timeout
-        }
+        } catch (_) {}
       }
 
       // 2. Check Django backend token if stored
@@ -144,7 +158,7 @@ export function AuthProvider({ children }) {
         if (localToken && !localToken.startsWith("sb_")) {
           try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 2500);
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
             const res = await fetch(`${getApiBase()}/api/auth/me/`, {
               headers: {
                 "Authorization": `Token ${localToken}`,
@@ -157,16 +171,16 @@ export function AuthProvider({ children }) {
             if (res.ok) {
               const resData = await res.json();
               if (resData?.authenticated && resData?.user) {
-                saveSession(resData.user, localToken);
+                saveSessionRef.current(resData.user, localToken);
                 setAuthChecking(false);
                 return { authenticated: true, user: resData.user, token: localToken };
               }
             }
-          } catch (apiErr) {
+          } catch (_) {
             // Backend unavailable or slow: if we already have local session, keep it
-            if (user) {
+            if (userRef.current) {
               setAuthChecking(false);
-              return { authenticated: true, user, token: localToken };
+              return { authenticated: true, user: userRef.current, token: localToken };
             }
           }
         }
@@ -175,23 +189,23 @@ export function AuthProvider({ children }) {
       // If user had a cached local session and backend is just waking up, preserve it
       if (typeof window !== "undefined" && localStorage.getItem("nagdrishti_token")) {
         setAuthChecking(false);
-        return { authenticated: true, user, token };
+        return { authenticated: true, user: userRef.current, token: tokenRef.current };
       }
 
       // Truly unauthenticated
       if (!isInitialMount || !localStorage.getItem("nagdrishti_token")) {
-        saveSession(null, null);
+        saveSessionRef.current(null, null);
       }
       setAuthChecking(false);
       return { authenticated: false, user: null, token: null };
     } catch (err) {
       console.warn("[AuthContext] verifySession warning:", err);
       setAuthChecking(false);
-      return { authenticated: Boolean(user), user, token };
+      return { authenticated: Boolean(userRef.current), user: userRef.current, token: tokenRef.current };
     }
-  }, [saveSession, user, token]);
+  }, []);
 
-  // Single root listener for Supabase auth state changes
+  // Single root listener for Supabase auth state changes — runs ONCE on mount
   useEffect(() => {
     let isMounted = true;
 
@@ -200,10 +214,10 @@ export function AuthProvider({ children }) {
       if (isMounted) setAuthChecking(false);
     });
 
-    // Safety timeout: never let authChecking remain true for >2s under any network condition
+    // Safety timeout: never let authChecking remain true for >1.5s under any condition
     const safetyTimer = setTimeout(() => {
       if (isMounted) setAuthChecking(false);
-    }, 2000);
+    }, 1500);
 
     let authSubscription = null;
     if (supabase) {
@@ -230,11 +244,11 @@ export function AuthProvider({ children }) {
               is_superuser: isOfficer,
               role: isOfficer ? "admin" : "citizen",
             };
-            saveSession(formattedUser, tokenValue);
+            saveSessionRef.current(formattedUser, tokenValue);
             setAuthChecking(false);
           }
         } else if (event === "SIGNED_OUT") {
-          saveSession(null, null);
+          saveSessionRef.current(null, null);
           setAuthChecking(false);
         }
       });
@@ -242,7 +256,7 @@ export function AuthProvider({ children }) {
     }
 
     const handleSessionExpired = () => {
-      saveSession(null, null);
+      saveSessionRef.current(null, null);
       setAuthChecking(false);
     };
     window.addEventListener("nagdrishti:session-expired", handleSessionExpired);
@@ -253,7 +267,7 @@ export function AuthProvider({ children }) {
       if (authSubscription) authSubscription.unsubscribe();
       window.removeEventListener("nagdrishti:session-expired", handleSessionExpired);
     };
-  }, [saveSession, verifySession]);
+  }, []);
 
   const logout = useCallback(async () => {
     saveSession(null, null);
