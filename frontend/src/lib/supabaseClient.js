@@ -39,10 +39,11 @@ export async function signInWithGoogleViaSupabase({
     );
   }
 
-  // Determine site origin for redirect URL
+  // Determine site origin dynamically for redirect URL
   const origin =
+    (typeof window !== "undefined" && window.location.origin) ||
     process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "https://nagdrishti-ai.vercel.app");
+    "https://nagdrishti-ai.vercel.app";
 
   const cleanOrigin = origin.replace(/\/+$/, "");
   const callbackUrl = `${cleanOrigin}/auth/callback?returnUrl=${encodeURIComponent(returnUrl)}&role=${requireAdmin ? "admin" : "citizen"}`;
