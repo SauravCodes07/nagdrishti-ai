@@ -5,23 +5,35 @@
 
 import { supabase, signOutSupabase, getSupabaseUser } from "./supabaseClient";
 
+export const PRODUCTION_API_URL = "https://nagdrishti-ai-backend.onrender.com";
+
 export const getApiBase = () => {
-  // If environment variable is explicitly provided, use it
+  // If environment variable is explicitly provided and valid, use it
   if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/+$/, "");
+    const envUrl = process.env.NEXT_PUBLIC_API_URL.trim();
+    if (envUrl) return envUrl.replace(/\/+$/, "");
   }
 
-  // If running in browser on a production domain (e.g. vercel.app, netlify.app, custom domain)
-  if (
-    typeof window !== "undefined" &&
-    window.location.hostname !== "localhost" &&
-    window.location.hostname !== "127.0.0.1"
-  ) {
-    return "https://nagdrishti-ai-backend.onrender.com";
+  // If running in browser:
+  if (typeof window !== "undefined") {
+    const isLocalhost =
+      window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1";
+
+    // Strictly isolated to local development environment
+    if (isLocalhost && process.env.NODE_ENV === "development") {
+      return "http://localhost:8000";
+    }
+
+    return PRODUCTION_API_URL;
   }
 
-  // Local development default
-  return "http://localhost:8000";
+  // SSR / Production default — NEVER fallback to localhost in production
+  if (process.env.NODE_ENV === "development") {
+    return "http://localhost:8000";
+  }
+
+  return PRODUCTION_API_URL;
 };
 
 export const API_BASE = getApiBase();
