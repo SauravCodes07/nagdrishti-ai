@@ -9,8 +9,12 @@ import { supabase } from "../../../lib/supabaseClient";
 function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnUrl = searchParams.get("returnUrl") || "/dashboard";
+  const rawReturnUrl = searchParams.get("returnUrl") || "";
   const role = searchParams.get("role") || "citizen";
+
+  // Validate return URL to prevent open redirects while ensuring proper destination
+  const defaultUrl = role === "admin" ? "/admin" : "/dashboard";
+  const returnUrl = rawReturnUrl.startsWith("/") ? rawReturnUrl : defaultUrl;
 
   const [status, setStatus] = useState("verifying"); // 'verifying' | 'success' | 'error'
   const [errorMessage, setErrorMessage] = useState("");
@@ -25,25 +29,47 @@ function AuthCallbackContent() {
         }
 
         // Check if there is an error in URL params
-        const errorDescription = searchParams.get("error_description");
+        const errorDescription =
+          searchParams.get("error_description") ||
+          searchParams.get("error");
         if (errorDescription) {
           throw new Error(errorDescription);
         }
 
-        // Get session from Supabase
-        const { data: { session }, error } = await supabase.auth.getSession();
+        let session = null;
 
-        if (error) {
-          throw error;
+        // 1. Check for PKCE authorization code in searchParams
+        const code = searchParams.get("code");
+        if (code) {
+          try {
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+            if (exchangeError) {
+              console.warn("PKCE code exchange notice:", exchangeError.message);
+            } else if (data?.session) {
+              session = data.session;
+            }
+          } catch (codeErr) {
+            console.warn("Error during exchangeCodeForSession:", codeErr);
+          }
         }
 
-        if (session && session.user) {
-          const user = session.user;
+        // 2. Fallback to getSession() (for hash fragment or existing session)
+        if (!session) {
+          const { data, error: sessionError } = await supabase.auth.getSession();
+          if (sessionError) {
+            console.warn("getSession error:", sessionError);
+          } else if (data?.session) {
+            session = data.session;
+          }
+        }
+
+        const handleSuccessSession = (activeSession) => {
+          if (!activeSession || !activeSession.user) return;
+          const user = activeSession.user;
           const userRole = role === "admin" ? "admin" : "citizen";
 
-          // Store tokens and basic session metadata
           if (typeof window !== "undefined") {
-            const tokenValue = session.access_token || `sb_${user.id}`;
+            const tokenValue = activeSession.access_token || `sb_${user.id}`;
             localStorage.setItem("nagdrishti_token", tokenValue);
             if (userRole === "admin") {
               localStorage.setItem("admin_token", tokenValue);
@@ -54,32 +80,20 @@ function AuthCallbackContent() {
             setStatus("success");
             setTimeout(() => {
               router.replace(returnUrl);
-            }, 600);
+            }, 500);
           }
+        };
+
+        if (session && session.user) {
+          handleSuccessSession(session);
           return;
         }
 
-        // If session not immediately present, listen for state change
+        // 3. If session not immediately available, listen for auth state change
         const { data: authListener } = supabase.auth.onAuthStateChange(
           async (event, newSession) => {
             if (newSession && newSession.user) {
-              const user = newSession.user;
-              const userRole = role === "admin" ? "admin" : "citizen";
-
-              if (typeof window !== "undefined") {
-                const tokenValue = newSession.access_token || `sb_${user.id}`;
-                localStorage.setItem("nagdrishti_token", tokenValue);
-                if (userRole === "admin") {
-                  localStorage.setItem("admin_token", tokenValue);
-                }
-              }
-
-              if (isMounted) {
-                setStatus("success");
-                setTimeout(() => {
-                  router.replace(returnUrl);
-                }, 600);
-              }
+              handleSuccessSession(newSession);
             }
           }
         );
@@ -110,7 +124,7 @@ function AuthCallbackContent() {
     return () => {
       isMounted = false;
     };
-  }, [router, returnUrl, role, searchParams]);
+  }, [router, returnUrl, role, searchParams, status]);
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center p-4 text-[#0F172A] dark:text-[#F8FAFC]">
