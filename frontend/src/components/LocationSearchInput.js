@@ -12,21 +12,30 @@ import {
   Shield,
   Compass,
   Navigation,
+  GraduationCap,
+  Building2,
+  HeartPulse,
+  Train,
+  AlertTriangle,
 } from "lucide-react";
 import {
   searchLocations,
   getGeographicCoverage,
   getNmcWardInfo,
   getCurrentGpsLocation,
+  getGpsAccuracyTier,
   isInsideNagpurDistrict,
   isInsideNmc,
   isWithinServiceRegion,
   POPULAR_NAGPUR_HUBS,
+  NAGPUR_DISTRICT_POIS,
   GEOGRAPHIC_COVERAGE_STATE,
+  isValidCoordinate,
 } from "../lib/geoService";
 
 export {
   POPULAR_NAGPUR_HUBS,
+  NAGPUR_DISTRICT_POIS,
   getGeographicCoverage,
   getNmcWardInfo,
   isInsideNagpurDistrict,
@@ -40,7 +49,7 @@ export default function LocationSearchInput({
   value,
   onChange,
   allowCurrentLocation = false,
-  placeholder = "Search address, square, village or landmark (e.g. Yerla, Katol, Sitabuldi)...",
+  placeholder = "Search college, hospital, square, village or road (e.g. Ramdeobaba, YCCE, Katol Road, Yerla)...",
   dotColor = "teal", // "teal" | "red"
 }) {
   const [query, setQuery] = useState(value?.name || "");
@@ -49,9 +58,11 @@ export default function LocationSearchInput({
   const [searching, setSearching] = useState(false);
   const [locating, setLocating] = useState(false);
   const [statusNotice, setStatusNotice] = useState(null); // { type: 'info' | 'warn' | 'error', text: string }
-  const [gpsAccuracy, setGpsAccuracy] = useState(null);
+  const [gpsAccuracyInfo, setGpsAccuracyInfo] = useState(null);
+  const [gpsErrorState, setGpsErrorState] = useState(null);
 
   const containerRef = useRef(null);
+  const inputRef = useRef(null);
   const debounceTimerRef = useRef(null);
   const abortControllerRef = useRef(null);
 
@@ -61,9 +72,15 @@ export default function LocationSearchInput({
       if (value.name && value.name !== query) {
         setQuery(value.name);
       }
-      if (value.lat && value.lng) {
+      if (isValidCoordinate(value.lat, value.lng)) {
         const coverage = getGeographicCoverage(value.lat, value.lng, value.rawAddressDetails || null);
         setStatusNotice(coverage.notice);
+      }
+      if (value.source === "gps" && value.accuracy) {
+        const accTier = getGpsAccuracyTier(value.accuracy);
+        setGpsAccuracyInfo(accTier);
+      } else if (value.source !== "gps") {
+        setGpsAccuracyInfo(null);
       }
     }
   }, [value]);
@@ -103,6 +120,7 @@ export default function LocationSearchInput({
 
     setSearching(true);
     setStatusNotice(null);
+    setGpsErrorState(null);
 
     try {
       const data = await searchLocations(cleanText, { signal: controller.signal, limit: 8 });
@@ -121,6 +139,7 @@ export default function LocationSearchInput({
     const text = e.target.value;
     setQuery(text);
     setStatusNotice(null);
+    setGpsErrorState(null);
 
     if (debounceTimerRef.current) {
       clearTimeout(debounceTimerRef.current);
@@ -129,7 +148,7 @@ export default function LocationSearchInput({
     if (text.length >= 2) {
       debounceTimerRef.current = setTimeout(() => {
         performSearch(text);
-      }, 300);
+      }, 250);
     } else {
       setResults([]);
       setIsOpen(false);
@@ -140,16 +159,20 @@ export default function LocationSearchInput({
     setQuery(loc.name);
     setIsOpen(false);
     setResults([]);
+    setGpsErrorState(null);
 
     const coverage = getGeographicCoverage(loc.lat, loc.lng, loc.rawAddressDetails || null);
     setStatusNotice(coverage.notice);
+    setGpsAccuracyInfo(null);
 
     if (onChange) {
       onChange({
         name: loc.name,
+        shortName: loc.shortName || loc.name,
         lat: Number(loc.lat),
         lng: Number(loc.lng),
         fullAddress: loc.fullAddress || loc.name,
+        category: loc.category || "Selected Location",
         coverageState: coverage.coverageState,
         insideDistrict: coverage.insideDistrict,
         insideNmc: coverage.insideNmc,
@@ -168,17 +191,19 @@ export default function LocationSearchInput({
   const handleUseCurrentLocation = async () => {
     setLocating(true);
     setStatusNotice(null);
-    setGpsAccuracy(null);
+    setGpsAccuracyInfo(null);
+    setGpsErrorState(null);
 
     try {
-      const loc = await getCurrentGpsLocation({ enableHighAccuracy: true, timeout: 10000 });
+      const loc = await getCurrentGpsLocation({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
       setQuery(loc.name);
-      setGpsAccuracy(loc.accuracyText);
+      const accTier = getGpsAccuracyTier(loc.accuracy);
+      setGpsAccuracyInfo(accTier);
 
       if (loc.isLowAccuracy) {
         setStatusNotice({
           type: "warn",
-          text: `GPS accuracy is currently low (±${loc.accuracy} m). Move outdoors or enable precise location.`,
+          text: `GPS accuracy is currently low (±${loc.accuracy} m). Move outdoors or enable device precise location.`,
         });
       } else {
         setStatusNotice(loc.notice);
@@ -187,6 +212,7 @@ export default function LocationSearchInput({
       if (onChange) {
         onChange({
           name: loc.name,
+          shortName: loc.name,
           lat: loc.lat,
           lng: loc.lng,
           fullAddress: loc.fullAddress,
@@ -201,12 +227,13 @@ export default function LocationSearchInput({
           riskIntelligenceLevel: loc.riskIntelligenceLevel,
           source: "gps",
           accuracy: loc.accuracy,
+          accuracyTier: loc.accuracyTier,
         });
       }
     } catch (err) {
-      setStatusNotice({
-        type: "error",
-        text: err.message || "Failed to detect current GPS location.",
+      setGpsErrorState({
+        message: err.message || "Unable to determine your current location.",
+        code: err.code,
       });
     } finally {
       setLocating(false);
@@ -218,15 +245,33 @@ export default function LocationSearchInput({
     setResults([]);
     setIsOpen(false);
     setStatusNotice(null);
-    setGpsAccuracy(null);
+    setGpsAccuracyInfo(null);
+    setGpsErrorState(null);
     if (onChange) {
       onChange(null);
     }
   };
 
+  const getCategoryIcon = (category) => {
+    const cat = (category || "").toLowerCase();
+    if (cat.includes("college") || cat.includes("university") || cat.includes("institute")) {
+      return <GraduationCap className="w-3.5 h-3.5" />;
+    }
+    if (cat.includes("hospital") || cat.includes("medical")) {
+      return <HeartPulse className="w-3.5 h-3.5" />;
+    }
+    if (cat.includes("station") || cat.includes("transit") || cat.includes("metro") || cat.includes("railway")) {
+      return <Train className="w-3.5 h-3.5" />;
+    }
+    if (cat.includes("commercial") || cat.includes("hub") || cat.includes("administrative")) {
+      return <Building2 className="w-3.5 h-3.5" />;
+    }
+    return <MapPin className="w-3.5 h-3.5" />;
+  };
+
   return (
     <div ref={containerRef} className="relative space-y-1.5 w-full">
-      {/* Label and Quick Utilities */}
+      {/* Label and GPS Action */}
       <div className="flex items-center justify-between">
         <label className="text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5">
           <span
@@ -243,7 +288,7 @@ export default function LocationSearchInput({
             onClick={handleUseCurrentLocation}
             disabled={locating}
             className="text-[11px] font-semibold text-[#0F766E] dark:text-[#14B8A6] hover:underline flex items-center gap-1 transition cursor-pointer disabled:opacity-50"
-            title="Detect GPS coordinates from device"
+            title="Detect precise GPS coordinates from device"
           >
             <Crosshair className={`w-3.5 h-3.5 ${locating ? "animate-spin" : ""}`} />
             <span>{locating ? "Acquiring GPS..." : "Use Current Location"}</span>
@@ -262,14 +307,15 @@ export default function LocationSearchInput({
         </div>
 
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={handleInputChange}
           onFocus={() => {
             if (results.length > 0) setIsOpen(true);
             else if (!query) {
-              // Pre-populate with top popular hubs across Nagpur district
-              setResults(POPULAR_NAGPUR_HUBS.slice(0, 7));
+              // Pre-populate with diverse popular hubs across Nagpur district (colleges, transit, rural talukas)
+              setResults(NAGPUR_DISTRICT_POIS.slice(0, 8));
               setIsOpen(true);
             }
           }}
@@ -289,15 +335,57 @@ export default function LocationSearchInput({
         )}
       </div>
 
-      {/* GPS Accuracy Indicator & Status Notices */}
-      {gpsAccuracy && (
-        <div className="flex items-center gap-1.5 text-[10px] font-semibold text-[#0F766E] dark:text-[#14B8A6]">
-          <Crosshair className="w-3 h-3" />
-          <span>{gpsAccuracy}</span>
+      {/* Real GPS Accuracy Badge & Source Metadata */}
+      {gpsAccuracyInfo && (
+        <div className="flex items-center gap-2 text-[10.5px]">
+          <div
+            className={`flex items-center gap-1 font-semibold px-2 py-0.5 rounded-md border ${
+              gpsAccuracyInfo.isLowAccuracy
+                ? "bg-[#FEF9C3] dark:bg-amber-500/15 text-[#854D0E] dark:text-[#FDE047] border-amber-300 dark:border-amber-500/30"
+                : "bg-[#F0FDFA] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] border-teal-300 dark:border-teal-500/30"
+            }`}
+          >
+            <Crosshair className="w-3 h-3 shrink-0" />
+            <span>{gpsAccuracyInfo.accuracyText}</span>
+            <span className="opacity-70 font-normal">({gpsAccuracyInfo.label})</span>
+          </div>
+          <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
+            Source: Device GPS
+          </span>
         </div>
       )}
 
-      {statusNotice && (
+      {/* Explicit GPS Failure Recovery Box */}
+      {gpsErrorState && (
+        <div className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 text-xs text-[#991B1B] dark:text-[#FCA5A5] space-y-2">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+            <span className="font-medium leading-tight">{gpsErrorState.message}</span>
+          </div>
+          <div className="flex items-center gap-2 pl-6">
+            <button
+              type="button"
+              onClick={handleUseCurrentLocation}
+              className="px-2.5 py-1 rounded-md bg-[#DC2626] text-white text-[11px] font-semibold hover:bg-red-700 transition cursor-pointer"
+            >
+              Try Again
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setGpsErrorState(null);
+                if (inputRef.current) inputRef.current.focus();
+              }}
+              className="px-2.5 py-1 rounded-md bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-[#334155] dark:text-slate-200 text-[11px] font-semibold hover:bg-slate-50 transition cursor-pointer"
+            >
+              Search Location Manually
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Coverage Status Notices */}
+      {statusNotice && !gpsErrorState && (
         <div
           className={`p-2.5 rounded-lg text-xs flex items-start gap-2 border ${
             statusNotice.type === "error"
@@ -318,21 +406,21 @@ export default function LocationSearchInput({
           {searching && results.length === 0 && (
             <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8] flex items-center justify-center gap-2">
               <RefreshCw className="w-3.5 h-3.5 animate-spin text-[#0F766E] dark:text-[#14B8A6]" />
-              <span>Searching Nagpur District geocoder...</span>
+              <span>Searching Nagpur District geocoder & landmarks...</span>
             </div>
           )}
 
           {!searching && results.length === 0 && (
             <div className="p-4 text-center text-xs text-[#64748B] dark:text-[#94A3B8]">
-              No locations found matching &quot;{query}&quot;. Try place names like &quot;Yerla&quot;, &quot;Katol Road&quot;, &quot;Sitabuldi&quot;, or &quot;Ramtek&quot;.
+              No places found matching &quot;{query}&quot;. Try typing &quot;Ramdeobaba College&quot;, &quot;YCCE&quot;, &quot;Katol Road&quot;, &quot;Yerla&quot;, or &quot;AIIMS&quot;.
             </div>
           )}
 
           {results.length > 0 && (
             <div className="divide-y divide-[#F1F5F9] dark:divide-[#1E293B]">
               <div className="px-3 py-1.5 bg-[#F8FAFC] dark:bg-[#0B0F17] text-[10px] font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] flex items-center justify-between">
-                <span>Nagpur District Results</span>
-                <span>{results.length} found</span>
+                <span>Nagpur District POIs & Locations</span>
+                <span>{results.length} results</span>
               </div>
 
               {results.map((loc) => {
@@ -359,7 +447,7 @@ export default function LocationSearchInput({
                             : "bg-[#F1F5F9] dark:bg-[#1E293B] text-[#64748B] dark:text-[#94A3B8]"
                         }`}
                       >
-                        <MapPin className="w-3.5 h-3.5" />
+                        {getCategoryIcon(loc.category)}
                       </div>
 
                       <div className="min-w-0">
@@ -368,15 +456,15 @@ export default function LocationSearchInput({
                             {loc.name}
                           </span>
                           {isUrban ? (
-                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80] border border-emerald-500/20">
+                            <span className="text-[9.5px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80] border border-emerald-500/20">
                               {loc.wardNumber ? `${loc.wardNumber} • ` : ""}NMC
                             </span>
                           ) : isRural ? (
-                            <span className="text-[10px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4] border border-teal-500/20">
+                            <span className="text-[9.5px] font-semibold uppercase px-1.5 py-0.2 rounded bg-[#CCFBF1] text-[#0F766E] dark:bg-teal-500/20 dark:text-[#5EEAD4] border border-teal-500/20">
                               Nagpur Rural
                             </span>
                           ) : (
-                            <span className="text-[10px] font-medium uppercase px-1.5 py-0.2 rounded bg-[#F1F5F9] text-[#475569] dark:bg-slate-800 dark:text-[#CBD5E1] border border-slate-300 dark:border-slate-700">
+                            <span className="text-[9.5px] font-medium uppercase px-1.5 py-0.2 rounded bg-[#F1F5F9] text-[#475569] dark:bg-slate-800 dark:text-[#CBD5E1] border border-slate-300 dark:border-slate-700">
                               External Area
                             </span>
                           )}

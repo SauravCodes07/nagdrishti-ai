@@ -164,7 +164,7 @@ export default function PublicLandingPage() {
             });
           },
           () => {},
-          { timeout: 5000, maximumAge: 60000 }
+          { timeout: 6000, maximumAge: 0, enableHighAccuracy: true }
         );
       }
     }

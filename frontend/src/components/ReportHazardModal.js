@@ -10,6 +10,8 @@ import {
   Bot,
 } from "lucide-react";
 import { submitReport } from "../lib/api";
+import { isValidCoordinate } from "../lib/geoService";
+import LocationSearchInput from "./LocationSearchInput";
 
 export default function ReportHazardModal({
   isOpen,
@@ -18,8 +20,11 @@ export default function ReportHazardModal({
   onPickOnMap,
   onReportSubmitted,
 }) {
-  const [lat, setLat] = useState(initialLocation ? initialLocation.lat : 21.1472);
-  const [lng, setLng] = useState(initialLocation ? initialLocation.lng : 79.0664);
+  const [selectedLocation, setSelectedLocation] = useState(
+    initialLocation
+      ? initialLocation
+      : { name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 }
+  );
   const [description, setDescription] = useState("");
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -45,14 +50,19 @@ export default function ReportHazardModal({
       return;
     }
 
+    if (!selectedLocation || !isValidCoordinate(selectedLocation.lat, selectedLocation.lng)) {
+      setError("Please specify a valid location in Nagpur.");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     setDetectionResult(null);
 
     try {
       const data = await submitReport({
-        lat,
-        lng,
+        lat: selectedLocation.lat,
+        lng: selectedLocation.lng,
         description,
         photoFile,
       });
@@ -94,30 +104,16 @@ export default function ReportHazardModal({
 
         {!detectionResult ? (
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* GPS Location Inputs */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">Latitude</label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={lat}
-                  onChange={(e) => setLat(parseFloat(e.target.value))}
-                  className="w-full text-xs font-normal bg-[#FFFFFF] dark:bg-[#0B1220] border border-[#CBD5E1] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
-                  required
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-[#475569] dark:text-[#CBD5E1]">Longitude</label>
-                <input
-                  type="number"
-                  step="0.0001"
-                  value={lng}
-                  onChange={(e) => setLng(parseFloat(e.target.value))}
-                  className="w-full text-xs font-normal bg-[#FFFFFF] dark:bg-[#0B1220] border border-[#CBD5E1] dark:border-[#334155] rounded-xl px-3 py-2 text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
-                  required
-                />
-              </div>
+            {/* Location Picker with Typo-Tolerant Search & Real GPS */}
+            <div className="space-y-1">
+              <LocationSearchInput
+                label="Incident Location"
+                value={selectedLocation}
+                onChange={(loc) => setSelectedLocation(loc)}
+                allowCurrentLocation={true}
+                placeholder="Search landmark, ward, or street in Nagpur..."
+                dotColor="teal"
+              />
             </div>
 
             {/* Photo Upload Area */}

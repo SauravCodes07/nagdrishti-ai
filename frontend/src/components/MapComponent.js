@@ -14,8 +14,14 @@ import {
   Zap,
   Info,
   Car,
+  Crosshair,
 } from "lucide-react";
-import { reverseGeocodeLocation, getCurrentGpsLocation } from "../lib/geoService";
+import {
+  reverseGeocodeLocation,
+  getCurrentGpsLocation,
+  getGpsAccuracyTier,
+  isValidCoordinate,
+} from "../lib/geoService";
 import { getTrafficIncidents, getTrafficFlowStatus } from "../lib/api";
 
 export function getRiskColor(category, score) {
@@ -25,19 +31,32 @@ export function getRiskColor(category, score) {
   return "#10B981"; // Bold Emerald Green
 }
 
+const MAPTILER_KEY = typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_MAPTILER_KEY : null;
+
+// High-Fidelity Tile Providers with Progressive Zoom Labels
 const TILE_PROVIDERS = {
   street: {
     id: "street",
     name: "Standard Road",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    url: MAPTILER_KEY
+      ? `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
+      : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    labelsUrl: null,
+    attribution: MAPTILER_KEY
+      ? '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a> (Voyager)',
     maxZoom: 19,
-    subdomains: ["a", "b", "c"],
+    subdomains: MAPTILER_KEY ? [] : ["a", "b", "c", "d"],
   },
   satellite: {
     id: "satellite",
-    name: "Satellite",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    name: "Satellite (Hybrid)",
+    url: MAPTILER_KEY
+      ? `https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`
+      : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    labelsUrl: MAPTILER_KEY
+      ? `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
+      : "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
     attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, Earthstar Geographics • Latest available satellite imagery',
     maxZoom: 19,
     subdomains: [],
@@ -46,7 +65,8 @@ const TILE_PROVIDERS = {
     id: "dark",
     name: "Dark Map",
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    labelsUrl: null,
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
     subdomains: ["a", "b", "c", "d"],
   },
@@ -65,7 +85,7 @@ export default function MapComponent({
   onSetOrigin = null,
   onSetDestination = null,
   isHeroBackground = false,
-  initialLayer = "satellite",
+  initialLayer = "street",
 }) {
   const mapContainerRef = useRef(null);
   const mapInstanceRef = useRef(null);
@@ -73,6 +93,7 @@ export default function MapComponent({
 
   // Dedicated Layer References
   const currentTileLayerRef = useRef(null);
+  const currentLabelsLayerRef = useRef(null);
   const zonesLayerGroupRef = useRef(null);
   const reportsLayerGroupRef = useRef(null);
   const routeLayerGroupRef = useRef(null);
@@ -99,9 +120,9 @@ export default function MapComponent({
   const [layerMenuOpen, setLayerMenuOpen] = useState(false);
   const [trafficEnabled, setTrafficEnabled] = useState(false);
   const [trafficStatus, setTrafficStatus] = useState("idle"); // "idle" | "live" | "updating" | "unavailable"
-  const [trafficLastUpdated, setTrafficLastUpdated] = useState(null);
   const [trafficIncidentsCount, setTrafficIncidentsCount] = useState(0);
   const [locatingUser, setLocatingUser] = useState(false);
+  const [gpsErrorNotice, setGpsErrorNotice] = useState(null);
 
   const trafficIntervalRef = useRef(null);
 
@@ -120,7 +141,7 @@ export default function MapComponent({
     });
 
     const map = L.map(mapContainerRef.current, {
-      center: [21.1458, 79.0882],
+      center: [21.1458, 79.0882], // Zero Mile, Nagpur
       zoom: isHeroBackground ? 12.0 : 11.5,
       minZoom: 8,
       maxZoom: 19,
@@ -131,7 +152,11 @@ export default function MapComponent({
       doubleClickZoom: !isHeroBackground,
     });
 
-    // Create Dedicated Leaflet Panes for strictly controlled z-ordering
+    // Create Dedicated Leaflet Panes for strictly controlled layer stacking
+    map.createPane("labelsPane");
+    map.getPane("labelsPane").style.zIndex = 250;
+    map.getPane("labelsPane").style.pointerEvents = "none";
+
     map.createPane("trafficTilePane");
     map.getPane("trafficTilePane").style.zIndex = 350;
     map.getPane("trafficTilePane").style.pointerEvents = "none";
@@ -149,7 +174,7 @@ export default function MapComponent({
     map.getPane("locationPane").style.zIndex = 550;
 
     // Add Base Tile Layer in standard tilePane
-    const provider = TILE_PROVIDERS[initialLayer] || TILE_PROVIDERS.satellite;
+    const provider = TILE_PROVIDERS[initialLayer] || TILE_PROVIDERS.street;
     const tileLayer = L.tileLayer(provider.url, {
       attribution: provider.attribution,
       maxZoom: provider.maxZoom,
@@ -158,6 +183,16 @@ export default function MapComponent({
     }).addTo(map);
 
     currentTileLayerRef.current = tileLayer;
+
+    // Add Reference / Hybrid Labels Layer if configured (e.g. for Satellite)
+    if (provider.labelsUrl) {
+      const labelsLayer = L.tileLayer(provider.labelsUrl, {
+        maxZoom: provider.maxZoom,
+        subdomains: provider.subdomains || [],
+        pane: "labelsPane",
+      }).addTo(map);
+      currentLabelsLayerRef.current = labelsLayer;
+    }
 
     if (!isHeroBackground) {
       L.control.zoom({ position: "bottomright" }).addTo(map);
@@ -171,9 +206,10 @@ export default function MapComponent({
     locationLayerGroupRef.current = L.layerGroup().addTo(map);
     endpointsLayerGroupRef.current = L.layerGroup().addTo(map);
 
-    // Interactive Map Click Handler with Dynamic Reverse Geocode & Ward Detection
+    // Interactive Map Click Handler with Dynamic Reverse Geocode & Action Popup
     map.on("click", async (e) => {
       const { lat, lng } = e.latlng;
+      if (!isValidCoordinate(lat, lng)) return;
 
       try {
         const geoInfo = await reverseGeocodeLocation(lat, lng);
@@ -191,11 +227,11 @@ export default function MapComponent({
           const isRural = geoInfo.coverageState === "NAGPUR_RURAL" || (geoInfo.insideDistrict && !geoInfo.insideNmc);
 
           const popupHtml = `
-            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 210px; padding: 2px;">
-              <div style="font-size: 12.5px; font-weight: 700; color: #0F172A; margin-bottom: 2px; line-height: 1.25;">
+            <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-width: 220px; padding: 2px;">
+              <div style="font-size: 13px; font-weight: 700; color: #0F172A; margin-bottom: 2px; line-height: 1.25;">
                 ${geoInfo.name}
               </div>
-              <div style="font-size: 11px; color: #64748B; margin-bottom: 6px; line-height: 1.2;">
+              <div style="font-size: 11px; color: #64748B; margin-bottom: 6px; line-height: 1.25;">
                 ${geoInfo.subtitle || geoInfo.fullAddress}
               </div>
               <div style="margin-bottom: 8px;">
@@ -235,17 +271,23 @@ export default function MapComponent({
 
             if (originBtn && onSetOriginRef.current) {
               originBtn.onclick = () => {
-                onSetOriginRef.current(geoInfo);
+                onSetOriginRef.current({
+                  ...geoInfo,
+                  source: "map_click",
+                });
                 map.closePopup();
               };
             }
             if (destBtn && onSetDestinationRef.current) {
               destBtn.onclick = () => {
-                onSetDestinationRef.current(geoInfo);
+                onSetDestinationRef.current({
+                  ...geoInfo,
+                  source: "map_click",
+                });
                 map.closePopup();
               };
             }
-          }, 40);
+          }, 50);
         }
       } catch (err) {
         if (onLocationSelectedRef.current) {
@@ -253,6 +295,7 @@ export default function MapComponent({
             lat,
             lng,
             name: `Location (${lat.toFixed(4)}, ${lng.toFixed(4)})`,
+            source: "map_click",
           });
         }
       }
@@ -275,11 +318,20 @@ export default function MapComponent({
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !TILE_PROVIDERS[layerKey]) return;
 
-    // Remove only the base tile layer from tilePane
+    // Remove current base tile layer
     if (currentTileLayerRef.current) {
       try {
         mapInstanceRef.current.removeLayer(currentTileLayerRef.current);
       } catch (_) {}
+      currentTileLayerRef.current = null;
+    }
+
+    // Remove current labels overlay
+    if (currentLabelsLayerRef.current) {
+      try {
+        mapInstanceRef.current.removeLayer(currentLabelsLayerRef.current);
+      } catch (_) {}
+      currentLabelsLayerRef.current = null;
     }
 
     const provider = TILE_PROVIDERS[layerKey];
@@ -291,11 +343,22 @@ export default function MapComponent({
     }).addTo(mapInstanceRef.current);
 
     currentTileLayerRef.current = newTileLayer;
+
+    // Add labels overlay if supported (e.g. Satellite Hybrid)
+    if (provider.labelsUrl) {
+      const labelsLayer = L.tileLayer(provider.labelsUrl, {
+        maxZoom: provider.maxZoom,
+        subdomains: provider.subdomains || [],
+        pane: "labelsPane",
+      }).addTo(mapInstanceRef.current);
+      currentLabelsLayerRef.current = labelsLayer;
+    }
+
     setActiveLayer(layerKey);
     setLayerMenuOpen(false);
   }, []);
 
-  // Sync external initialLayer prop changes (e.g. from hero toggle)
+  // Sync external initialLayer prop changes (e.g. from landing page)
   useEffect(() => {
     if (initialLayer && initialLayer !== activeLayer && mapInstanceRef.current) {
       handleSwitchLayer(initialLayer);
@@ -310,7 +373,6 @@ export default function MapComponent({
     setTrafficStatus("updating");
 
     try {
-      // Fetch incidents & flow status in parallel
       const [incRes, flowRes] = await Promise.allSettled([
         getTrafficIncidents("78.24,20.58,79.66,21.75", true),
         getTrafficFlowStatus(),
@@ -331,7 +393,7 @@ export default function MapComponent({
         trafficFlowTileLayerRef.current = flowLayer;
       }
 
-      // Update Incidents
+      // Update Incidents Overlay
       trafficLayerGroupRef.current.clearLayers();
       let incidentsCount = 0;
 
@@ -342,6 +404,7 @@ export default function MapComponent({
         incidents.forEach((inc) => {
           if (!inc.coordinates || !inc.coordinates[0] || !inc.coordinates[1]) return;
           const [lat, lng] = inc.coordinates;
+          if (!isValidCoordinate(lat, lng)) return;
 
           const isMajorDelay = inc.delay_minutes >= 5;
           const iconColor = isMajorDelay ? "#DC2626" : "#EA580C";
@@ -384,7 +447,6 @@ export default function MapComponent({
       }
 
       setTrafficIncidentsCount(incidentsCount);
-      setTrafficLastUpdated(new Date());
       setTrafficStatus("live");
     } catch (err) {
       console.warn("[Map Traffic] Fetch notice:", err.message);
@@ -499,7 +561,7 @@ export default function MapComponent({
         lat = Number(rep.reporter_location.coordinates[1]);
       }
 
-      if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+      if (!isValidCoordinate(lat, lng)) return;
 
       const isWaterlogging = rep.waterlogging_confidence > 0.6 || rep.severity === "Severe";
       const iconHtml = `
@@ -536,46 +598,55 @@ export default function MapComponent({
     });
   }, [reports, isHeroBackground]);
 
-  // 6. Update Real GPS Location Marker & Accuracy Circle in locationPane
+  // 6. Update Real GPS Location Marker & Dynamic Accuracy Circle in locationPane
   useEffect(() => {
     const L = leafletRef.current;
     if (!L || !mapInstanceRef.current || !locationLayerGroupRef.current) return;
 
     locationLayerGroupRef.current.clearLayers();
 
-    // Check if origin or selected location has GPS source
-    const gpsTarget = (origin?.source === "gps" || origin?.accuracy) ? origin : null;
+    // Check if origin or selected location has verified GPS source
+    const gpsTarget = (origin?.source === "gps" || origin?.accuracy !== undefined && origin?.accuracy !== null) ? origin : null;
 
-    if (gpsTarget && gpsTarget.lat && gpsTarget.lng) {
-      const accuracyRadius = Math.max(8, Math.min(gpsTarget.accuracy || 20, 500));
+    if (gpsTarget && isValidCoordinate(gpsTarget.lat, gpsTarget.lng)) {
+      const accuracyRadius = Math.max(5, Math.min(gpsTarget.accuracy || 15, 1000));
+      const accuracyTier = getGpsAccuracyTier(accuracyRadius);
 
-      // Accuracy circle
+      // Real Accuracy Circle sized to actual accuracy meters
       L.circle([Number(gpsTarget.lat), Number(gpsTarget.lng)], {
         radius: accuracyRadius,
-        color: "#0F766E",
+        color: accuracyTier.isLowAccuracy ? "#EA580C" : "#0F766E",
         weight: 1.5,
-        opacity: 0.6,
-        fillColor: "#14B8A6",
+        opacity: 0.65,
+        fillColor: accuracyTier.isLowAccuracy ? "#F97316" : "#14B8A6",
         fillOpacity: 0.12,
         pane: "locationPane",
       }).addTo(locationLayerGroupRef.current);
 
-      // Pulsing Beacon Marker
+      // Dedicated Pulsing GPS Beacon Marker
       const beaconIcon = L.divIcon({
         className: "custom-gps-beacon",
         html: `
-          <div style="position: relative; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;">
+          <div style="position: relative; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;">
             <div style="position: absolute; width: 100%; height: 100%; border-radius: 50%; background-color: #0F766E; opacity: 0.35; animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;"></div>
-            <div style="position: relative; width: 14px; height: 14px; border-radius: 50%; background-color: #0F766E; border: 2.5px solid white; box-shadow: 0 0 10px rgba(15,118,110,0.8), 0 2px 4px rgba(0,0,0,0.3);"></div>
+            <div style="position: relative; width: 15px; height: 15px; border-radius: 50%; background-color: #0F766E; border: 2.5px solid white; box-shadow: 0 0 10px rgba(15,118,110,0.8), 0 2px 5px rgba(0,0,0,0.35);"></div>
           </div>
         `,
-        iconSize: [26, 26],
-        iconAnchor: [13, 13],
+        iconSize: [28, 28],
+        iconAnchor: [14, 14],
         pane: "locationPane",
       });
 
       L.marker([Number(gpsTarget.lat), Number(gpsTarget.lng)], { icon: beaconIcon, pane: "locationPane" })
-        .bindPopup(`<strong>Your Current Location</strong><br/><span style="font-size:10px; color:#64748B;">Accuracy: ±${gpsTarget.accuracy || 15}m</span>`)
+        .bindPopup(`
+          <div style="font-family: sans-serif; min-width: 170px;">
+            <strong style="font-size: 12px; color: #0F172A;">Your Current Location</strong>
+            <div style="font-size: 10.5px; color: #0F766E; font-weight: 600; margin-top: 2px;">
+              ${accuracyTier.accuracyText} • ${accuracyTier.label}
+            </div>
+            ${accuracyTier.advice ? `<div style="font-size: 10px; color: #EA580C; margin-top: 3px;">${accuracyTier.advice}</div>` : ""}
+          </div>
+        `)
         .addTo(locationLayerGroupRef.current);
     }
   }, [origin]);
@@ -587,7 +658,7 @@ export default function MapComponent({
 
     endpointsLayerGroupRef.current.clearLayers();
 
-    if (origin && origin.lat && origin.lng) {
+    if (origin && isValidCoordinate(origin.lat, origin.lng) && origin.source !== "gps") {
       const originIcon = L.divIcon({
         className: "custom-origin-marker",
         html: `<div style="background-color: #0F766E; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px rgba(15,118,110,0.8), 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 800;">A</div>`,
@@ -599,7 +670,7 @@ export default function MapComponent({
         .addTo(endpointsLayerGroupRef.current);
     }
 
-    if (destination && destination.lat && destination.lng) {
+    if (destination && isValidCoordinate(destination.lat, destination.lng)) {
       const destIcon = L.divIcon({
         className: "custom-destination-marker",
         html: `<div style="background-color: #DC2626; width: 28px; height: 28px; border-radius: 50%; border: 2.5px solid white; box-shadow: 0 0 12px rgba(220,38,38,0.8), 0 2px 6px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: 800;">B</div>`,
@@ -646,7 +717,7 @@ export default function MapComponent({
           }
           return null;
         })
-        .filter(Boolean);
+        .filter((pt) => pt && isValidCoordinate(pt[0], pt[1]));
 
       if (latlngs.length >= 2) {
         // Outer ambient glow path in routePane
@@ -669,7 +740,7 @@ export default function MapComponent({
           pane: "routePane",
         }).addTo(routeLayerGroupRef.current);
 
-        // Auto-fit route with generous padding
+        // Auto-fit route bounds with generous padding
         try {
           const bounds = mainLine.getBounds();
           if (bounds.isValid()) {
@@ -699,20 +770,24 @@ export default function MapComponent({
     mapInstanceRef.current.setView([21.1458, 79.0882], 11.5, { animate: true });
   };
 
-  // Quick GPS Trigger on Map
+  // Real Browser GPS Trigger on Map
   const handleLocateMe = async () => {
     if (locatingUser || !mapInstanceRef.current) return;
     setLocatingUser(true);
+    setGpsErrorNotice(null);
+
     try {
-      const loc = await getCurrentGpsLocation({ enableHighAccuracy: true, timeout: 8000 });
-      if (loc.lat && loc.lng) {
-        mapInstanceRef.current.setView([loc.lat, loc.lng], 14, { animate: true });
+      const loc = await getCurrentGpsLocation({ enableHighAccuracy: true, timeout: 10000, maximumAge: 0 });
+      if (isValidCoordinate(loc.lat, loc.lng)) {
+        mapInstanceRef.current.setView([loc.lat, loc.lng], 15, { animate: true });
         if (onSetOriginRef.current) {
           onSetOriginRef.current(loc);
         }
       }
     } catch (err) {
       console.warn("[Map Locate Me] Error:", err.message);
+      setGpsErrorNotice(err.message || "Unable to determine your current location.");
+      setTimeout(() => setGpsErrorNotice(null), 6000);
     } finally {
       setLocatingUser(false);
     }
@@ -762,7 +837,7 @@ export default function MapComponent({
             </button>
 
             {layerMenuOpen && (
-              <div className="absolute right-0 top-11 w-48 rounded-xl bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] shadow-xl p-1.5 space-y-1 z-30">
+              <div className="absolute right-0 top-11 w-52 rounded-xl bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] shadow-xl p-1.5 space-y-1 z-30">
                 <button
                   type="button"
                   onClick={() => handleSwitchLayer("street")}
@@ -773,7 +848,7 @@ export default function MapComponent({
                   }`}
                 >
                   <MapIcon className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Standard Road</span>
+                  <span>Standard Road Map</span>
                 </button>
 
                 <button
@@ -786,7 +861,7 @@ export default function MapComponent({
                   }`}
                 >
                   <Globe className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Esri Satellite</span>
+                  <span>Satellite (Hybrid Labels)</span>
                 </button>
 
                 <button
@@ -803,11 +878,19 @@ export default function MapComponent({
                 </button>
 
                 <div className="pt-1 border-t border-[#E2E8F0] dark:border-[#243244] px-2 py-1 text-[10px] text-[#94A3B8] leading-tight">
-                  Satellite imagery date varies by area
+                  Latest available satellite & road datasets
                 </div>
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Floating GPS Error Notice if any */}
+      {gpsErrorNotice && (
+        <div className="absolute top-14 left-4 right-4 sm:left-auto sm:right-3 sm:max-w-xs z-30 p-2.5 rounded-xl bg-[#FEF2F2] dark:bg-red-950/90 border border-red-200 dark:border-red-500/40 text-xs text-[#991B1B] dark:text-[#FCA5A5] shadow-lg flex items-start gap-2">
+          <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+          <div className="leading-tight">{gpsErrorNotice}</div>
         </div>
       )}
 
@@ -819,22 +902,22 @@ export default function MapComponent({
             type="button"
             onClick={handleRecenter}
             className="h-8 px-2.5 rounded-lg bg-[#FFFFFF]/90 dark:bg-[#0F172A]/90 backdrop-blur-md border border-[#E2E8F0] dark:border-[#243244] shadow-md hover:bg-[#FFFFFF] dark:hover:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-[11px] flex items-center gap-1.5 transition cursor-pointer"
-            title="Recenter Map View"
+            title="Recenter Map View to Nagpur District"
           >
             <RotateCcw className="w-3 h-3 text-[#0F766E] dark:text-[#14B8A6]" />
             <span>Recenter</span>
           </button>
 
-          {/* Quick Locate Button */}
+          {/* Quick Real GPS Button */}
           <button
             type="button"
             onClick={handleLocateMe}
             disabled={locatingUser}
             className="h-8 px-2.5 rounded-lg bg-[#FFFFFF]/90 dark:bg-[#0F172A]/90 backdrop-blur-md border border-[#E2E8F0] dark:border-[#243244] shadow-md hover:bg-[#FFFFFF] dark:hover:bg-[#0F172A] text-[#0F172A] dark:text-[#F8FAFC] font-semibold text-[11px] flex items-center gap-1.5 transition cursor-pointer disabled:opacity-50"
-            title="Focus Current GPS Location"
+            title="Detect and focus device GPS location"
           >
-            <Navigation className={`w-3 h-3 text-[#0F766E] dark:text-[#14B8A6] ${locatingUser ? "animate-spin" : ""}`} />
-            <span>{locatingUser ? "Locating..." : "My GPS"}</span>
+            <Crosshair className={`w-3 h-3 text-[#0F766E] dark:text-[#14B8A6] ${locatingUser ? "animate-spin" : ""}`} />
+            <span>{locatingUser ? "Acquiring GPS..." : "My GPS"}</span>
           </button>
 
           {/* Live Traffic Status Pill */}

@@ -20,7 +20,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import CitizenLayout from "../../components/layouts/CitizenLayout";
 import LocationSearchInput from "../../components/LocationSearchInput";
 import { getSafeRoute, getRiskZones, getReports, DEFAULT_RISK_ZONES } from "../../lib/api";
-import { getGeographicCoverage, getNmcWardInfo, isInsideNagpurDistrict, isWithinServiceRegion } from "../../lib/geoService";
+import {
+  getGeographicCoverage,
+  getNmcWardInfo,
+  isInsideNagpurDistrict,
+  isWithinServiceRegion,
+  isValidCoordinate,
+} from "../../lib/geoService";
 import {
   HoverLiftCard,
   MagneticButton,
@@ -40,32 +46,38 @@ const QUICK_TRIP_PRESETS = [
   {
     name: "Yerla → Lakadganj",
     desc: "Katol Road to East Nagpur",
-    origin: { name: "Yerla (Katol Road)", lat: 21.2085, lng: 78.9656 },
-    dest: { name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 },
+    origin: { name: "Yerla (Katol Road Belt)", lat: 21.2085, lng: 78.9656, source: "preset" },
+    dest: { name: "Lakadganj Square & Timber Market", lat: 21.1550, lng: 79.1300, source: "preset" },
+  },
+  {
+    name: "Ramdeobaba → AIIMS",
+    desc: "North College to MIHAN Healthcare",
+    origin: { name: "Shri Ramdeobaba College of Engineering (RCOEM)", lat: 21.1776, lng: 79.0617, source: "preset" },
+    dest: { name: "AIIMS Nagpur (MIHAN)", lat: 21.0360, lng: 79.0300, source: "preset" },
   },
   {
     name: "Sitabuldi → Dharampeth",
     desc: "Central Metro Strip",
-    origin: { name: "Sitabuldi Interchange", lat: 21.1465, lng: 79.0825 },
-    dest: { name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 },
+    origin: { name: "Sitabuldi Interchange Metro Station", lat: 21.1465, lng: 79.0825, source: "preset" },
+    dest: { name: "Dharampeth Square & Market", lat: 21.1472, lng: 79.0664, source: "preset" },
   },
   {
-    name: "Hingna → Sitabuldi",
-    desc: "Industrial Transit Link",
-    origin: { name: "Hingna MIDC", lat: 20.9916, lng: 78.8732 },
-    dest: { name: "Sitabuldi Interchange", lat: 21.1465, lng: 79.0825 },
+    name: "YCCE → Sitabuldi",
+    desc: "Hingna Transit Link",
+    origin: { name: "YCCE Engineering College (Hingna Road)", lat: 21.0975, lng: 78.9782, source: "preset" },
+    dest: { name: "Sitabuldi Interchange", lat: 21.1465, lng: 79.0825, source: "preset" },
   },
   {
     name: "Katol → Sadar",
-    desc: "Taluka to Urban Hub",
-    origin: { name: "Katol Town", lat: 21.2752, lng: 78.5866 },
-    dest: { name: "Sadar Residency Rd", lat: 21.1605, lng: 79.0830 },
+    desc: "Taluka Hub to North Central",
+    origin: { name: "Katol Town (Taluka Headquarters)", lat: 21.2752, lng: 78.5866, source: "preset" },
+    dest: { name: "Sadar Residency Road", lat: 21.1605, lng: 79.0830, source: "preset" },
   },
   {
     name: "Kamptee → Airport",
-    desc: "Metropolitan Arterial",
-    origin: { name: "Kamptee Town", lat: 21.2171, lng: 79.1964 },
-    dest: { name: "Wardha Rd Airport T1", lat: 21.0920, lng: 79.0630 },
+    desc: "Northeast to Airport Corridor",
+    origin: { name: "Kamptee Cantonment Town", lat: 21.2171, lng: 79.1964, source: "preset" },
+    dest: { name: "Dr. Babasaheb Ambedkar Airport", lat: 21.0920, lng: 79.0630, source: "preset" },
   },
 ];
 
@@ -74,13 +86,13 @@ function SafeRouteContent() {
   const destQuery = searchParams ? searchParams.get("destination") : null;
 
   const [startPoint, setStartPoint] = useState({
-    name: "Sitabuldi Interchange",
+    name: "Sitabuldi Interchange Metro Station",
     lat: 21.1465,
     lng: 79.0825,
     source: "preset",
   });
   const [endPoint, setEndPoint] = useState({
-    name: "Dharampeth Square",
+    name: "Dharampeth Square & Market",
     lat: 21.1472,
     lng: 79.0664,
     source: "preset",
@@ -107,16 +119,20 @@ function SafeRouteContent() {
     }
   }, [destQuery]);
 
-  const originCoverage = startPoint?.lat ? getGeographicCoverage(startPoint.lat, startPoint.lng, startPoint.rawAddressDetails || null) : null;
-  const destCoverage = endPoint?.lat ? getGeographicCoverage(endPoint.lat, endPoint.lng, endPoint.rawAddressDetails || null) : null;
+  const originCoverage = startPoint?.lat && isValidCoordinate(startPoint.lat, startPoint.lng)
+    ? getGeographicCoverage(startPoint.lat, startPoint.lng, startPoint.rawAddressDetails || null)
+    : null;
+  const destCoverage = endPoint?.lat && isValidCoordinate(endPoint.lat, endPoint.lng)
+    ? getGeographicCoverage(endPoint.lat, endPoint.lng, endPoint.rawAddressDetails || null)
+    : null;
 
   const handleCalculateRoute = async () => {
     if (!startPoint || !endPoint) {
-      setError("Please select both Origin and Destination.");
+      setError("Please select both Origin (Start) and Destination.");
       return;
     }
 
-    if (!startPoint.lat || !startPoint.lng || !endPoint.lat || !endPoint.lng) {
+    if (!isValidCoordinate(startPoint.lat, startPoint.lng) || !isValidCoordinate(endPoint.lat, endPoint.lng)) {
       setError("Please select valid locations with coordinates.");
       return;
     }
@@ -136,7 +152,7 @@ function SafeRouteContent() {
     } catch (err) {
       console.error("[Route Page Error]:", err);
       setError(
-        err.message || "Failed to calculate road route across OpenStreetMap road network."
+        err.message || "Failed to calculate road route across road network."
       );
     } finally {
       setLoading(false);
@@ -260,9 +276,12 @@ function SafeRouteContent() {
               <LocationSearchInput
                 label="Origin (Start Location)"
                 value={startPoint}
-                onChange={(loc) => setStartPoint(loc)}
+                onChange={(loc) => {
+                  setStartPoint(loc);
+                  setRouteResult(null);
+                }}
                 allowCurrentLocation={true}
-                placeholder="Search origin (e.g. Yerla, Sitabuldi, Hingna)..."
+                placeholder="Search origin (e.g. Ramdeobaba College, Yerla, Sitabuldi)..."
                 dotColor="teal"
               />
               {originCoverage && (
@@ -278,9 +297,12 @@ function SafeRouteContent() {
               <LocationSearchInput
                 label="Destination (Arrival Point)"
                 value={endPoint}
-                onChange={(loc) => setEndPoint(loc)}
+                onChange={(loc) => {
+                  setEndPoint(loc);
+                  setRouteResult(null);
+                }}
                 allowCurrentLocation={false}
-                placeholder="Search destination (e.g. Lakadganj, Katol, Airport)..."
+                placeholder="Search destination (e.g. AIIMS Nagpur, YCCE, Lakadganj, Katol)..."
                 dotColor="red"
               />
               {destCoverage && (
@@ -404,18 +426,20 @@ function SafeRouteContent() {
               onSetOrigin={(loc) => {
                 setStartPoint({
                   name: loc.name,
+                  shortName: loc.shortName || loc.name,
                   lat: loc.lat,
                   lng: loc.lng,
-                  source: "map",
+                  source: loc.source || "map_click",
                 });
                 setRouteResult(null);
               }}
               onSetDestination={(loc) => {
                 setEndPoint({
                   name: loc.name,
+                  shortName: loc.shortName || loc.name,
                   lat: loc.lat,
                   lng: loc.lng,
-                  source: "map",
+                  source: loc.source || "map_click",
                 });
                 setRouteResult(null);
               }}

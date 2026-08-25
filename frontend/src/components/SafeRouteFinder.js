@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { getSafeRoute } from "../lib/api";
+import { isValidCoordinate } from "../lib/geoService";
 import LocationSearchInput from "./LocationSearchInput";
 
 export default function SafeRouteFinder({
@@ -18,8 +19,18 @@ export default function SafeRouteFinder({
   clickMode,
   setClickMode,
 }) {
-  const [startPoint, setStartPoint] = useState({ name: "Dharampeth Square", lat: 21.1472, lng: 79.0664 });
-  const [endPoint, setEndPoint] = useState({ name: "Lakadganj Square", lat: 21.1550, lng: 79.1300 });
+  const [startPoint, setStartPoint] = useState({
+    name: "Shri Ramdeobaba College of Engineering (RCOEM)",
+    lat: 21.1776,
+    lng: 79.0617,
+    source: "preset",
+  });
+  const [endPoint, setEndPoint] = useState({
+    name: "AIIMS Nagpur (MIHAN)",
+    lat: 21.0360,
+    lng: 79.0300,
+    source: "preset",
+  });
 
   const [travelMode, setTravelMode] = useState("driving");
   const [loading, setLoading] = useState(false);
@@ -32,7 +43,7 @@ export default function SafeRouteFinder({
       return;
     }
 
-    if (!startPoint.lat || !startPoint.lng || !endPoint.lat || !endPoint.lng) {
+    if (!isValidCoordinate(startPoint.lat, startPoint.lng) || !isValidCoordinate(endPoint.lat, endPoint.lng)) {
       setError("Please select valid locations with coordinates.");
       return;
     }
@@ -58,6 +69,7 @@ export default function SafeRouteFinder({
     const temp = startPoint;
     setStartPoint(endPoint);
     setEndPoint(temp);
+    setRouteResult(null);
   };
 
   return (
@@ -113,9 +125,12 @@ export default function SafeRouteFinder({
       <LocationSearchInput
         label="Start Location (Origin)"
         value={startPoint}
-        onChange={(loc) => setStartPoint(loc)}
+        onChange={(loc) => {
+          setStartPoint(loc);
+          setRouteResult(null);
+        }}
         allowCurrentLocation={true}
-        placeholder="Search origin in Nagpur (e.g. Yerla, Sitabuldi, Hingna)..."
+        placeholder="Search origin in Nagpur (e.g. Ramdeobaba, Yerla, Sitabuldi)..."
         dotColor="teal"
       />
 
@@ -123,9 +138,12 @@ export default function SafeRouteFinder({
       <LocationSearchInput
         label="Destination (Arrival Point)"
         value={endPoint}
-        onChange={(loc) => setEndPoint(loc)}
+        onChange={(loc) => {
+          setEndPoint(loc);
+          setRouteResult(null);
+        }}
         allowCurrentLocation={false}
-        placeholder="Search destination in Nagpur (e.g. Lakadganj, Katol, Sadar)..."
+        placeholder="Search destination in Nagpur (e.g. AIIMS, YCCE, Lakadganj, Katol)..."
         dotColor="red"
       />
 
