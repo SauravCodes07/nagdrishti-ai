@@ -504,13 +504,32 @@ export default function CitizenLayout({ children }) {
               </Link>
             )}
 
-            {/* Theme Toggle (Mobile/Tablet view) */}
+            {/* Theme Toggle Button in Main Navbar (Desktop & Mobile) */}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer md:hidden"
+              onClick={(e) => toggleTheme(e)}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
               title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              aria-label={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
-              {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
+              <motion.div
+                key={theme}
+                initial={{ rotate: -90, scale: 0.85 }}
+                animate={{ rotate: 0, scale: 1 }}
+                transition={{ duration: 0.25 }}
+                className="flex items-center gap-1.5"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="w-4 h-4 text-[#F59E0B]" />
+                    <span className="hidden sm:inline text-xs font-semibold text-[#CBD5E1]">Light</span>
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-4 h-4 text-[#0F766E]" />
+                    <span className="hidden sm:inline text-xs font-semibold text-[#475569]">Dark</span>
+                  </>
+                )}
+              </motion.div>
             </button>
 
             {/* Emergency SOS Button */}
@@ -696,6 +715,20 @@ export default function CitizenLayout({ children }) {
               </div>
 
               <div className="pt-4 border-t border-[#E2E8F0] dark:border-[#243244] space-y-2">
+                <button
+                  onClick={(e) => {
+                    toggleTheme(e);
+                  }}
+                  className="w-full flex items-center justify-between py-2.5 px-3 rounded-xl text-xs font-medium bg-[#F8FAFC] dark:bg-[#111C2E] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] cursor-pointer"
+                >
+                  <div className="flex items-center gap-2">
+                    {theme === "dark" ? <Sun className="w-4 h-4 text-[#F59E0B]" /> : <Moon className="w-4 h-4 text-[#0F766E]" />}
+                    <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4]">
+                    Switch
+                  </span>
+                </button>
                 <Link
                   href="/"
                   onClick={() => setMobileDrawerOpen(false)}

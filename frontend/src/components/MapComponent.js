@@ -15,6 +15,7 @@ import {
   Info,
   Car,
   Crosshair,
+  Check,
 } from "lucide-react";
 import {
   reverseGeocodeLocation,
@@ -37,7 +38,7 @@ const MAPTILER_KEY = typeof process !== "undefined" ? process.env?.NEXT_PUBLIC_M
 const TILE_PROVIDERS = {
   street: {
     id: "street",
-    name: "Standard Road",
+    name: "Standard Road Map",
     url: MAPTILER_KEY
       ? `https://api.maptiler.com/maps/streets-v2/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
       : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
@@ -50,25 +51,29 @@ const TILE_PROVIDERS = {
   },
   satellite: {
     id: "satellite",
-    name: "Satellite (Hybrid)",
+    name: "Satellite (Hybrid Labels)",
     url: MAPTILER_KEY
       ? `https://api.maptiler.com/maps/satellite/{z}/{x}/{y}.jpg?key=${MAPTILER_KEY}`
       : "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     labelsUrl: MAPTILER_KEY
       ? `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
       : "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, Earthstar Geographics • Latest available satellite imagery',
+    attribution: '&copy; <a href="https://www.esri.com/">Esri</a>, Earthstar Geographics',
     maxZoom: 19,
     subdomains: [],
   },
   dark: {
     id: "dark",
-    name: "Dark Map",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    name: "Dark Terrain",
+    url: MAPTILER_KEY
+      ? `https://api.maptiler.com/maps/dataviz-dark/{z}/{x}/{y}.png?key=${MAPTILER_KEY}`
+      : "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png",
     labelsUrl: null,
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    attribution: MAPTILER_KEY
+      ? '&copy; <a href="https://www.maptiler.com/">MapTiler</a> &copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+      : '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     maxZoom: 19,
-    subdomains: ["a", "b", "c", "d"],
+    subdomains: MAPTILER_KEY ? [] : ["a", "b", "c", "d"],
   },
 };
 
@@ -123,8 +128,11 @@ export default function MapComponent({
   const [trafficIncidentsCount, setTrafficIncidentsCount] = useState(0);
   const [locatingUser, setLocatingUser] = useState(false);
   const [gpsErrorNotice, setGpsErrorNotice] = useState(null);
+  const [tileErrorNotice, setTileErrorNotice] = useState(null);
 
   const trafficIntervalRef = useRef(null);
+  const layerMenuContainerRef = useRef(null);
+  const prevInitialLayerRef = useRef(initialLayer);
 
   // 1. Initialize Leaflet Map safely in client environment with Dedicated Panes
   useEffect(() => {
@@ -174,7 +182,8 @@ export default function MapComponent({
     map.getPane("locationPane").style.zIndex = 550;
 
     // Add Base Tile Layer in standard tilePane
-    const provider = TILE_PROVIDERS[initialLayer] || TILE_PROVIDERS.street;
+    const initialKey = TILE_PROVIDERS[initialLayer] ? initialLayer : "street";
+    const provider = TILE_PROVIDERS[initialKey];
     const tileLayer = L.tileLayer(provider.url, {
       attribution: provider.attribution,
       maxZoom: provider.maxZoom,
@@ -335,13 +344,31 @@ export default function MapComponent({
     }
 
     const provider = TILE_PROVIDERS[layerKey];
+    setTileErrorNotice(null);
+
     const newTileLayer = L.tileLayer(provider.url, {
       attribution: provider.attribution,
       maxZoom: provider.maxZoom,
       subdomains: provider.subdomains || [],
       pane: "tilePane",
-    }).addTo(mapInstanceRef.current);
+    });
 
+    let tileErrorCount = 0;
+    newTileLayer.on("tileerror", () => {
+      tileErrorCount++;
+      if (tileErrorCount === 5 && layerKey !== "street") {
+        const errorMsg =
+          layerKey === "satellite"
+            ? "Satellite imagery temporarily unavailable"
+            : "Dark terrain map temporarily unavailable";
+        setTileErrorNotice(errorMsg);
+        setTimeout(() => {
+          handleSwitchLayer("street");
+        }, 100);
+      }
+    });
+
+    newTileLayer.addTo(mapInstanceRef.current);
     currentTileLayerRef.current = newTileLayer;
 
     // Add labels overlay if supported (e.g. Satellite Hybrid)
@@ -358,12 +385,28 @@ export default function MapComponent({
     setLayerMenuOpen(false);
   }, []);
 
-  // Sync external initialLayer prop changes (e.g. from landing page)
+  // Sync external initialLayer prop changes (e.g. when landing page toggles heroMapLayer)
   useEffect(() => {
-    if (initialLayer && initialLayer !== activeLayer && mapInstanceRef.current) {
+    if (initialLayer && initialLayer !== prevInitialLayerRef.current && mapInstanceRef.current) {
+      prevInitialLayerRef.current = initialLayer;
       handleSwitchLayer(initialLayer);
     }
-  }, [initialLayer, activeLayer, handleSwitchLayer]);
+  }, [initialLayer, handleSwitchLayer]);
+
+  // Click-outside listener for layer switcher menu
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (layerMenuContainerRef.current && !layerMenuContainerRef.current.contains(e.target)) {
+        setLayerMenuOpen(false);
+      }
+    };
+    if (layerMenuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [layerMenuOpen]);
 
   // 3. TomTom Live Traffic Engine (Flow & Incidents)
   const fetchTrafficData = useCallback(async () => {
@@ -819,7 +862,7 @@ export default function MapComponent({
           </div>
 
           {/* Layer Control Switcher (Street / Satellite / Dark) */}
-          <div className="relative">
+          <div className="relative" ref={layerMenuContainerRef}>
             <button
               type="button"
               onClick={() => setLayerMenuOpen(!layerMenuOpen)}
@@ -833,56 +876,79 @@ export default function MapComponent({
               ) : (
                 <MapIcon className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
               )}
-              <span className="capitalize">{TILE_PROVIDERS[activeLayer]?.name || "Map"}</span>
+              <span>{TILE_PROVIDERS[activeLayer]?.name || "Map"}</span>
             </button>
 
             {layerMenuOpen && (
-              <div className="absolute right-0 top-11 w-52 rounded-xl bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] shadow-xl p-1.5 space-y-1 z-30">
+              <div className="absolute right-0 top-11 w-56 rounded-xl bg-[#FFFFFF] dark:bg-[#0F172A] border border-[#E2E8F0] dark:border-[#243244] shadow-xl p-1.5 space-y-1 z-30">
                 <button
                   type="button"
                   onClick={() => handleSwitchLayer("street")}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition cursor-pointer ${
                     activeLayer === "street"
-                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-semibold"
-                      : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-bold"
+                      : "text-[#475569] dark:text-[#CBD5E1] font-medium hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
                   }`}
                 >
-                  <MapIcon className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Standard Road Map</span>
+                  <div className="flex items-center gap-2">
+                    <MapIcon className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span>Standard Road Map</span>
+                  </div>
+                  {activeLayer === "street" && (
+                    <Check className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#5EEAD4] shrink-0" />
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleSwitchLayer("satellite")}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition cursor-pointer ${
                     activeLayer === "satellite"
-                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-semibold"
-                      : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-bold"
+                      : "text-[#475569] dark:text-[#CBD5E1] font-medium hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
                   }`}
                 >
-                  <Globe className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
-                  <span>Satellite (Hybrid Labels)</span>
+                  <div className="flex items-center gap-2">
+                    <Globe className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#14B8A6]" />
+                    <span>Satellite (Hybrid Labels)</span>
+                  </div>
+                  {activeLayer === "satellite" && (
+                    <Check className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#5EEAD4] shrink-0" />
+                  )}
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleSwitchLayer("dark")}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
+                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs transition cursor-pointer ${
                     activeLayer === "dark"
-                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-semibold"
-                      : "text-[#475569] dark:text-[#CBD5E1] hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
+                      ? "bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] font-bold"
+                      : "text-[#475569] dark:text-[#CBD5E1] font-medium hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]"
                   }`}
                 >
-                  <Moon className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  <span>Dark Terrain</span>
+                  <div className="flex items-center gap-2">
+                    <Moon className="w-3.5 h-3.5 text-[#F59E0B]" />
+                    <span>Dark Terrain</span>
+                  </div>
+                  {activeLayer === "dark" && (
+                    <Check className="w-3.5 h-3.5 text-[#0F766E] dark:text-[#5EEAD4] shrink-0" />
+                  )}
                 </button>
 
                 <div className="pt-1 border-t border-[#E2E8F0] dark:border-[#243244] px-2 py-1 text-[10px] text-[#94A3B8] leading-tight">
-                  Latest available satellite & road datasets
+                  High-fidelity satellite & vector terrain
                 </div>
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Floating Tile Loading Notice if any */}
+      {tileErrorNotice && (
+        <div className="absolute top-14 right-3 z-30 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/90 border border-amber-200 dark:border-amber-500/40 text-xs text-amber-900 dark:text-amber-200 shadow-lg flex items-center gap-2 max-w-xs">
+          <Info className="w-4 h-4 text-amber-600 shrink-0" />
+          <div className="leading-tight">{tileErrorNotice}</div>
         </div>
       )}
 

@@ -372,3 +372,21 @@ a.btn-interactive:active {
 .dark .leaflet-popup-tip {
   background: #111C2E !important;
 }
+
+/* ========================================================================= */
+/* SMOOTH VIEW TRANSITION RIPPLE & TOP-TO-BOTTOM THEME WAVE */
+/* ========================================================================= */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+

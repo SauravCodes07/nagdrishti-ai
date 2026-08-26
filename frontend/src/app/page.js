@@ -252,20 +252,28 @@ export default function PublicLandingPage() {
           <div className="flex items-center gap-2.5 sm:gap-3">
             {/* Theme Toggle with Rotation Animation */}
             <button
-              onClick={toggleTheme}
-              className="p-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer shadow-sm"
+              onClick={(e) => toggleTheme(e)}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#111C2E] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] text-[#475569] dark:text-[#CBD5E1] border border-[#E2E8F0] dark:border-[#243244] transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
               title={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
+              aria-label={theme === "dark" ? "Switch to Light Theme" : "Switch to Dark Theme"}
             >
               <motion.div
                 key={theme}
-                initial={{ rotate: -90, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
+                initial={{ rotate: -90, scale: 0.85 }}
+                animate={{ rotate: 0, scale: 1 }}
                 transition={{ duration: 0.25 }}
+                className="flex items-center gap-1.5"
               >
                 {theme === "dark" ? (
-                  <Sun className="w-4 h-4 text-[#F59E0B]" />
+                  <>
+                    <Sun className="w-4 h-4 text-[#F59E0B]" />
+                    <span className="hidden sm:inline text-xs font-semibold text-[#CBD5E1]">Light</span>
+                  </>
                 ) : (
-                  <Moon className="w-4 h-4 text-[#0F766E]" />
+                  <>
+                    <Moon className="w-4 h-4 text-[#0F766E]" />
+                    <span className="hidden sm:inline text-xs font-semibold text-[#475569]">Dark</span>
+                  </>
                 )}
               </motion.div>
             </button>
