@@ -254,16 +254,19 @@ export default function LocationSearchInput({
 
   const getCategoryIcon = (category) => {
     const cat = (category || "").toLowerCase();
-    if (cat.includes("college") || cat.includes("university") || cat.includes("institute")) {
+    if (cat.includes("college") || cat.includes("university") || cat.includes("institute") || cat.includes("school") || cat.includes("education")) {
       return <GraduationCap className="w-3.5 h-3.5" />;
     }
-    if (cat.includes("hospital") || cat.includes("medical")) {
+    if (cat.includes("hospital") || cat.includes("medical") || cat.includes("clinic") || cat.includes("health")) {
       return <HeartPulse className="w-3.5 h-3.5" />;
     }
-    if (cat.includes("station") || cat.includes("transit") || cat.includes("metro") || cat.includes("railway")) {
+    if (cat.includes("station") || cat.includes("transit") || cat.includes("metro") || cat.includes("railway") || cat.includes("airport") || cat.includes("bus")) {
       return <Train className="w-3.5 h-3.5" />;
     }
-    if (cat.includes("commercial") || cat.includes("hub") || cat.includes("administrative")) {
+    if (cat.includes("temple") || cat.includes("religious") || cat.includes("worship") || cat.includes("mosque") || cat.includes("church")) {
+      return <Compass className="w-3.5 h-3.5 text-amber-500" />;
+    }
+    if (cat.includes("commercial") || cat.includes("hub") || cat.includes("administrative") || cat.includes("market") || cat.includes("mall")) {
       return <Building2 className="w-3.5 h-3.5" />;
     }
     return <MapPin className="w-3.5 h-3.5" />;

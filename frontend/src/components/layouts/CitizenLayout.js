@@ -55,10 +55,10 @@ export default function CitizenLayout({ children }) {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [isInstalled, setIsInstalled] = useState(false);
 
-  // Fast unauthenticated redirection
+  // Only enforce login redirect on strictly authenticated user routes (like /profile)
   useEffect(() => {
-    if (!authChecking && !isAuthenticated) {
-      router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/dashboard")}`);
+    if (pathname === "/profile" && !authChecking && !isAuthenticated) {
+      router.replace(`/login?returnUrl=${encodeURIComponent(pathname || "/profile")}`);
     }
   }, [authChecking, isAuthenticated, pathname, router]);
 
@@ -154,8 +154,8 @@ export default function CitizenLayout({ children }) {
     return "NagDrishti AI";
   };
 
-  // Only show brief initial loader if we have zero cached session and are verifying for the first time
-  if (authChecking && !isAuthenticated) {
+  // Only show brief initial loader on protected profile page if session is still verifying
+  if (pathname === "/profile" && authChecking && !isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#0B1220] flex flex-col items-center justify-center text-[#0F172A] dark:text-[#F8FAFC] space-y-4 p-4 antialiased">
         <div className="w-12 h-12 rounded-xl bg-[#0F172A] p-1.5 flex items-center justify-center border border-[#E2E8F0] dark:border-[#334155] shadow-sm animate-pulse">

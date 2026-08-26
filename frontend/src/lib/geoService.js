@@ -1482,17 +1482,52 @@ function computeFuzzyScore(query, poi) {
   return bestScore;
 }
 
+// In-memory LRU-like query cache for sub-millisecond repeated searches
+const _geocodingCache = new Map();
+const GEOCODING_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes cache
+const MAX_GEOCODING_CACHE_ENTRIES = 200;
+
+function getCachedGeocodeResults(queryKey) {
+  if (_geocodingCache.has(queryKey)) {
+    const entry = _geocodingCache.get(queryKey);
+    if (Date.now() - entry.timestamp < GEOCODING_CACHE_TTL_MS) {
+      return entry.results;
+    }
+    _geocodingCache.delete(queryKey);
+  }
+  return null;
+}
+
+function setCachedGeocodeResults(queryKey, results) {
+  if (_geocodingCache.size >= MAX_GEOCODING_CACHE_ENTRIES) {
+    const firstKey = _geocodingCache.keys().next().value;
+    _geocodingCache.delete(firstKey);
+  }
+  _geocodingCache.set(queryKey, {
+    timestamp: Date.now(),
+    results,
+  });
+}
+
 /**
- * Searches locations across complete Nagpur District (Urban + Rural)
- * Multi-Tier Pipeline:
- * 1. Instant local fuzzy & alias matching across 200+ indexed Nagpur POIs, colleges, and talukas (0ms latency, typo-tolerant).
- * 2. Provider geocoding API (MapTiler Geocoding API if key configured, or controlled geocoding service).
- * 3. Deduplication, relevance ranking, and 3-tier coverage classification.
+ * Searches locations across complete Nagpur District (Urban + Rural).
+ * Multi-Tier High-Speed Concurrent Pipeline:
+ * 1. Instant local fuzzy & alias index across 200+ indexed Nagpur POIs, colleges, hospitals & talukas (0ms).
+ * 2. OpenStreetMap Photon Geocoding API (sub-150ms real-time autocomplete across all POIs, roads, colleges, temples, villages).
+ * 3. OpenStreetMap Nominatim with Nagpur bounding box [78.20, 20.50, 79.80, 21.80].
+ * 4. MapTiler Geocoding API (if NEXT_PUBLIC_MAPTILER_KEY configured).
+ * 5. In-memory caching, deduplication (~50m proximity), and 3-tier coverage classification.
  */
 export async function searchLocations(queryText, { signal = null, limit = 8 } = {}) {
   const clean = (queryText || "").trim();
   if (!clean || clean.length < 2) {
     return [];
+  }
+
+  const cacheKey = clean.toLowerCase();
+  const cached = getCachedGeocodeResults(cacheKey);
+  if (cached) {
+    return cached.slice(0, limit);
   }
 
   const results = [];
@@ -1560,56 +1595,72 @@ export async function searchLocations(queryText, { signal = null, limit = 8 } = 
     addResult(poi);
   }
 
-  // 2. Provider Geocoding: MapTiler Geocoding API if key configured
-  const maptilerKey = typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MAPTILER_KEY;
-  if (maptilerKey && results.length < limit) {
-    try {
-      const maptilerUrl = `https://api.maptiler.com/geocoding/${encodeURIComponent(clean)}.json?key=${maptilerKey}&bbox=78.20,20.50,79.80,21.80&country=in&language=en,hi,mr&limit=6`;
-      const mtRes = await fetch(maptilerUrl, { signal });
-      if (mtRes.ok) {
-        const mtData = await mtRes.json();
-        if (Array.isArray(mtData?.features)) {
-          for (const feat of mtData.features) {
-            if (feat.geometry?.coordinates) {
-              const [lng, lat] = feat.geometry.coordinates;
-              const placeName = feat.text || feat.place_name?.split(",")?.[0] || clean;
-              const sub = feat.place_name ? feat.place_name.replace(placeName, "").replace(/^,\s*/, "") : "Nagpur District, Maharashtra";
+  // 2. Query OSM Photon API & OSM Nominatim & MapTiler in parallel with short timeout
+  const fetchPromises = [];
+
+  // A. OSM Photon Autocomplete API (Targeted to Nagpur center and bounding box)
+  const photonUrl = `https://photon.komoot.io/api/?q=${encodeURIComponent(clean)}&lat=21.1458&lon=79.0882&bbox=78.20,20.50,79.80,21.80&limit=8`;
+  fetchPromises.push(
+    fetch(photonUrl, { signal: signal || AbortSignal.timeout(3000) })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        if (Array.isArray(data?.features)) {
+          for (const feat of data.features) {
+            const props = feat.properties || {};
+            const coords = feat.geometry?.coordinates;
+            if (coords && coords.length >= 2) {
+              const [lng, lat] = coords;
+              const name = props.name || props.street || clean;
+              const localityParts = [
+                props.district || props.city || props.county || props.state,
+                "Nagpur District",
+              ].filter(Boolean);
+              const sub = props.street && props.street !== name
+                ? `${props.street}, ${localityParts.join(", ")}`
+                : localityParts.join(", ");
+
+              const osmType = props.osm_value || props.type || "place";
+              let cat = "Place";
+              if (["university", "college", "school"].includes(osmType)) cat = "College / Educational";
+              else if (["hospital", "clinic", "pharmacy", "doctors"].includes(osmType)) cat = "Hospital / Medical";
+              else if (["station", "halt", "bus_stop", "airport", "subway"].includes(osmType)) cat = "Transit Hub";
+              else if (["place_of_worship", "temple", "mosque", "church"].includes(osmType)) cat = "Temple / Religious";
+              else if (["commercial", "supermarket", "mall", "market"].includes(osmType)) cat = "Commercial Hub";
+              else if (["residential", "village", "suburb", "town"].includes(osmType)) cat = "Residential / Locality";
+
               addResult({
-                id: `mt_${feat.id}`,
-                name: placeName,
-                subtitle: sub,
-                fullAddress: feat.place_name,
+                id: `photon_${props.osm_id || Math.random()}`,
+                name: name,
+                subtitle: sub || "Nagpur District, Maharashtra",
+                fullAddress: `${name}, ${sub}`,
                 lat,
                 lng,
-                category: feat.place_type?.[0] || "Geocoded Place",
-                relevanceScore: 70,
-                source: "maptiler_geocoding",
+                category: cat,
+                relevanceScore: 65,
+                source: "osm_photon",
               });
             }
           }
         }
-      }
-    } catch (_) {}
-  }
+      })
+      .catch(() => {})
+  );
 
-  // 3. Fallback controlled geocoding if query hasn't yielded adequate matches
-  if (results.length === 0) {
-    try {
-      // Controlled query with regional bounding box (covers 78.20 to 79.70, 20.58 to 21.75)
-      const viewboxStr = "78.20,21.75,79.70,20.58";
-      const fallbackUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-        `${clean} Nagpur`
-      )}&viewbox=${viewboxStr}&bounded=0&countrycodes=in&limit=6&addressdetails=1`;
-
-      const res = await fetch(fallbackUrl, {
-        signal,
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "NagDrishti-AI-Civic-Navigation/2.0",
-        },
-      });
-
-      if (res.ok) {
+  // B. OSM Nominatim Geocoder (Regional Bounding Box)
+  const nominatimUrl = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+    `${clean} Nagpur`
+  )}&viewbox=78.20,21.75,79.70,20.58&bounded=0&countrycodes=in&limit=6&addressdetails=1`;
+  fetchPromises.push(
+    fetch(nominatimUrl, {
+      signal: signal || AbortSignal.timeout(3500),
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "NagDrishti-AI-Civic-Navigation/2.0",
+      },
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data)) {
           for (const item of data) {
@@ -1631,13 +1682,55 @@ export async function searchLocations(queryText, { signal = null, limit = 8 } = 
             });
           }
         }
-      }
-    } catch (_) {}
+      })
+      .catch(() => {})
+  );
+
+  // C. MapTiler API if key configured
+  const maptilerKey = typeof process !== "undefined" && process.env?.NEXT_PUBLIC_MAPTILER_KEY;
+  if (maptilerKey) {
+    const maptilerUrl = `https://api.maptiler.com/geocoding/${encodeURIComponent(clean)}.json?key=${maptilerKey}&bbox=78.20,20.50,79.80,21.80&country=in&language=en,hi,mr&limit=6`;
+    fetchPromises.push(
+      fetch(maptilerUrl, { signal: signal || AbortSignal.timeout(3000) })
+        .then(async (res) => {
+          if (!res.ok) return;
+          const mtData = await res.json();
+          if (Array.isArray(mtData?.features)) {
+            for (const feat of mtData.features) {
+              if (feat.geometry?.coordinates) {
+                const [lng, lat] = feat.geometry.coordinates;
+                const placeName = feat.text || feat.place_name?.split(",")?.[0] || clean;
+                const sub = feat.place_name ? feat.place_name.replace(placeName, "").replace(/^,\s*/, "") : "Nagpur District, Maharashtra";
+                addResult({
+                  id: `mt_${feat.id}`,
+                  name: placeName,
+                  subtitle: sub,
+                  fullAddress: feat.place_name,
+                  lat,
+                  lng,
+                  category: feat.place_type?.[0] || "Geocoded Place",
+                  relevanceScore: 70,
+                  source: "maptiler_geocoding",
+                });
+              }
+            }
+          }
+        })
+        .catch(() => {})
+    );
   }
+
+  // Await all geocoding promises with timeout
+  await Promise.allSettled(fetchPromises);
 
   // Sort strictly by relevance score descending
   results.sort((a, b) => b.relevanceScore - a.relevanceScore);
-  return results.slice(0, limit);
+  const finalResults = results.slice(0, limit);
+
+  // Cache query results for instant retrieval
+  setCachedGeocodeResults(cacheKey, finalResults);
+
+  return finalResults;
 }
 
 /**
@@ -1667,7 +1760,7 @@ export async function reverseGeocodeLocation(lat, lng, { signal = null } = {}) {
     };
   }
 
-  // 1. Check if point is close (within 100m) to a known landmark in our Nagpur POI database
+  // 1. Check if point is close (within 120m) to a known landmark in our Nagpur POI database
   let closestPoi = null;
   let minPoiDistKm = 0.12; // 120m threshold
   for (const poi of NAGPUR_DISTRICT_POIS) {
@@ -1687,11 +1780,11 @@ export async function reverseGeocodeLocation(lat, lng, { signal = null } = {}) {
   let fullAddress = `${defaultName}, ${subtitle}`;
   let addressDetails = null;
 
-  // 2. Perform reverse geocode lookup
+  // 2. Perform reverse geocode lookup with 3.5s timeout
   try {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${numLat}&lon=${numLng}&zoom=18&addressdetails=1`;
     const res = await fetch(url, {
-      signal,
+      signal: signal || AbortSignal.timeout(3500),
       headers: {
         Accept: "application/json",
         "User-Agent": "NagDrishti-AI-Civic-Navigation/2.0",
