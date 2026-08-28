@@ -31,6 +31,10 @@ import {
   HoverLiftCard,
   MagneticButton,
   AnimatedCounter,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
@@ -173,7 +177,6 @@ function SafeRouteContent() {
     setError(null);
   };
 
-  // Helper for dynamic safety assessment text
   const getSafetyAssessmentText = () => {
     if (routeResult?.safety_explanation) {
       return routeResult.safety_explanation;
@@ -206,15 +209,17 @@ function SafeRouteContent() {
         </span>
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           {QUICK_TRIP_PRESETS.map((p) => (
-            <button
+            <motion.button
               key={p.name}
+              whileHover={{ scale: 1.03, y: -1 }}
+              whileTap={{ scale: 0.96 }}
               type="button"
               onClick={() => applyPreset(p)}
               className="h-8 px-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#CBD5E1] dark:border-[#334155] hover:border-[#0F766E] dark:hover:border-[#14B8A6] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-1.5 shrink-0 transition shadow-2xs hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B] cursor-pointer"
             >
               <Sparkles className="w-3 h-3 text-[#0F766E] dark:text-[#14B8A6]" />
               <span>{p.name}</span>
-            </button>
+            </motion.button>
           ))}
         </div>
       </div>
@@ -223,7 +228,7 @@ function SafeRouteContent() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Column: Route Parameters & Analysis */}
         <div className="lg:col-span-5 space-y-4">
-          <HoverLiftCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-5">
+          <SpotlightCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-5">
             <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -313,17 +318,16 @@ function SafeRouteContent() {
               )}
             </div>
 
-            {/* Calculate Button */}
-            <MagneticButton>
-              <button
-                onClick={handleCalculateRoute}
-                disabled={loading}
-                className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs sm:text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-                <span>{loading ? "Calculating safest road route..." : "Find Flood-Safe Route"}</span>
-              </button>
-            </MagneticButton>
+            {/* Calculate Button with ShimmerButton */}
+            <ShimmerButton
+              onClick={handleCalculateRoute}
+              disabled={loading}
+              background="var(--primary)"
+              className="w-full h-11 text-xs sm:text-sm font-semibold shadow-md"
+            >
+              <Navigation className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              <span>{loading ? "Calculating safest road route..." : "Find Flood-Safe Route"}</span>
+            </ShimmerButton>
 
             {/* Error Banner */}
             <AnimatePresence>
@@ -340,7 +344,7 @@ function SafeRouteContent() {
               )}
             </AnimatePresence>
 
-            {/* Route Result Card */}
+            {/* Route Result Card with BorderBeam */}
             <AnimatePresence>
               {routeResult && (
                 <motion.div
@@ -348,8 +352,10 @@ function SafeRouteContent() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.96 }}
                   transition={{ type: "spring", stiffness: 350, damping: 28 }}
-                  className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3 shadow-inner"
+                  className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3 relative overflow-hidden shadow-inner"
                 >
+                  <BorderBeam size={120} duration={8} colorFrom="#14B8A6" colorTo="#0F766E" />
+                  
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5 text-[#16A34A] dark:text-[#4ADE80] font-semibold text-xs">
                       <ShieldCheck className="w-4 h-4" />
@@ -395,7 +401,7 @@ function SafeRouteContent() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </HoverLiftCard>
+          </SpotlightCard>
         </div>
 
         {/* Right Column: Interactive Map Screen */}

@@ -13,6 +13,7 @@ import {
   Bell,
   RefreshCw,
   ChevronRight,
+  Zap,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,6 +26,10 @@ import {
   StaggerGrid,
   StaggerItem,
   AnimatedIcon,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
@@ -129,23 +134,20 @@ export default function AppDashboardPage() {
               <span>Sync Feeds</span>
             </motion.button>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                href="/report"
-                className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-1.5 transition shadow-sm"
-              >
+            <Link href="/report">
+              <ShimmerButton background="var(--primary)" className="h-10 px-4 text-xs font-semibold">
                 <Camera className="w-3.5 h-3.5" />
                 <span>Report Hazard</span>
-              </Link>
-            </motion.div>
+              </ShimmerButton>
+            </Link>
           </div>
         </div>
 
-        {/* 4 KPI Live Telemetry Cards with Spring Animated Counters */}
+        {/* 4 KPI Live Telemetry Cards with Spotlight Effects */}
         <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: IMD Rainfall */}
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 h-full">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">IMD Rainfall</span>
                 <AnimatedIcon icon={CloudRain} type="wiggle" className="text-[#0F766E] dark:text-[#14B8A6]" />
@@ -156,12 +158,12 @@ export default function AppDashboardPage() {
               <div className="text-xs text-[#0F766E] dark:text-[#14B8A6] font-semibold truncate">
                 {weather.condition || "Live Doppler Radar"}
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           {/* Card 2: Flooded Wards */}
           <StaggerItem>
-            <HoverLiftCard riskCategory={severeZonesCount > 0 ? "Severe" : "Low"} className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full">
+            <SpotlightCard riskCategory={severeZonesCount > 0 ? "Severe" : "Low"} className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 h-full">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Flooded Wards</span>
                 <AnimatedIcon icon={Droplets} type="pulse" className="text-[#DC2626]" />
@@ -172,12 +174,12 @@ export default function AppDashboardPage() {
               <div className="text-xs text-[#DC2626] dark:text-[#F87171] font-semibold">
                 {severeZonesCount} Severe, {highZonesCount} High Risk
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           {/* Card 3: Safe Roads */}
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 h-full">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Safe Road Index</span>
                 <AnimatedIcon icon={Car} type="scale" className="text-[#16A34A]" />
@@ -188,12 +190,12 @@ export default function AppDashboardPage() {
               <div className="text-xs text-[#16A34A] dark:text-[#4ADE80] font-semibold">
                 OSM Graph Accessible
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           {/* Card 4: Reports */}
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] space-y-1.5 h-full">
               <div className="flex items-center justify-between text-[#64748B] dark:text-[#94A3B8]">
                 <span className="text-xs font-medium uppercase tracking-wider">Citizen Reports</span>
                 <AnimatedIcon icon={Activity} type="pulse" className="text-[#F59E0B]" />
@@ -204,13 +206,13 @@ export default function AppDashboardPage() {
               <div className="text-xs text-[#854D0E] dark:text-[#FDE68A] font-semibold">
                 Crowdsourced Ground Intel
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
         </StaggerGrid>
 
-        {/* City Threat Index Alert Bar */}
-        <ScrollReveal direction="up" delay={0.1}>
-          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* City Threat Index Alert Bar with Spotlight */}
+        <BlurFade delay={0.1}>
+          <SpotlightCard className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
               <div className={`p-2.5 rounded-xl border ${threatBg}`}>
                 <ShieldAlert className="w-5 h-5" />
@@ -250,15 +252,15 @@ export default function AppDashboardPage() {
                 </Link>
               </motion.div>
             </div>
-          </div>
-        </ScrollReveal>
+          </SpotlightCard>
+        </BlurFade>
 
         {/* 2-Column Responsive Dashboard Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Live Catchment Map */}
           <div className="lg:col-span-8 space-y-4">
-            <ScrollReveal direction="up" delay={0.15}>
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4">
+            <BlurFade delay={0.15}>
+              <SpotlightCard className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
@@ -309,18 +311,22 @@ export default function AppDashboardPage() {
                     </div>
                   </div>
                 </div>
-              </div>
-            </ScrollReveal>
+              </SpotlightCard>
+            </BlurFade>
           </div>
 
           {/* Right Column: Ward Telemetry Inspector & Quick Actions */}
           <div className="lg:col-span-4 space-y-4">
             {/* Selected Ward Telemetry Card */}
-            <ScrollReveal direction="up" delay={0.2}>
-              <HoverLiftCard
+            <BlurFade delay={0.2}>
+              <SpotlightCard
                 riskCategory={selectedZone?.risk_category || "Low"}
-                className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4"
+                className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4 relative"
               >
+                {selectedZone?.risk_category === "Severe" && (
+                  <BorderBeam size={120} duration={8} colorFrom="#DC2626" colorTo="#F87171" />
+                )}
+                
                 <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
                     Zone Details
@@ -407,12 +413,12 @@ export default function AppDashboardPage() {
                     Click any ward polygon on the map to inspect live metrics.
                   </div>
                 )}
-              </HoverLiftCard>
-            </ScrollReveal>
+              </SpotlightCard>
+            </BlurFade>
 
             {/* Quick Action Shortcuts */}
-            <ScrollReveal direction="up" delay={0.25}>
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2">
+            <BlurFade delay={0.25}>
+              <SpotlightCard className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8] block mb-2">
                   Quick Actions
                 </span>
@@ -476,8 +482,8 @@ export default function AppDashboardPage() {
                     <ChevronRight className="w-4 h-4 text-[#64748B] dark:text-[#94A3B8]" />
                   </Link>
                 </motion.div>
-              </div>
-            </ScrollReveal>
+              </SpotlightCard>
+            </BlurFade>
           </div>
         </div>
       </div>

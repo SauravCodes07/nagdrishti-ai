@@ -21,6 +21,10 @@ import {
   RiskPulse,
   StaggerGrid,
   StaggerItem,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
@@ -100,7 +104,7 @@ export default function AdminCommandCenterPage() {
       <div className="space-y-6">
         {/* Top Control Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-semibold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
                 Command Desk
@@ -116,7 +120,7 @@ export default function AdminCommandCenterPage() {
             <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight mt-1">
               City Risk Overview
             </h1>
-          </div>
+          </BlurFade>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <motion.button
@@ -129,58 +133,56 @@ export default function AdminCommandCenterPage() {
               <span>Sync Network</span>
             </motion.button>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/admin/simulate"
-                className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-1.5 transition shadow-sm"
-              >
+            <Link href="/admin/simulate">
+              <ShimmerButton background="var(--primary)" className="h-10 px-4 text-xs font-semibold">
                 <Sliders className="w-3.5 h-3.5" />
                 <span>Simulate Scenario</span>
-              </Link>
-            </motion.div>
+              </ShimmerButton>
+            </Link>
           </div>
         </div>
 
-        {/* 4 Top KPI Command Counters with Spring Animations */}
+        {/* 4 Top KPI Command Counters with Spotlight Effects */}
         <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StaggerItem>
-            <HoverLiftCard riskCategory="Severe" className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
+            <SpotlightCard riskCategory="Severe" className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full relative overflow-hidden">
+              {severeCount > 0 && <BorderBeam size={130} duration={8} colorFrom="#DC2626" colorTo="#F87171" />}
               <span className="text-xs uppercase font-medium text-[#64748B] dark:text-[#94A3B8]">Critical Priority Basins</span>
               <div className="text-3xl sm:text-4xl font-bold text-[#DC2626] dark:text-[#F87171] mt-1">
                 <AnimatedCounter value={severeCount} />
               </div>
               <p className="text-xs text-[#DC2626] dark:text-[#F87171] font-medium">Immediate pump dispatch required</p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
               <span className="text-xs uppercase font-medium text-[#64748B] dark:text-[#94A3B8]">Pending Citizen Reports</span>
               <div className="text-3xl sm:text-4xl font-bold text-[#D97706] dark:text-[#FDE047] mt-1">
                 <AnimatedCounter value={pendingReports} />
               </div>
               <p className="text-xs text-[#D97706] dark:text-[#FDE047] font-medium">Awaiting officer moderation</p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
               <span className="text-xs uppercase font-medium text-[#64748B] dark:text-[#94A3B8]">Active Dispatches</span>
               <div className="text-3xl sm:text-4xl font-bold text-[#0F766E] dark:text-[#14B8A6] mt-1">
                 <AnimatedCounter value={dispatchedUnits} />
               </div>
               <p className="text-xs text-[#0F766E] dark:text-[#14B8A6] font-medium">Dewatering units in field</p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-1 h-full">
               <span className="text-xs uppercase font-medium text-[#64748B] dark:text-[#94A3B8]">IMD Radar Live</span>
               <div className="text-3xl sm:text-4xl font-bold text-[#0F172A] dark:text-[#F8FAFC] mt-1">
                 <AnimatedCounter value={weather.rainfall_intensity_mm ?? 18.5} decimals={1} suffix=" mm/h" />
               </div>
               <p className="text-xs text-[#475569] dark:text-[#CBD5E1] font-medium">{weather.condition || "Live Radar Stream"}</p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
         </StaggerGrid>
 
@@ -188,8 +190,8 @@ export default function AdminCommandCenterPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           {/* Left Column: Priority Dispatch Queue Overview */}
           <div className="lg:col-span-7 space-y-4">
-            <ScrollReveal direction="up" delay={0.1}>
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4">
+            <BlurFade delay={0.1}>
+              <SpotlightCard className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4">
                 <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
                   <div>
                     <h2 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
@@ -260,14 +262,14 @@ export default function AdminCommandCenterPage() {
                     </motion.div>
                   ))}
                 </div>
-              </div>
-            </ScrollReveal>
+              </SpotlightCard>
+            </BlurFade>
           </div>
 
           {/* Right Column: Live GIS Catchment Map */}
           <div className="lg:col-span-5 space-y-4">
-            <ScrollReveal direction="up" delay={0.15}>
-              <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3">
+            <BlurFade delay={0.15}>
+              <SpotlightCard className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
                     PostGIS Topology
@@ -280,8 +282,8 @@ export default function AdminCommandCenterPage() {
                 <div className="h-[360px] w-full rounded-xl overflow-hidden relative border border-[#E2E8F0] dark:border-[#243244]">
                   <MapComponent zones={zones} reports={reports} />
                 </div>
-              </div>
-            </ScrollReveal>
+              </SpotlightCard>
+            </BlurFade>
           </div>
         </div>
       </div>

@@ -31,6 +31,10 @@ import {
   HoverLiftCard,
   StaggerGrid,
   StaggerItem,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 const EMERGENCY_SERVICES = [
@@ -39,24 +43,28 @@ const EMERGENCY_SERVICES = [
     phone: "0712-2567035",
     desc: "Nagpur Municipal Corporation emergency waterlogging and drainage helpline.",
     badge: "Official Municipal Desk",
+    isPrimary: true,
   },
   {
     title: "Police Emergency Response",
     phone: "112",
     desc: "National emergency dialer for road blockages, accidents, and life safety.",
     badge: "24/7 National Dispatch",
+    isPrimary: false,
   },
   {
     title: "Fire & Flood Rescue",
     phone: "101",
     desc: "Rapid deployment for deep water rescue, fallen trees, and flash evacuations.",
     badge: "Disaster Response",
+    isPrimary: false,
   },
   {
     title: "Ambulance / Medical Emergency",
     phone: "108",
     desc: "Emergency medical transport and hospital routing in crisis zones.",
     badge: "Medical Response",
+    isPrimary: false,
   },
 ];
 
@@ -122,82 +130,84 @@ export default function CitizenProfilePage() {
     <CitizenLayout>
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        <div>
+        <BlurFade delay={0.05}>
           <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             Citizen Profile & Safety Desk
           </h1>
           <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
             Manage your account credentials, preferences, and verified emergency municipal contacts
           </p>
-        </div>
+        </BlurFade>
 
         {/* User Identity Card */}
-        <HoverLiftCard className="p-6 sm:p-7 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0] dark:border-[#243244]">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] font-bold text-xl flex items-center justify-center border border-[#0F766E]/20 shrink-0">
-                {user?.name ? user.name.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : "C"}
+        <BlurFade delay={0.1}>
+          <SpotlightCard className="p-6 sm:p-7 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E2E8F0] dark:border-[#243244]">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 rounded-2xl bg-[#CCFBF1] dark:bg-teal-500/20 text-[#0F766E] dark:text-[#5EEAD4] font-bold text-xl flex items-center justify-center border border-[#0F766E]/20 shrink-0">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : user?.username ? user.username.charAt(0).toUpperCase() : "C"}
+                </div>
+
+                <div className="space-y-0.5 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
+                      {user?.name || user?.username || "Verified Citizen"}
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] dark:bg-green-500/20 dark:text-[#4ADE80] text-[10px] font-bold border border-green-500/30">
+                      Active Citizen Session
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
+                    @{user?.username || "citizen"} • {user?.email || "Nagpur Civic Portal"}
+                  </p>
+                </div>
               </div>
 
-              <div className="space-y-0.5 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
-                    {user?.name || user?.username || "Verified Citizen"}
-                  </h2>
-                  <span className="px-2 py-0.5 rounded-full bg-[#DCFCE7] text-[#166534] dark:bg-green-500/20 dark:text-[#4ADE80] text-[10px] font-bold border border-green-500/30">
-                    Active Citizen Session
-                  </span>
-                </div>
-                <p className="text-xs text-[#64748B] dark:text-[#94A3B8]">
-                  @{user?.username || "citizen"} • {user?.email || "Nagpur Civic Portal"}
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={toggleTheme}
+                  className="px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                  title="Toggle Theme"
+                >
+                  {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-[#F59E0B]" /> : <Moon className="w-3.5 h-3.5 text-[#0F766E]" />}
+                  <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+                </motion.button>
+
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={handleLogout}
+                  className="px-3 py-2 rounded-xl bg-[#FEF2F2] dark:bg-red-500/15 hover:bg-[#FEE2E2] dark:hover:bg-red-500/25 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-[#991B1B] dark:text-[#F87171] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Quick Stats / Info Badges */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+                <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Role</span>
+                <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC] capitalize">{user?.role || "Citizen"}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+                <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Auth Provider</span>
+                <p className="font-bold text-[#0F766E] dark:text-[#14B8A6]">
+                  {user?.email && user?.picture ? "Google Account" : "Standard Auth"}
                 </p>
               </div>
+              <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+                <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Coverage Area</span>
+                <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">Nagpur Metro</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
+                <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Session Security</span>
+                <p className="font-bold text-green-600 dark:text-green-400">CSRF Protected</p>
+              </div>
             </div>
-
-            <div className="flex items-center gap-2 self-start sm:self-auto">
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={toggleTheme}
-                className="px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
-                title="Toggle Theme"
-              >
-                {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-[#F59E0B]" /> : <Moon className="w-3.5 h-3.5 text-[#0F766E]" />}
-                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-              </motion.button>
-
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
-                className="px-3 py-2 rounded-xl bg-[#FEF2F2] dark:bg-red-500/15 hover:bg-[#FEE2E2] dark:hover:bg-red-500/25 border border-red-200 dark:border-red-500/30 text-xs font-semibold text-[#991B1B] dark:text-[#F87171] transition shadow-sm flex items-center gap-1.5 cursor-pointer"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>Sign Out</span>
-              </motion.button>
-            </div>
-          </div>
-
-          {/* Quick Stats / Info Badges */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Role</span>
-              <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC] capitalize">{user?.role || "Citizen"}</p>
-            </div>
-            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Auth Provider</span>
-              <p className="font-bold text-[#0F766E] dark:text-[#14B8A6]">
-                {user?.email && user?.picture ? "Google Account" : "Standard Auth"}
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Coverage Area</span>
-              <p className="font-bold text-[#0F172A] dark:text-[#F8FAFC]">Nagpur Metro</p>
-            </div>
-            <div className="p-3 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-[#64748B] dark:text-[#94A3B8]">Session Security</span>
-              <p className="font-bold text-green-600 dark:text-green-400">CSRF Protected</p>
-            </div>
-          </div>
-        </HoverLiftCard>
+          </SpotlightCard>
+        </BlurFade>
 
         {/* Emergency Contacts Directory */}
         <div className="space-y-4">
@@ -211,10 +221,12 @@ export default function CitizenProfilePage() {
           <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {EMERGENCY_SERVICES.map((serv) => (
               <StaggerItem key={serv.title}>
-                <HoverLiftCard
+                <SpotlightCard
                   riskCategory="Severe"
-                  className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3 flex flex-col justify-between h-full"
+                  className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-red-200 dark:border-red-900/40 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-3 flex flex-col justify-between h-full relative overflow-hidden"
                 >
+                  {serv.isPrimary && <BorderBeam size={130} duration={8} colorFrom="#DC2626" colorTo="#F87171" />}
+                  
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]">
@@ -235,7 +247,7 @@ export default function CitizenProfilePage() {
                     <PhoneCall className="w-3.5 h-3.5" />
                     <span>Call {serv.phone}</span>
                   </motion.a>
-                </HoverLiftCard>
+                </SpotlightCard>
               </StaggerItem>
             ))}
           </StaggerGrid>
@@ -253,7 +265,7 @@ export default function CitizenProfilePage() {
           <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {SAFETY_TIPS.map((tip, idx) => (
               <StaggerItem key={tip.title}>
-                <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2 h-full">
+                <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-2 h-full">
                   <div className="flex items-center gap-2.5">
                     <span className="w-6 h-6 rounded-lg bg-[#CCFBF1] dark:bg-teal-500/15 text-[#0F766E] dark:text-[#5EEAD4] text-xs font-bold flex items-center justify-center font-mono">
                       0{idx + 1}
@@ -263,7 +275,7 @@ export default function CitizenProfilePage() {
                   <p className="text-xs text-[#475569] dark:text-[#CBD5E1] leading-relaxed pl-8.5 font-normal">
                     {tip.desc}
                   </p>
-                </HoverLiftCard>
+                </SpotlightCard>
               </StaggerItem>
             ))}
           </StaggerGrid>
@@ -271,7 +283,7 @@ export default function CitizenProfilePage() {
 
         {/* Onboarding Tour & Officer Desk Links */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+          <SpotlightCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Compass className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -293,9 +305,9 @@ export default function CitizenProfilePage() {
             >
               <span>Replay Onboarding Tour</span>
             </motion.button>
-          </HoverLiftCard>
+          </SpotlightCard>
 
-          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+          <SpotlightCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex flex-col justify-between gap-4 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <Lock className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -308,16 +320,13 @@ export default function CitizenProfilePage() {
               </p>
             </div>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
-              <Link
-                href="/admin/login"
-                className="w-full h-10 px-5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs shrink-0 flex items-center justify-center gap-2 transition shadow-sm"
-              >
+            <Link href="/admin/login">
+              <ShimmerButton background="var(--primary)" className="w-full h-10 text-xs font-semibold">
                 <span>Officer Portal</span>
                 <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
-            </motion.div>
-          </HoverLiftCard>
+              </ShimmerButton>
+            </Link>
+          </SpotlightCard>
         </div>
       </div>
     </CitizenLayout>

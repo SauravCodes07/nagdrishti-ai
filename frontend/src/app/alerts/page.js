@@ -20,6 +20,9 @@ import {
   RiskPulse,
   StaggerGrid,
   StaggerItem,
+  SpotlightCard,
+  BorderBeam,
+  BlurFade,
 } from "../../components/motion";
 
 const DEFAULT_ALERTS = [
@@ -92,14 +95,14 @@ export default function AlertsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Recent Alerts
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Official Nagpur Municipal Corporation flood advisories, waterlogging warnings, and evacuation notices
             </p>
-          </div>
+          </BlurFade>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -156,7 +159,7 @@ export default function AlertsPage() {
             </p>
           </div>
         ) : filteredAlerts.length === 0 ? (
-          <ScrollReveal direction="up">
+          <BlurFade delay={0.1}>
             <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-12 text-center space-y-2 shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
               <CheckCircle2 className="w-10 h-10 text-[#16A34A] mx-auto" />
               <h3 className="text-base font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
@@ -166,21 +169,23 @@ export default function AlertsPage() {
                 All monitored drainage basins and major transport routes are currently within acceptable flow parameters.
               </p>
             </div>
-          </ScrollReveal>
+          </BlurFade>
         ) : (
           <StaggerGrid className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredAlerts.map((alert) => {
               const isSevere = alert.severity === "Severe" || alert.severity === "High";
               return (
                 <StaggerItem key={alert.id}>
-                  <HoverLiftCard
+                  <SpotlightCard
                     riskCategory={alert.severity}
-                    className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col justify-between space-y-4 h-full ${
+                    className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col justify-between space-y-4 h-full relative overflow-hidden ${
                       isSevere
                         ? "border-red-200 dark:border-red-900/50"
                         : "border-[#E2E8F0] dark:border-[#243244]"
                     }`}
                   >
+                    {isSevere && <BorderBeam size={130} duration={7} colorFrom="#DC2626" colorTo="#F87171" />}
+                    
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
                         <RiskPulse category={alert.severity}>
@@ -214,6 +219,7 @@ export default function AlertsPage() {
 
                     <div className="pt-3 border-t border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between gap-2">
                       <motion.button
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleCopyAlert(alert)}
                         className="flex-1 h-9 rounded-lg bg-[#F8FAFC] dark:bg-[#0B0F17] hover:bg-[#F1F5F9] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-[#334155] dark:text-[#CBD5E1] font-semibold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer"
@@ -223,6 +229,7 @@ export default function AlertsPage() {
                       </motion.button>
 
                       <motion.button
+                        whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleWhatsAppShare(alert)}
                         className="flex-1 h-9 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition shadow-sm cursor-pointer"
@@ -231,7 +238,7 @@ export default function AlertsPage() {
                         <span>WhatsApp</span>
                       </motion.button>
                     </div>
-                  </HoverLiftCard>
+                  </SpotlightCard>
                 </StaggerItem>
               );
             })}

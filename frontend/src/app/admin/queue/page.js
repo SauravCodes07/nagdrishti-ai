@@ -10,7 +10,13 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getPriorityQueue, updateDispatchStatus } from "../../../lib/api";
-import { RiskPulse, HoverLiftCard } from "../../../components/motion";
+import {
+  RiskPulse,
+  HoverLiftCard,
+  SpotlightCard,
+  BorderBeam,
+  BlurFade,
+} from "../../../components/motion";
 
 const DEFAULT_PRIORITY_QUEUE = [
   { zone_id: 2, zone_name: "Sitabuldi Interchange", risk_category: "Severe", risk_score: 88.4, rainfall_mm: 36.5, drainage_capacity: 0.35, pending_reports_count: 5, dispatch_status: "Dispatched" },
@@ -66,14 +72,14 @@ export default function AdminPriorityQueuePage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Priority Queue
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Ranked by Multi-Variable Crisis Formula: <code className="text-[#0F766E] dark:text-[#14B8A6] font-mono">0.45·Rain + 0.35·(1-Elev) + 0.20·(1-Drain) + Photo Boost</code>
             </p>
-          </div>
+          </BlurFade>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -117,116 +123,118 @@ export default function AdminPriorityQueuePage() {
         </div>
 
         {/* Priority Table Container with FLIP Layout Animations */}
-        <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F8FAFC] dark:bg-[#0F172A] text-[#64748B] dark:text-[#94A3B8] font-semibold uppercase text-[11px] tracking-wider">
-                  <th className="p-3.5">Rank & Ward</th>
-                  <th className="p-3.5">Risk Index</th>
-                  <th className="p-3.5">Rainfall (mm/h)</th>
-                  <th className="p-3.5">Drainage Capacity</th>
-                  <th className="p-3.5">Pending Reports</th>
-                  <th className="p-3.5">Dispatch Status</th>
-                  <th className="p-3.5 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
-                <AnimatePresence mode="popLayout">
-                  {filteredQueue.map((item, idx) => (
-                    <motion.tr
-                      layout
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 32 }}
-                      key={item.zone_id}
-                      className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition-colors"
-                    >
-                      <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-md bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#0F766E] dark:text-[#14B8A6] font-bold text-xs flex items-center justify-center font-mono">
-                          #{idx + 1}
-                        </span>
-                        <span>{item.zone_name}</span>
-                      </td>
+        <BlurFade delay={0.1}>
+          <div className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(15,23,42,0.06)]">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-[#E2E8F0] dark:border-[#243244] bg-[#F8FAFC] dark:bg-[#0F172A] text-[#64748B] dark:text-[#94A3B8] font-semibold uppercase text-[11px] tracking-wider">
+                    <th className="p-3.5">Rank & Ward</th>
+                    <th className="p-3.5">Risk Index</th>
+                    <th className="p-3.5">Rainfall (mm/h)</th>
+                    <th className="p-3.5">Drainage Capacity</th>
+                    <th className="p-3.5">Pending Reports</th>
+                    <th className="p-3.5">Dispatch Status</th>
+                    <th className="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
+                  <AnimatePresence mode="popLayout">
+                    {filteredQueue.map((item, idx) => (
+                      <motion.tr
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 32 }}
+                        key={item.zone_id}
+                        className="hover:bg-[#F8FAFC] dark:hover:bg-[#1E293B]/40 transition-colors"
+                      >
+                        <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC] flex items-center gap-2">
+                          <span className="w-5 h-5 rounded-md bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#0F766E] dark:text-[#14B8A6] font-bold text-xs flex items-center justify-center font-mono">
+                            #{idx + 1}
+                          </span>
+                          <span>{item.zone_name}</span>
+                        </td>
 
-                      <td className="p-3.5">
-                        <RiskPulse category={item.risk_category}>
+                        <td className="p-3.5">
+                          <RiskPulse category={item.risk_category}>
+                            <span
+                              className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
+                                item.risk_category === "Severe"
+                                  ? "bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]"
+                                  : item.risk_category === "High"
+                                  ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-orange-500/20 dark:text-[#FB923C]"
+                                  : item.risk_category === "Medium"
+                                  ? "bg-[#FEF9C3] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE047]"
+                                  : "bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]"
+                              }`}
+                            >
+                              {item.risk_score?.toFixed(1)} ({item.risk_category})
+                            </span>
+                          </RiskPulse>
+                        </td>
+
+                        <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                          {item.rainfall_mm?.toFixed(1)} mm/h
+                        </td>
+
+                        <td className="p-3.5 text-[#475569] dark:text-[#CBD5E1]">
+                          {Math.round((item.drainage_capacity || 0.5) * 100)}%
+                        </td>
+
+                        <td className="p-3.5 text-[#475569] dark:text-[#CBD5E1]">
+                          {item.pending_reports_count || 0} Reports
+                        </td>
+
+                        <td className="p-3.5">
                           <span
-                            className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
-                              item.risk_category === "Severe"
-                                ? "bg-[#FEE2E2] text-[#991B1B] dark:bg-red-500/20 dark:text-[#F87171]"
-                                : item.risk_category === "High"
-                                ? "bg-[#FFEDD5] text-[#9A3412] dark:bg-orange-500/20 dark:text-[#FB923C]"
-                                : item.risk_category === "Medium"
-                                ? "bg-[#FEF9C3] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE047]"
-                                : "bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]"
+                            className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
+                              item.dispatch_status === "Dispatched"
+                                ? "bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A]"
+                                : item.dispatch_status === "Resolved"
+                                ? "bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]"
+                                : "bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#64748B] dark:text-[#94A3B8]"
                             }`}
                           >
-                            {item.risk_score?.toFixed(1)} ({item.risk_category})
+                            {item.dispatch_status || "Unassigned"}
                           </span>
-                        </RiskPulse>
-                      </td>
+                        </td>
 
-                      <td className="p-3.5 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                        {item.rainfall_mm?.toFixed(1)} mm/h
-                      </td>
-
-                      <td className="p-3.5 text-[#475569] dark:text-[#CBD5E1]">
-                        {Math.round((item.drainage_capacity || 0.5) * 100)}%
-                      </td>
-
-                      <td className="p-3.5 text-[#475569] dark:text-[#CBD5E1]">
-                        {item.pending_reports_count || 0} Reports
-                      </td>
-
-                      <td className="p-3.5">
-                        <span
-                          className={`text-[10px] font-semibold uppercase px-2 py-0.5 rounded ${
-                            item.dispatch_status === "Dispatched"
-                              ? "bg-[#FEF3C7] text-[#854D0E] dark:bg-amber-500/20 dark:text-[#FDE68A]"
-                              : item.dispatch_status === "Resolved"
-                              ? "bg-[#DCFCE7] text-[#166534] dark:bg-emerald-500/20 dark:text-[#4ADE80]"
-                              : "bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#64748B] dark:text-[#94A3B8]"
-                          }`}
-                        >
-                          {item.dispatch_status || "Unassigned"}
-                        </span>
-                      </td>
-
-                      <td className="p-3.5 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {item.dispatch_status !== "Dispatched" && (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleStatusChange(item.zone_id, "Dispatched")}
-                              disabled={updatingId === item.zone_id}
-                              className="px-2.5 py-1 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-xs transition cursor-pointer shadow-sm"
-                            >
-                              Dispatch QRT
-                            </motion.button>
-                          )}
-                          {item.dispatch_status !== "Resolved" && (
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => handleStatusChange(item.zone_id, "Resolved")}
-                              disabled={updatingId === item.zone_id}
-                              className="px-2.5 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-xs transition cursor-pointer shadow-sm"
-                            >
-                              Resolve
-                            </motion.button>
-                          )}
-                        </div>
-                      </td>
-                    </motion.tr>
-                  ))}
-                </AnimatePresence>
-              </tbody>
-            </table>
+                        <td className="p-3.5 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            {item.dispatch_status !== "Dispatched" && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleStatusChange(item.zone_id, "Dispatched")}
+                                disabled={updatingId === item.zone_id}
+                                className="px-2.5 py-1 rounded-lg bg-[#0F766E] hover:bg-[#115E59] text-white font-semibold text-xs transition cursor-pointer shadow-sm"
+                              >
+                                Dispatch QRT
+                              </motion.button>
+                            )}
+                            {item.dispatch_status !== "Resolved" && (
+                              <motion.button
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => handleStatusChange(item.zone_id, "Resolved")}
+                                disabled={updatingId === item.zone_id}
+                                className="px-2.5 py-1 rounded-lg bg-[#16A34A] hover:bg-[#15803D] text-white font-semibold text-xs transition cursor-pointer shadow-sm"
+                              >
+                                Resolve
+                              </motion.button>
+                            )}
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
+        </BlurFade>
       </div>
     </AdminLayout>
   );

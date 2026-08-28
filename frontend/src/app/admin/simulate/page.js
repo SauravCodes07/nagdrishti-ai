@@ -21,6 +21,10 @@ import {
   RiskPulse,
   StaggerGrid,
   StaggerItem,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../../components/motion";
 
 const SIMULATION_STAGES = [
@@ -98,14 +102,14 @@ export default function AdminSimulatePage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
+        <BlurFade delay={0.05}>
           <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             Crisis Scenario Simulator
           </h1>
           <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
             Test full-cycle municipal emergency protocols across 8 pre-configured monsoon flood stages
           </p>
-        </div>
+        </BlurFade>
 
         {/* Stepper Progress Indicator */}
         <div className="p-4 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm overflow-hidden">
@@ -125,22 +129,23 @@ export default function AdminSimulatePage() {
           </div>
         </div>
 
-        {/* 8-Stage Scenario Grid with StaggerGrid and HoverLiftCards */}
+        {/* 8-Stage Scenario Grid with StaggerGrid and SpotlightCards */}
         <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {SIMULATION_STAGES.map((st, idx) => {
             const Icon = st.icon;
             const isRunning = activeStage === st.id;
-            const isPassed = activeIndex >= idx;
 
             return (
               <StaggerItem key={st.id}>
-                <HoverLiftCard
-                  className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col justify-between space-y-4 h-full transition ${
+                <SpotlightCard
+                  className={`p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border shadow-[0_1px_3px_rgba(15,23,42,0.06)] flex flex-col justify-between space-y-4 h-full relative overflow-hidden transition ${
                     isRunning
                       ? "border-[#0F766E] dark:border-[#14B8A6] ring-2 ring-[#0F766E]/30 dark:ring-[#14B8A6]/30"
                       : "border-[#E2E8F0] dark:border-[#243244]"
                   }`}
                 >
+                  {isRunning && <BorderBeam size={130} duration={6} colorFrom="#14B8A6" colorTo="#0F766E" />}
+                  
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="w-7 h-7 rounded-lg bg-[#F1F5F9] dark:bg-[#0B0F17] text-[#0F766E] dark:text-[#14B8A6] text-xs font-bold flex items-center justify-center font-mono">
@@ -171,7 +176,7 @@ export default function AdminSimulatePage() {
                     <Play className={`w-3.5 h-3.5 ${loading && isRunning ? "animate-spin" : ""}`} />
                     <span>{loading && isRunning ? "Injecting..." : "Execute Stage"}</span>
                   </motion.button>
-                </HoverLiftCard>
+                </SpotlightCard>
               </StaggerItem>
             );
           })}

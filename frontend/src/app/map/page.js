@@ -17,6 +17,10 @@ import {
   AnimatedCounter,
   HoverLiftCard,
   RiskPulse,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 const MapComponent = dynamic(() => import("../../components/MapComponent"), {
@@ -84,14 +88,14 @@ export default function MapPage() {
       <div className="space-y-6">
         {/* Header & Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Live Risk Map
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Real-time catchment risk overlay and crowdsourced hazard markers across 10 administrative zones
             </p>
-          </div>
+          </BlurFade>
 
           <div className="flex items-center gap-2.5 self-start sm:self-auto">
             <motion.button
@@ -104,15 +108,12 @@ export default function MapPage() {
               <span>Refresh Map</span>
             </motion.button>
 
-            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.96 }}>
-              <Link
-                href="/report"
-                className="h-10 px-4 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs flex items-center gap-1.5 transition shadow-sm"
-              >
+            <Link href="/report">
+              <ShimmerButton background="var(--primary)" className="h-10 px-4 text-xs font-semibold">
                 <Camera className="w-3.5 h-3.5" />
                 <span>Report Hazard</span>
-              </Link>
-            </motion.div>
+              </ShimmerButton>
+            </Link>
           </div>
         </div>
 
@@ -183,10 +184,14 @@ export default function MapPage() {
 
           {/* Right Inspector & Ward Details Panel */}
           <div className="lg:col-span-4 space-y-4">
-            <HoverLiftCard
+            <SpotlightCard
               riskCategory={selectedZone?.risk_category || "Low"}
-              className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4"
+              className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-4 relative overflow-hidden"
             >
+              {selectedZone?.risk_category === "Severe" && (
+                <BorderBeam size={130} duration={8} colorFrom="#DC2626" colorTo="#F87171" />
+              )}
+              
               <div className="flex items-center justify-between border-b border-[#E2E8F0] dark:border-[#243244] pb-3">
                 <span className="text-xs font-semibold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
                   Zone Details
@@ -273,7 +278,7 @@ export default function MapPage() {
                   Select a ward polygon from the map to view detailed risk intelligence.
                 </div>
               )}
-            </HoverLiftCard>
+            </SpotlightCard>
           </div>
         </div>
       </div>

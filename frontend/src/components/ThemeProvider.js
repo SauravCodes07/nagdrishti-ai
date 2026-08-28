@@ -16,6 +16,10 @@ export function ThemeProvider({ children }) {
   const applyThemeToDOM = useCallback((t) => {
     if (typeof document === "undefined") return;
     const root = document.documentElement;
+
+    // Temporarily disable CSS transitions during theme switch to prevent multi-element transition lag
+    root.classList.add("theme-transitioning");
+
     if (t === "dark") {
       root.classList.add("dark");
       root.classList.remove("light");
@@ -27,6 +31,11 @@ export function ThemeProvider({ children }) {
       root.setAttribute("data-theme", "light");
       root.style.colorScheme = "light";
     }
+
+    // Force style flush and remove class in next animation frame
+    requestAnimationFrame(() => {
+      root.classList.remove("theme-transitioning");
+    });
   }, []);
 
   useEffect(() => {
@@ -37,7 +46,6 @@ export function ThemeProvider({ children }) {
         setThemeState(stored);
         applyThemeToDOM(stored);
       } else {
-        // Default to dark theme for civic command center look, but allow instant switch
         setThemeState("dark");
         applyThemeToDOM("dark");
       }
@@ -59,59 +67,10 @@ export function ThemeProvider({ children }) {
     [applyThemeToDOM]
   );
 
-  const toggleTheme = useCallback(
-    (event) => {
-      const next = theme === "dark" ? "light" : "dark";
-
-      // If document.startViewTransition is supported, perform smooth radial/downward wave transition
-      if (
-        typeof document !== "undefined" &&
-        document.startViewTransition &&
-        typeof window !== "undefined" &&
-        !window.matchMedia("(prefers-reduced-motion: reduce)").matches
-      ) {
-        let x = window.innerWidth / 2;
-        let y = 32;
-
-        if (event && typeof event.clientX === "number" && typeof event.clientY === "number" && (event.clientX !== 0 || event.clientY !== 0)) {
-          x = event.clientX;
-          y = event.clientY;
-        }
-
-        const endRadius = Math.hypot(
-          Math.max(x, window.innerWidth - x),
-          Math.max(y, window.innerHeight - y)
-        );
-
-        const transition = document.startViewTransition(() => {
-          setTheme(next);
-        });
-
-        transition.ready
-          .then(() => {
-            document.documentElement.animate(
-              {
-                clipPath: [
-                  `circle(0px at ${x}px ${y}px)`,
-                  `circle(${endRadius}px at ${x}px ${y}px)`,
-                ],
-              },
-              {
-                duration: 400,
-                easing: "cubic-bezier(0.4, 0, 0.2, 1)",
-                pseudoElement: "::view-transition-new(root)",
-              }
-            );
-          })
-          .catch(() => {
-            setTheme(next);
-          });
-      } else {
-        setTheme(next);
-      }
-    },
-    [theme, setTheme]
-  );
+  const toggleTheme = useCallback(() => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+  }, [theme, setTheme]);
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, mounted }}>

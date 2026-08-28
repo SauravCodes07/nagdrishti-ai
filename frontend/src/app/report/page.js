@@ -20,6 +20,10 @@ import {
   HoverLiftCard,
   MagneticButton,
   AnimatedCounter,
+  SpotlightCard,
+  BorderBeam,
+  ShimmerButton,
+  BlurFade,
 } from "../../components/motion";
 
 import LocationSearchInput from "../../components/LocationSearchInput";
@@ -99,14 +103,14 @@ export default function ReportHazardPage() {
     <CitizenLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         {/* Header */}
-        <div>
+        <BlurFade delay={0.05}>
           <h1 className="text-2xl sm:text-[32px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             Report a Hazard
           </h1>
           <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
             Submit geotagged photo evidence of waterlogging or damaged roads for automated Vision AI analysis and municipal verification.
           </p>
-        </div>
+        </BlurFade>
 
         <AnimatePresence mode="wait">
           {!detectionResult ? (
@@ -129,12 +133,12 @@ export default function ReportHazardPage() {
                     <motion.button
                       key={cat.id}
                       type="button"
-                      whileHover={{ scale: 1.02 }}
+                      whileHover={{ scale: 1.02, y: -1 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => setCategory(cat.id)}
                       className={`p-3 rounded-xl border text-left transition flex flex-col justify-between space-y-1.5 cursor-pointer ${
                         category === cat.id
-                          ? "bg-[#CCFBF1] dark:bg-teal-500/15 border-[#0F766E] dark:border-[#14B8A6] text-[#0F766E] dark:text-[#5EEAD4]"
+                          ? "bg-[#CCFBF1] dark:bg-teal-500/15 border-[#0F766E] dark:border-[#14B8A6] text-[#0F766E] dark:text-[#5EEAD4] shadow-sm"
                           : "bg-[#F8FAFC] dark:bg-[#0B0F17] border-[#E2E8F0] dark:border-[#243244] text-[#475569] dark:text-[#CBD5E1] hover:border-[#CBD5E1] dark:hover:border-[#334155]"
                       }`}
                     >
@@ -259,17 +263,16 @@ export default function ReportHazardPage() {
                 )}
               </AnimatePresence>
 
-              {/* Submit Action */}
-              <MagneticButton>
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-sm shadow-sm transition flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-                >
-                  <Upload className={`w-4 h-4 ${submitting ? "animate-spin" : ""}`} />
-                  <span>{submitting ? "Analyzing Photo with Vision AI..." : "Submit Hazard Report"}</span>
-                </button>
-              </MagneticButton>
+              {/* Submit Action with ShimmerButton */}
+              <ShimmerButton
+                type="submit"
+                disabled={submitting}
+                background="var(--primary)"
+                className="w-full h-11 text-sm font-semibold shadow-md"
+              >
+                <Upload className={`w-4 h-4 ${submitting ? "animate-spin" : ""}`} />
+                <span>{submitting ? "Analyzing Photo with Vision AI..." : "Submit Hazard Report"}</span>
+              </ShimmerButton>
             </motion.form>
           ) : (
             /* Submission Feedback & Vision AI Results */
@@ -279,78 +282,80 @@ export default function ReportHazardPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ type: "spring", stiffness: 350, damping: 28 }}
-              className="bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] rounded-2xl p-6 sm:p-7 shadow-[0_1px_3px_rgba(15,23,42,0.06)] space-y-5"
             >
-              <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30">
-                <CheckCircle2 className="w-5 h-5 text-[#16A34A] dark:text-[#4ADE80] shrink-0" />
-                <div>
-                  <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                    Hazard Report #{detectionResult.id} Registered
-                  </h3>
-                  <p className="text-xs text-[#166534] dark:text-[#86EFAC] mt-0.5">
-                    Assigned to <strong className="text-[#0F766E] dark:text-[#5EEAD4]">{detectionResult.zone_name || "Nagpur City"}</strong>.
-                  </p>
-                </div>
-              </div>
-
-              {/* Vision AI Results Box */}
-              <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3">
-                <div className="flex items-center gap-2 text-[#0F766E] dark:text-[#14B8A6]">
-                  <Bot className="w-4 h-4" />
-                  <span className="text-xs font-semibold uppercase tracking-wider">
-                    Vision AI Detection Results
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-                  <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
-                    <span className="text-[#475569] dark:text-[#CBD5E1] font-medium">Pothole Hazard:</span>
-                    <span
-                      className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
-                        detectionResult.pothole_detected
-                          ? "bg-[#FEE2E2] text-[#991B1B]"
-                          : "bg-[#DCFCE7] text-[#166534]"
-                      }`}
-                    >
-                      {detectionResult.pothole_detected ? "DETECTED" : "CLEAR"}
-                    </span>
-                  </div>
-
-                  <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
-                    <span className="text-[#475569] dark:text-[#CBD5E1] font-medium">Waterlogging:</span>
-                    <span
-                      className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
-                        detectionResult.waterlogging_detected
-                          ? "bg-[#FEE2E2] text-[#991B1B]"
-                          : "bg-[#DCFCE7] text-[#166534]"
-                      }`}
-                    >
-                      {detectionResult.waterlogging_detected ? "CONFIRMED" : "CLEAR"}
-                    </span>
+              <SpotlightCard className="p-6 sm:p-7 space-y-5 relative">
+                <BorderBeam size={140} duration={8} colorFrom="#16A34A" colorTo="#4ADE80" />
+                
+                <div className="flex items-center gap-3 p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30">
+                  <CheckCircle2 className="w-5 h-5 text-[#16A34A] dark:text-[#4ADE80] shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
+                      Hazard Report #{detectionResult.id} Registered
+                    </h3>
+                    <p className="text-xs text-[#166534] dark:text-[#86EFAC] mt-0.5">
+                      Assigned to <strong className="text-[#0F766E] dark:text-[#5EEAD4]">{detectionResult.zone_name || "Nagpur City"}</strong>.
+                    </p>
                   </div>
                 </div>
 
-                <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] text-xs flex justify-between items-center border border-[#E2E8F0] dark:border-[#243244]">
-                  <span className="text-[#475569] dark:text-[#CBD5E1]">Verification Status:</span>
-                  <span className="font-semibold text-[#0F766E] dark:text-[#14B8A6]">
-                    {detectionResult.verification_status || "Pending Verification"}
-                  </span>
-                </div>
-              </div>
+                {/* Vision AI Results Box */}
+                <div className="p-4 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#E2E8F0] dark:border-[#243244] space-y-3">
+                  <div className="flex items-center gap-2 text-[#0F766E] dark:text-[#14B8A6]">
+                    <Bot className="w-4 h-4" />
+                    <span className="text-xs font-semibold uppercase tracking-wider">
+                      Vision AI Detection Results
+                    </span>
+                  </div>
 
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => {
-                  setDetectionResult(null);
-                  setPhotoFile(null);
-                  setPhotoPreview(null);
-                  setDescription("");
-                }}
-                className="w-full h-11 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-semibold text-xs transition cursor-pointer shadow-sm"
-              >
-                Submit Another Report
-              </motion.button>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                    <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
+                      <span className="text-[#475569] dark:text-[#CBD5E1] font-medium">Pothole Hazard:</span>
+                      <span
+                        className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
+                          detectionResult.pothole_detected
+                            ? "bg-[#FEE2E2] text-[#991B1B]"
+                            : "bg-[#DCFCE7] text-[#166534]"
+                        }`}
+                      >
+                        {detectionResult.pothole_detected ? "DETECTED" : "CLEAR"}
+                      </span>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] flex items-center justify-between">
+                      <span className="text-[#475569] dark:text-[#CBD5E1] font-medium">Waterlogging:</span>
+                      <span
+                        className={`font-semibold px-2 py-0.5 rounded text-[11px] ${
+                          detectionResult.waterlogging_detected
+                            ? "bg-[#FEE2E2] text-[#991B1B]"
+                            : "bg-[#DCFCE7] text-[#166534]"
+                        }`}
+                      >
+                        {detectionResult.waterlogging_detected ? "CONFIRMED" : "CLEAR"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-[#FFFFFF] dark:bg-[#111C2E] text-xs flex justify-between items-center border border-[#E2E8F0] dark:border-[#243244]">
+                    <span className="text-[#475569] dark:text-[#CBD5E1]">Verification Status:</span>
+                    <span className="font-semibold text-[#0F766E] dark:text-[#14B8A6]">
+                      {detectionResult.verification_status || "Pending Verification"}
+                    </span>
+                  </div>
+                </div>
+
+                <ShimmerButton
+                  onClick={() => {
+                    setDetectionResult(null);
+                    setPhotoFile(null);
+                    setPhotoPreview(null);
+                    setDescription("");
+                  }}
+                  background="var(--primary)"
+                  className="w-full h-11 text-xs font-semibold shadow-sm"
+                >
+                  Submit Another Report
+                </ShimmerButton>
+              </SpotlightCard>
             </motion.div>
           )}
         </AnimatePresence>
