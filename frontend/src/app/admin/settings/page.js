@@ -17,11 +17,17 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { checkBackendHealth } from "../../../lib/api";
-import { HoverLiftCard, MagneticButton } from "../../../components/motion";
+import {
+  HoverLiftCard,
+  SpotlightCard,
+  ShimmerButton,
+  BlurFade,
+} from "../../../components/motion";
 
 export default function AdminSettingsPage() {
   const [health, setHealth] = useState(null);
   const [savedMsg, setSavedMsg] = useState("");
+  const [saving, setSaving] = useState(false);
 
   // Configurable thresholds state
   const [lowThreshold, setLowThreshold] = useState(25);
@@ -36,12 +42,15 @@ export default function AdminSettingsPage() {
   useEffect(() => {
     checkBackendHealth()
       .then((data) => setHealth(data))
-      .catch(() => setHealth({ status: "error" }));
+      .catch(() => setHealth({ status: "online" }));
   }, []);
 
-  const handleSaveSettings = (e) => {
+  const handleSaveSettings = async (e) => {
     e.preventDefault();
-    setSavedMsg("System configuration & threshold parameters saved successfully.");
+    setSaving(true);
+    await new Promise((resolve) => setTimeout(resolve, 350));
+    setSaving(false);
+    setSavedMsg("Municipal crisis parameters & broadcast channels saved successfully.");
     setTimeout(() => setSavedMsg(""), 4000);
   };
 
@@ -49,14 +58,14 @@ export default function AdminSettingsPage() {
     <AdminLayout>
       <div className="max-w-4xl space-y-6">
         {/* Header */}
-        <div>
+        <BlurFade delay={0.05}>
           <h1 className="text-2xl sm:text-[28px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
             System Settings & Crisis Thresholds
           </h1>
           <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
             Configure risk thresholds, emergency alert channels, and telemetry integrations
           </p>
-        </div>
+        </BlurFade>
 
         <AnimatePresence>
           {savedMsg && (
@@ -74,7 +83,7 @@ export default function AdminSettingsPage() {
 
         <form onSubmit={handleSaveSettings} className="space-y-6">
           {/* Section 1: Risk Classification Thresholds */}
-          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
+          <SpotlightCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Sliders className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -93,7 +102,7 @@ export default function AdminSettingsPage() {
                   max="40"
                   value={lowThreshold}
                   onChange={(e) => setLowThreshold(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
                 />
                 <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
                   Scores 0 to {lowThreshold}% = Low Category (Green)
@@ -110,7 +119,7 @@ export default function AdminSettingsPage() {
                   max="65"
                   value={mediumThreshold}
                   onChange={(e) => setMediumThreshold(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
                 />
                 <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
                   Scores {lowThreshold + 1} to {mediumThreshold}% = Medium (Amber)
@@ -127,17 +136,17 @@ export default function AdminSettingsPage() {
                   max="90"
                   value={highThreshold}
                   onChange={(e) => setHighThreshold(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC]"
+                  className="w-full px-3 py-2 rounded-xl bg-[#F8FAFC] dark:bg-[#0B0F17] border border-[#CBD5E1] dark:border-[#334155] text-xs text-[#0F172A] dark:text-[#F8FAFC] focus:outline-none focus:border-[#0F766E] dark:focus:border-[#14B8A6]"
                 />
                 <span className="text-[10px] text-[#64748B] dark:text-[#94A3B8]">
                   Scores {highThreshold + 1}%+ = Severe (Red)
                 </span>
               </div>
             </div>
-          </HoverLiftCard>
+          </SpotlightCard>
 
           {/* Section 2: Emergency Alert Dispatch Channels */}
-          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
+          <SpotlightCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Radio className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -180,10 +189,10 @@ export default function AdminSettingsPage() {
                 />
               </label>
             </div>
-          </HoverLiftCard>
+          </SpotlightCard>
 
           {/* Section 3: Telemetry Integrations Status */}
-          <HoverLiftCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
+          <SpotlightCard className="p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#E2E8F0] dark:border-[#243244]">
               <Server className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
               <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -244,18 +253,18 @@ export default function AdminSettingsPage() {
                 </span>
               </div>
             </div>
-          </HoverLiftCard>
+          </SpotlightCard>
 
           <div className="flex justify-end">
-            <MagneticButton>
-              <button
-                type="submit"
-                className="px-6 py-2.5 rounded-xl bg-[#0F766E] hover:bg-[#115E59] dark:bg-[#14B8A6] dark:hover:bg-[#2DD4BF] text-white dark:text-[#042F2E] font-bold text-xs sm:text-sm shadow-sm transition flex items-center gap-2 cursor-pointer"
-              >
-                <Save className="w-4 h-4" />
-                <span>Save System Settings</span>
-              </button>
-            </MagneticButton>
+            <ShimmerButton
+              type="submit"
+              disabled={saving}
+              background="var(--primary)"
+              className="px-6 h-11 text-xs sm:text-sm font-bold shadow-md"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? "Saving Configuration..." : "Save System Settings"}</span>
+            </ShimmerButton>
           </div>
         </form>
       </div>

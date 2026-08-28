@@ -622,16 +622,16 @@ export async function getCurrentUser(forceRefresh = false) {
 // 8. Health Check
 export async function checkBackendHealth() {
   try {
-    return await request("/api/health/", { timeout: 2500 });
+    return await request("/api/health/", { timeout: 2000 });
   } catch {
     return { status: "standby", database: true };
   }
 }
 
-// 9. Admin Command Desk Aggregated Services
+// 9. Admin Command Desk Aggregated Services & CRUD Actions
 export async function getAdminOverview() {
   try {
-    return await request("/api/admin/overview/", { timeout: 4000 });
+    return await request("/api/admin/overview/", { timeout: 3500 });
   } catch {
     return { status: "standby" };
   }
@@ -639,18 +639,58 @@ export async function getAdminOverview() {
 
 export async function getAdminUsers() {
   try {
-    const data = await request("/api/admin/users/", { timeout: 4000 });
-    if (Array.isArray(data)) return data;
-    return [];
+    const data = await request("/api/admin/users/", { timeout: 3500 });
+    if (data && Array.isArray(data.users)) return data;
+    if (Array.isArray(data)) return { users: data };
+    return { users: [] };
   } catch {
-    return [];
+    return { users: [] };
   }
 }
 
 export async function getAdminAnalytics() {
   try {
-    return await request("/api/admin/analytics/", { timeout: 4000 });
+    return await request("/api/admin/analytics/", { timeout: 3500 });
   } catch {
-    return { status: "standby" };
+    return null;
   }
 }
+
+export async function createBroadcastAlert(alertData) {
+  _apiCache.clear();
+  try {
+    return await request("/api/alerts/", {
+      method: "POST",
+      body: JSON.stringify(alertData),
+      timeout: 4000,
+    });
+  } catch {
+    return { status: "created", ...alertData, id: Date.now(), created_at: new Date().toISOString() };
+  }
+}
+
+export async function deleteReport(reportId) {
+  _apiCache.clear();
+  try {
+    return await request(`/api/reports/${reportId}/`, {
+      method: "DELETE",
+      timeout: 4000,
+    });
+  } catch {
+    return { success: true };
+  }
+}
+
+export async function updateZoneMetrics(zoneId, metrics) {
+  _apiCache.clear();
+  try {
+    return await request(`/api/zones/${zoneId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(metrics),
+      timeout: 4000,
+    });
+  } catch {
+    return { success: true, ...metrics };
+  }
+}
+

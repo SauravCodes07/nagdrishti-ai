@@ -1,13 +1,13 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { useReducedMotionConfig } from "./useReducedMotionConfig";
 
 /**
  * SpotlightCard — Aceternity UI / Magic UI dynamic mouse-following radial spotlight card
- * Creates a subtle interactive beam that follows the cursor over the card surface and border.
+ * High-performance hardware-accelerated CSS variable mouse tracking with zero React re-renders on move.
  */
 export default function SpotlightCard({
   children,
@@ -22,13 +22,7 @@ export default function SpotlightCard({
   const [isHovered, setIsHovered] = useState(false);
   const [isPointerDevice, setIsPointerDevice] = useState(false);
   const { shouldReduceMotion } = useReducedMotionConfig();
-
-  const mouseX = useMotionValue(-1000);
-  const mouseY = useMotionValue(-1000);
-
-  const springConfig = { stiffness: 400, damping: 30 };
-  const smoothX = useSpring(mouseX, springConfig);
-  const smoothY = useSpring(mouseY, springConfig);
+  const rafId = useRef(null);
 
   useEffect(() => {
     const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -56,9 +50,19 @@ export default function SpotlightCard({
 
   const handleMouseMove = (e) => {
     if (!cardRef.current || !isPointerDevice || shouldReduceMotion) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    mouseX.set(e.clientX - rect.left);
-    mouseY.set(e.clientY - rect.top);
+    if (rafId.current) cancelAnimationFrame(rafId.current);
+
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+
+    rafId.current = requestAnimationFrame(() => {
+      if (!cardRef.current) return;
+      const rect = cardRef.current.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      cardRef.current.style.setProperty("--mouse-x", `${x}px`);
+      cardRef.current.style.setProperty("--mouse-y", `${y}px`);
+    });
   };
 
   const handleMouseEnter = () => {
@@ -67,8 +71,7 @@ export default function SpotlightCard({
 
   const handleMouseLeave = () => {
     setIsHovered(false);
-    mouseX.set(-1000);
-    mouseY.set(-1000);
+    if (rafId.current) cancelAnimationFrame(rafId.current);
   };
 
   const effectiveSpotlight = getCategorySpotlight();
@@ -80,10 +83,16 @@ export default function SpotlightCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={onClick}
-      whileHover={shouldReduceMotion ? undefined : { y: -3, transition: { duration: 0.2, ease: "easeOut" } }}
+      whileHover={shouldReduceMotion ? undefined : { y: -2, transition: { duration: 0.18, ease: "easeOut" } }}
       whileTap={shouldReduceMotion ? undefined : { scale: 0.985 }}
+      style={{
+        "--mouse-x": "-1000px",
+        "--mouse-y": "-1000px",
+        "--spotlight-color": effectiveSpotlight,
+        "--spotlight-radius": `${spotlightRadius}px`,
+      }}
       className={cn(
-        "relative rounded-2xl border border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#111C2E] overflow-hidden transition-shadow duration-300 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-xl",
+        "relative rounded-2xl border border-[#E2E8F0] dark:border-[#243244] bg-[#FFFFFF] dark:bg-[#111C2E] overflow-hidden transition-shadow duration-200 shadow-[0_1px_3px_rgba(15,23,42,0.06)] hover:shadow-xl",
         riskCategory?.toLowerCase() === "severe" && "hover:border-red-500/50 dark:hover:border-red-500/60",
         riskCategory?.toLowerCase() === "high" && "hover:border-orange-500/50 dark:hover:border-orange-500/60",
         riskCategory?.toLowerCase() === "medium" && "hover:border-amber-500/50 dark:hover:border-amber-500/60",
@@ -92,13 +101,13 @@ export default function SpotlightCard({
       )}
       {...props}
     >
-      {/* Radial Spotlight Overlay */}
+      {/* Hardware-accelerated Radial Spotlight Overlay */}
       {isPointerDevice && !shouldReduceMotion && (
-        <motion.div
-          className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-300 z-10"
+        <div
+          className="pointer-events-none absolute -inset-px rounded-2xl opacity-0 transition-opacity duration-200 z-10"
           style={{
             opacity: isHovered ? 1 : 0,
-            background: `radial-gradient(${spotlightRadius}px circle at ${smoothX.get()}px ${smoothY.get()}px, ${effectiveSpotlight}, transparent 80%)`,
+            background: `radial-gradient(var(--spotlight-radius) circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 80%)`,
           }}
         />
       )}

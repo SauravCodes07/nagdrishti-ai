@@ -33,7 +33,9 @@ import { useTheme } from "../../../components/ThemeProvider";
 import {
   ScrollReveal,
   HoverLiftCard,
+  SpotlightCard,
   AnimatedCounter,
+  BlurFade,
 } from "../../../components/motion";
 
 const DEFAULT_ANALYTICS = {
@@ -46,19 +48,20 @@ const DEFAULT_ANALYTICS = {
     { date: "Yesterday", Dharampeth: 40, Lakadganj: 76, Gandhibagh: 67, Mahal: 44, "Nehru Nagar": 60, Sitabuldi: 86 },
     { date: "Today", Dharampeth: 42, Lakadganj: 79, Gandhibagh: 68, Mahal: 45, "Nehru Nagar": 62, Sitabuldi: 88 },
   ],
-  category_distribution: [
-    { name: "Waterlogging", count: 48 },
-    { name: "Severe Pothole", count: 26 },
-    { name: "Drain Overflow", count: 34 },
-    { name: "Road Blockage", count: 14 },
+  category_breakdown: [
+    { name: "Waterlogging", value: 48, color: "#0F766E" },
+    { name: "Severe Pothole", value: 26, color: "#DC2626" },
+    { name: "Drain Overflow", value: 34, color: "#F59E0B" },
+    { name: "Road Blockage", value: 14, color: "#8B5CF6" },
   ],
   report_volume: [
-    { time: "00:00", reports: 2 },
-    { time: "04:00", reports: 1 },
-    { time: "08:00", reports: 12 },
-    { time: "12:00", reports: 28 },
-    { time: "16:00", reports: 34 },
-    { time: "20:00", reports: 18 },
+    { date: "Day -6", total_reports: 12, verified_reports: 10 },
+    { date: "Day -5", total_reports: 18, verified_reports: 15 },
+    { date: "Day -4", total_reports: 24, verified_reports: 20 },
+    { date: "Day -3", total_reports: 38, verified_reports: 32 },
+    { date: "Day -2", total_reports: 45, verified_reports: 40 },
+    { date: "Yesterday", total_reports: 52, verified_reports: 48 },
+    { date: "Today", total_reports: 36, verified_reports: 30 },
   ],
 };
 
@@ -101,14 +104,14 @@ export default function AdminAnalyticsPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <h1 className="text-2xl sm:text-[28px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Crisis Analytics & Predictive Trends
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Historical multi-ward risk index progression, crowdsourced report volume, and hazard distribution
             </p>
-          </div>
+          </BlurFade>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -121,11 +124,11 @@ export default function AdminAnalyticsPage() {
           </motion.button>
         </div>
 
-        {/* Charts Grid with Spring Entrances & Active Recharts Animations */}
+        {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Chart 1: 7-Day Risk Score Trends Line Chart */}
           <div className="lg:col-span-8">
-            <HoverLiftCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
+            <SpotlightCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -167,7 +170,7 @@ export default function AdminAnalyticsPage() {
                             dot={{ r: 3 }}
                             activeDot={{ r: 5 }}
                             isAnimationActive={true}
-                            animationDuration={900}
+                            animationDuration={800}
                           />
                         ))}
                     </LineChart>
@@ -178,12 +181,12 @@ export default function AdminAnalyticsPage() {
                   </div>
                 )}
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </div>
 
           {/* Chart 2: Hazard Distribution Pie Chart */}
           <div className="lg:col-span-4">
-            <HoverLiftCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4 flex flex-col justify-between h-full">
+            <SpotlightCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4 flex flex-col justify-between h-full">
               <div className="flex items-center gap-2">
                 <PieIcon className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
                 <h2 className="text-xs font-bold uppercase tracking-wider text-[#0F172A] dark:text-[#F8FAFC]">
@@ -204,7 +207,7 @@ export default function AdminAnalyticsPage() {
                         paddingAngle={4}
                         dataKey="value"
                         isAnimationActive={true}
-                        animationDuration={900}
+                        animationDuration={800}
                       >
                         {data.category_breakdown.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -236,12 +239,12 @@ export default function AdminAnalyticsPage() {
                   </div>
                 ))}
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </div>
 
           {/* Chart 3: Report Volume Bar Chart */}
           <div className="lg:col-span-12">
-            <HoverLiftCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
+            <SpotlightCard className="p-5 sm:p-6 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BarChart3 className="w-4 h-4 text-[#0F766E] dark:text-[#14B8A6]" />
@@ -270,13 +273,13 @@ export default function AdminAnalyticsPage() {
                         }}
                       />
                       <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "8px" }} />
-                      <Bar dataKey="total_reports" name="Total Ingested Reports" fill="#0F766E" radius={[6, 6, 0, 0]} isAnimationActive={true} animationDuration={900} />
-                      <Bar dataKey="verified_reports" name="Officer Verified Reports" fill="#16A34A" radius={[6, 6, 0, 0]} isAnimationActive={true} animationDuration={900} />
+                      <Bar dataKey="total_reports" name="Total Ingested Reports" fill="#0F766E" radius={[6, 6, 0, 0]} isAnimationActive={true} animationDuration={800} />
+                      <Bar dataKey="verified_reports" name="Officer Verified Reports" fill="#16A34A" radius={[6, 6, 0, 0]} isAnimationActive={true} animationDuration={800} />
                     </BarChart>
                   </ResponsiveContainer>
                 ) : null}
               </div>
-            </HoverLiftCard>
+            </SpotlightCard>
           </div>
         </div>
       </div>

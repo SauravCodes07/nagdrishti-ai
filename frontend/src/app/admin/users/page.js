@@ -12,15 +12,20 @@ import {
   KeyRound,
   FileText,
   Filter,
+  ShieldAlert,
+  Edit2,
+  CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import AdminLayout from "../../../components/layouts/AdminLayout";
 import { getAdminUsers } from "../../../lib/api";
 import {
   HoverLiftCard,
+  SpotlightCard,
   AnimatedCounter,
   StaggerGrid,
   StaggerItem,
+  BlurFade,
 } from "../../../components/motion";
 
 const DEFAULT_ADMIN_USERS = [
@@ -35,12 +40,13 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const fetchUsers = async () => {
     try {
       setLoading(true);
       const res = await getAdminUsers();
-      if (res && Array.isArray(res.users)) {
+      if (res && Array.isArray(res.users) && res.users.length > 0) {
         setUsers(res.users);
       }
     } catch (err) {
@@ -53,6 +59,21 @@ export default function AdminUsersPage() {
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  const handleToggleRole = (userId) => {
+    setUsers((prev) =>
+      prev.map((u) => {
+        if (u.id === userId) {
+          const newIsStaff = !u.is_staff;
+          const newRole = newIsStaff ? "admin" : "citizen";
+          setSuccessMsg(`Updated @${u.username} permissions to ${newRole.toUpperCase()}`);
+          setTimeout(() => setSuccessMsg(""), 3500);
+          return { ...u, is_staff: newIsStaff, role: newRole };
+        }
+        return u;
+      })
+    );
+  };
 
   const filteredUsers = users.filter((u) => {
     const matchesSearch =
@@ -76,14 +97,14 @@ export default function AdminUsersPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
+          <BlurFade delay={0.05}>
             <h1 className="text-2xl sm:text-[28px] font-bold text-[#0F172A] dark:text-[#F8FAFC] tracking-tight">
               Registered Accounts & Credentials
             </h1>
             <p className="text-xs sm:text-sm text-[#475569] dark:text-[#CBD5E1] font-normal mt-0.5">
               Directory of citizens, disaster response officers, and authentication providers
             </p>
-          </div>
+          </BlurFade>
 
           <motion.button
             whileTap={{ scale: 0.95 }}
@@ -96,39 +117,54 @@ export default function AdminUsersPage() {
           </motion.button>
         </div>
 
+        {/* Success Alert */}
+        <AnimatePresence>
+          {successMsg && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="p-3.5 rounded-xl bg-[#DCFCE7] dark:bg-green-500/15 border border-green-200 dark:border-green-500/30 text-[#166534] dark:text-[#4ADE80] text-xs font-semibold flex items-center gap-2"
+            >
+              <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0" />
+              <span>{successMsg}</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Top Metric Cards with AnimatedCounters */}
         <StaggerGrid className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#64748B] dark:text-[#94A3B8]">
                 Total Accounts
               </span>
               <p className="text-2xl font-bold text-[#0F172A] dark:text-[#F8FAFC]">
                 <AnimatedCounter value={users.length} />
               </p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#0F766E] dark:text-[#14B8A6]">
                 Registered Citizens
               </span>
               <p className="text-2xl font-bold text-[#0F766E] dark:text-[#14B8A6]">
                 <AnimatedCounter value={citizenCount} />
               </p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
 
           <StaggerItem>
-            <HoverLiftCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
+            <SpotlightCard className="p-5 rounded-2xl bg-[#FFFFFF] dark:bg-[#111C2E] border border-[#E2E8F0] dark:border-[#243244] shadow-sm space-y-1 h-full">
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#854D0E] dark:text-[#FDE68A]">
                 Municipal Officers
               </span>
               <p className="text-2xl font-bold text-[#854D0E] dark:text-[#FDE68A]">
                 <AnimatedCounter value={officerCount} />
               </p>
-            </HoverLiftCard>
+            </SpotlightCard>
           </StaggerItem>
         </StaggerGrid>
 
@@ -169,7 +205,7 @@ export default function AdminUsersPage() {
                   <th className="py-3.5 px-4">Role & Access</th>
                   <th className="py-3.5 px-4">Authentication</th>
                   <th className="py-3.5 px-4">Reports Filed</th>
-                  <th className="py-3.5 px-4">Joined Date</th>
+                  <th className="py-3.5 px-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#E2E8F0] dark:divide-[#243244]">
@@ -233,11 +269,18 @@ export default function AdminUsersPage() {
                         </td>
 
                         <td className="py-3.5 px-4 font-semibold text-[#0F172A] dark:text-[#F8FAFC]">
-                          {u.report_count || 0} Reports
+                          {u.reports_count || u.report_count || 0} Reports
                         </td>
 
-                        <td className="py-3.5 px-4 font-mono text-[#64748B] dark:text-[#94A3B8]">
-                          {u.date_joined ? new Date(u.date_joined).toLocaleDateString() : "Active"}
+                        <td className="py-3.5 px-4 text-right">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleToggleRole(u.id)}
+                            className="px-2.5 py-1 rounded-lg bg-[#F1F5F9] dark:bg-[#162235] hover:bg-[#E2E8F0] dark:hover:bg-[#1E293B] border border-[#CBD5E1] dark:border-[#334155] text-xs font-semibold text-[#0F172A] dark:text-[#F8FAFC] transition cursor-pointer"
+                          >
+                            {u.is_staff || u.role === "admin" ? "Demote to Citizen" : "Promote to Officer"}
+                          </motion.button>
                         </td>
                       </motion.tr>
                     ))}

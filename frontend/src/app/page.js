@@ -326,9 +326,8 @@ export default function PublicLandingPage() {
         <div className="absolute top-16 right-20 w-32 h-32 rounded-full border border-teal-500/20 pointer-events-none z-10 hidden xl:block animate-float-slow" />
         <div className="absolute bottom-20 left-12 w-24 h-24 rounded-full border border-teal-400/15 pointer-events-none z-10 hidden xl:block animate-float-slow" />
 
-        {/* Theme-Aware Gradient Overlays for High Map Clarity and Crisp Text Readability */}
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/85 via-[#FFFFFF]/40 to-transparent dark:from-[#0B1220]/90 dark:via-[#0B1220]/50 dark:to-transparent" />
-        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-t from-[#FFFFFF]/60 via-transparent to-transparent dark:from-[#0B1220]/70 dark:via-transparent dark:to-transparent" />
+        {/* Minimal Gradient Overlay for a Bold, Vivid Map Background with Crisp Text Contrast */}
+        <div className="absolute inset-0 z-10 pointer-events-none bg-gradient-to-r from-[#FFFFFF]/30 via-transparent to-transparent dark:from-[#0B1220]/40 dark:via-transparent to-transparent" />
 
         {/* Interactive Content Container */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 w-full">
